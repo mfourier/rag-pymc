@@ -1,0 +1,39 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Generated corpus artifacts
+datasets/processed/
+datasets/raw/*
+!datasets/raw/manifests/
+!datasets/raw/manifests/**
+
+# Test, type-checking, and lint caches
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local learning notes and continuation prompts
+.local-learning/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store

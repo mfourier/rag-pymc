@@ -1,0 +1,10 @@
+"""Core package for the rag-pymc adaptive tutor."""
+
+from importlib.metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("rag-pymc")
+except PackageNotFoundError:
+    __version__ = "0.0.0+unknown"
+
+__all__ = ["__version__"]

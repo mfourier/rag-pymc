@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=77,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rag-pymc"
+version = "0.1.0"
+description = "An evidence-grounded adaptive tutor for learning PyMC"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "arviz==1.2.0",
+  "beautifulsoup4==4.15.0",
+  "pydantic==2.13.4",
+  "pymc==6.1.0",
+  "pytensor==3.1.3",
+  "sentence-transformers==5.6.0",
+  "torch==2.13.0",
+  "typer==0.27.0",
+]
+
+[project.scripts]
+rag-pymc = "rag_pymc.cli:app"
+
+[dependency-groups]
+dev = [
+  "mypy==2.3.0",
+  "pre-commit==4.6.0",
+  "pytest==9.1.1",
+  "ruff==0.15.22",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+rag_pymc = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ANN", "B", "D", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+pretty = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
+testpaths = ["tests"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

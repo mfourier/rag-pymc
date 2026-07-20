@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "model_id": "cross-encoder/ms-marco-MiniLM-L6-v2",
+  "revision": "c5ee24cb16019beea0893ab7796b1df96625c6b8",
+  "source_url": "https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2",
+  "source_last_modified_at": "2025-08-29T14:36:10Z",
+  "downloaded_at": "2026-07-20T05:09:02Z",
+  "license_name": "Apache-2.0",
+  "license_url": "https://huggingface.co/cross-encoder/ms-marco-MiniLM-L6-v2/blob/c5ee24cb16019beea0893ab7796b1df96625c6b8/README.md",
+  "sentence_transformers_version": "5.6.0",
+  "max_sequence_length": 512,
+  "backend": "torch",
+  "score_function": "identity_logit"
+}

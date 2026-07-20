@@ -1,0 +1,18 @@
+{
+  "manifest_version": "1",
+  "source_id": "pymc-6.1.0-api-pymc.model.core.set_data",
+  "library": "pymc",
+  "library_version": "6.1.0",
+  "source_type": "api_reference",
+  "source_url": "https://www.pymc.io/projects/docs/en/stable/api/model/generated/pymc.model.core.set_data.html",
+  "release_tag": "v6.1.0",
+  "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.1.0",
+  "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5",
+  "source_last_modified_at": "2026-07-07T10:22:56Z",
+  "downloaded_at": "2026-07-20T04:09:52Z",
+  "content_hash": "d123ea93e161192ba8cf00c445f35ef20478e74540110b4c3ec4a49bfb1bc8df",
+  "media_type": "text/html",
+  "expected_api_symbol": "pymc.model.core.set_data",
+  "license_name": "Apache-2.0",
+  "license_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/LICENSE"
+}

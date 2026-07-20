@@ -1,0 +1,1084 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>pymc.Data &#8212; PyMC 6.1.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!-- 
+    this give us a css class that will be invisible only if js is disabled 
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=26a4bc78f4c0ddb94549" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/style.css?v=bf8e26bd" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=26a4bc78f4c0ddb94549"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549" />
+
+    <script src="../../_static/documentation_options.js?v=6340cb70"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/thebelab-helper.js"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/generated/pymc.Data';</script>
+    <link rel="canonical" href="https://www.pymc.io/projects/docs/api/generated/pymc.Data.html" />
+    <link rel="icon" href="../../_static/PyMC.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="pymc.get_data" href="pymc.get_data.html" />
+    <link rel="prev" title="Data" href="../data.html" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="6.1.0" />
+  
+  <script async type="text/javascript" src="/_/static/javascript/readthedocs-addons.js"></script><meta name="readthedocs-project-slug" content="pymc" /><meta name="readthedocs-version-slug" content="stable" /><meta name="readthedocs-resolver-filename" content="/api/generated/pymc.Data.html" /><meta name="readthedocs-http-status" content="200" /></head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="light">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+
+
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search within PyMC library docs..."
+         aria-label="Search within PyMC library docs..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut">Local&nbsp;search</span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+     
+  
+
+<a class="navbar-brand logo" href="https://www.pymc.io">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../../_static/PyMC.jpg" class="logo__image only-light" alt="PyMC 6.1.0 documentation - Home"/>
+    <img src="../../_static/PyMC.jpg" class="logo__image only-dark pst-js-only" alt="PyMC 6.1.0 documentation - Home"/>
+  
+  
+</a></div>
+    
+      <div class="navbar-item"><b>6.1.0</b></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://www.pymc.io/welcome.html">
+    Home
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://www.pymc.io/projects/examples/en/latest/gallery.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../learn.html">
+    Learn
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://www.pymc.io/community/index.html">
+    Community
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../contributing/index.html">
+    Contributing
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          <div>
+  <a class="nav-link pst-navbar-icon" href="../../search.html">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </a>
+</div>
+        </div>
+      
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/pymc-devs/pymc" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://bayes.club/@pymc" title="Mastodon" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-mastodon fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Mastodon</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/pymc_devs/" title="Twitter" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-twitter fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Twitter</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.youtube.com/c/PyMCDevelopers" title="YouTube" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-youtube fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">YouTube</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discourse.pymc.io" title="Discourse" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-discourse fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Discourse</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile"><div>
+  <a class="nav-link pst-navbar-icon" href="../../search.html">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </a>
+</div>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://www.pymc.io/welcome.html">
+    Home
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://www.pymc.io/projects/examples/en/latest/gallery.html">
+    Examples
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../learn.html">
+    Learn
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../api.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://www.pymc.io/community/index.html">
+    Community
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../contributing/index.html">
+    Contributing
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/pymc-devs/pymc" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://bayes.club/@pymc" title="Mastodon" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-mastodon fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Mastodon</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/pymc_devs/" title="Twitter" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-twitter fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Twitter</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://www.youtube.com/c/PyMCDevelopers" title="YouTube" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-youtube fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">YouTube</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discourse.pymc.io" title="Discourse" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-discourse fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Discourse</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../distributions.html">Distributions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/continuous.html">Continuous</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.AsymmetricLaplace.html">pymc.AsymmetricLaplace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Beta.html">pymc.Beta</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Cauchy.html">pymc.Cauchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ChiSquared.html">pymc.ChiSquared</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ExGaussian.html">pymc.ExGaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Exponential.html">pymc.Exponential</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Flat.html">pymc.Flat</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Gamma.html">pymc.Gamma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Gumbel.html">pymc.Gumbel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HalfCauchy.html">pymc.HalfCauchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HalfFlat.html">pymc.HalfFlat</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HalfNormal.html">pymc.HalfNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HalfStudentT.html">pymc.HalfStudentT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Interpolated.html">pymc.Interpolated</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.InverseGamma.html">pymc.InverseGamma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Kumaraswamy.html">pymc.Kumaraswamy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Laplace.html">pymc.Laplace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Logistic.html">pymc.Logistic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.LogitNormal.html">pymc.LogitNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.LogNormal.html">pymc.LogNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Moyal.html">pymc.Moyal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Normal.html">pymc.Normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Pareto.html">pymc.Pareto</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.PolyaGamma.html">pymc.PolyaGamma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Rice.html">pymc.Rice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.SkewNormal.html">pymc.SkewNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.SkewStudentT.html">pymc.SkewStudentT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.StudentT.html">pymc.StudentT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Triangular.html">pymc.Triangular</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.TruncatedNormal.html">pymc.TruncatedNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Uniform.html">pymc.Uniform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.VonMises.html">pymc.VonMises</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Wald.html">pymc.Wald</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Weibull.html">pymc.Weibull</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/discrete.html">Discrete</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Bernoulli.html">pymc.Bernoulli</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.BetaBinomial.html">pymc.BetaBinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Binomial.html">pymc.Binomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Categorical.html">pymc.Categorical</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.DiscreteUniform.html">pymc.DiscreteUniform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.DiscreteWeibull.html">pymc.DiscreteWeibull</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Geometric.html">pymc.Geometric</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HyperGeometric.html">pymc.HyperGeometric</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.NegativeBinomial.html">pymc.NegativeBinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.OrderedLogistic.html">pymc.OrderedLogistic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.OrderedProbit.html">pymc.OrderedProbit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Poisson.html">pymc.Poisson</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/multivariate.html">Multivariate</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.CAR.html">pymc.CAR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Dirichlet.html">pymc.Dirichlet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.DirichletMultinomial.html">pymc.DirichletMultinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ICAR.html">pymc.ICAR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.KroneckerNormal.html">pymc.KroneckerNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.LKJCholeskyCov.html">pymc.LKJCholeskyCov</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.LKJCorr.html">pymc.LKJCorr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.MatrixNormal.html">pymc.MatrixNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Multinomial.html">pymc.Multinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.MvNormal.html">pymc.MvNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.MvStudentT.html">pymc.MvStudentT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.OrderedMultinomial.html">pymc.OrderedMultinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.StickBreakingWeights.html">pymc.StickBreakingWeights</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Wishart.html">pymc.Wishart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.WishartBartlett.html">pymc.WishartBartlett</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ZeroSumNormal.html">pymc.ZeroSumNormal</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/mixture.html">Mixture</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Mixture.html">pymc.Mixture</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.NormalMixture.html">pymc.NormalMixture</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ZeroInflatedBinomial.html">pymc.ZeroInflatedBinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ZeroInflatedNegativeBinomial.html">pymc.ZeroInflatedNegativeBinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.ZeroInflatedPoisson.html">pymc.ZeroInflatedPoisson</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HurdlePoisson.html">pymc.HurdlePoisson</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HurdleNegativeBinomial.html">pymc.HurdleNegativeBinomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HurdleGamma.html">pymc.HurdleGamma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.HurdleLogNormal.html">pymc.HurdleLogNormal</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/timeseries.html">Timeseries</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.AR.html">pymc.AR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.EulerMaruyama.html">pymc.EulerMaruyama</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.GARCH11.html">pymc.GARCH11</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.GaussianRandomWalk.html">pymc.GaussianRandomWalk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.MvGaussianRandomWalk.html">pymc.MvGaussianRandomWalk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.MvStudentTRandomWalk.html">pymc.MvStudentTRandomWalk</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/truncated.html">Truncated</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/censored.html">Censored</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/custom.html">CustomDist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../distributions/simulator.html">Simulator</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/transforms.html">Transformations</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.circular.html">pymc.distributions.transforms.circular</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.log.html">pymc.distributions.transforms.log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.log_exp_m1.html">pymc.distributions.transforms.log_exp_m1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.logodds.html">pymc.distributions.transforms.logodds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.ordered.html">pymc.distributions.transforms.ordered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.simplex.html">pymc.distributions.transforms.simplex</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.CholeskyCovPacked.html">pymc.distributions.transforms.CholeskyCovPacked</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.CircularTransform.html">pymc.distributions.transforms.CircularTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.Interval.html">pymc.distributions.transforms.Interval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.LogExpM1.html">pymc.distributions.transforms.LogExpM1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.LogOddsTransform.html">pymc.distributions.transforms.LogOddsTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.LogTransform.html">pymc.distributions.transforms.LogTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.Ordered.html">pymc.distributions.transforms.Ordered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.SimplexTransform.html">pymc.distributions.transforms.SimplexTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.ZeroSumTransform.html">pymc.distributions.transforms.ZeroSumTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.distributions.transforms.Chain.html">pymc.distributions.transforms.Chain</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../distributions/utilities.html">Distribution utilities</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Continuous.html">pymc.Continuous</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Discrete.html">pymc.Discrete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.Distribution.html">pymc.Distribution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.SymbolicRandomVariable.html">pymc.SymbolicRandomVariable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../distributions/generated/pymc.DiracDelta.html">pymc.DiracDelta</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../gp.html">Gaussian Processes</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../gp/implementations.html">Implementations</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.HSGP.html">pymc.gp.HSGP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.HSGPPeriodic.html">pymc.gp.HSGPPeriodic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.Latent.html">pymc.gp.Latent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.LatentKron.html">pymc.gp.LatentKron</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.Marginal.html">pymc.gp.Marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.MarginalKron.html">pymc.gp.MarginalKron</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.MarginalApprox.html">pymc.gp.MarginalApprox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.TP.html">pymc.gp.TP</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../gp/mean.html">Mean Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.mean.Zero.html">pymc.gp.mean.Zero</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.mean.Constant.html">pymc.gp.mean.Constant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.mean.Linear.html">pymc.gp.mean.Linear</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../gp/cov.html">Covariance Functions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Constant.html">pymc.gp.cov.Constant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.WhiteNoise.html">pymc.gp.cov.WhiteNoise</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.ExpQuad.html">pymc.gp.cov.ExpQuad</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.RatQuad.html">pymc.gp.cov.RatQuad</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Exponential.html">pymc.gp.cov.Exponential</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Matern52.html">pymc.gp.cov.Matern52</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Matern32.html">pymc.gp.cov.Matern32</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Linear.html">pymc.gp.cov.Linear</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Polynomial.html">pymc.gp.cov.Polynomial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Cosine.html">pymc.gp.cov.Cosine</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Periodic.html">pymc.gp.cov.Periodic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.WarpedInput.html">pymc.gp.cov.WarpedInput</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Gibbs.html">pymc.gp.cov.Gibbs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Coregion.html">pymc.gp.cov.Coregion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.ScaledCov.html">pymc.gp.cov.ScaledCov</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.cov.Kron.html">pymc.gp.cov.Kron</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../gp/util.html">GP Utilities</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../gp/generated/pymc.gp.util.plot_gp_dist.html">pymc.gp.util.plot_gp_dist</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../model.html">Model</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../model/core.html">Model creation and inspection</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.core.Model.html">pymc.model.core.Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.core.modelcontext.html">pymc.model.core.modelcontext</a></li>
+</ul>
+</details></li>
+
+
+<li class="toctree-l2 has-children"><a class="reference internal" href="../model/conditioning.html">Model Conditioning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.do.html">pymc.model.transform.do</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.observe.html">pymc.model.transform.observe</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.change_value_transforms.html">pymc.model.transform.change_value_transforms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.remove_value_transforms.html">pymc.model.transform.remove_value_transforms</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../model/transform_values.html">Value Transforms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform_values.constrain_values.html">pymc.model.transform_values.constrain_values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform_values.unconstrain_values.html">pymc.model.transform_values.unconstrain_values</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../model/deterministics.html">Deterministic Surgery</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.extract_deterministics.html">pymc.model.transform.extract_deterministics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.insert_deterministics.html">pymc.model.transform.insert_deterministics</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../model/optimization.html">Model Optimization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.transform.freeze_dims_and_data.html">pymc.model.transform.freeze_dims_and_data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../model/fgraph.html">FunctionGraph</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.fgraph.clone_model.html">pymc.model.fgraph.clone_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.fgraph.fgraph_from_model.html">pymc.model.fgraph.fgraph_from_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/generated/pymc.model.fgraph.model_from_fgraph.html">pymc.model.fgraph.model_from_fgraph</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../samplers.html">Samplers</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sample.html">pymc.sample</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sample_prior_predictive.html">pymc.sample_prior_predictive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sample_posterior_predictive.html">pymc.sample_posterior_predictive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.draw.html">pymc.draw</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.compute_deterministics.html">pymc.compute_deterministics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.vectorize_over_posterior.html">pymc.vectorize_over_posterior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.init_nuts.html">pymc.init_nuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sampling.jax.sample_blackjax_nuts.html">pymc.sampling.jax.sample_blackjax_nuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sampling.jax.sample_numpyro_nuts.html">pymc.sampling.jax.sample_numpyro_nuts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.hmc.NUTS.html">pymc.step_methods.hmc.NUTS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.hmc.HamiltonianMC.html">pymc.step_methods.hmc.HamiltonianMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.BinaryGibbsMetropolis.html">pymc.step_methods.BinaryGibbsMetropolis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.BinaryMetropolis.html">pymc.step_methods.BinaryMetropolis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.CategoricalGibbsMetropolis.html">pymc.step_methods.CategoricalGibbsMetropolis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.CauchyProposal.html">pymc.step_methods.CauchyProposal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.DEMetropolis.html">pymc.step_methods.DEMetropolis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.DEMetropolisZ.html">pymc.step_methods.DEMetropolisZ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.LaplaceProposal.html">pymc.step_methods.LaplaceProposal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.Metropolis.html">pymc.step_methods.Metropolis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.MultivariateNormalProposal.html">pymc.step_methods.MultivariateNormalProposal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.NormalProposal.html">pymc.step_methods.NormalProposal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.PoissonProposal.html">pymc.step_methods.PoissonProposal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.UniformProposal.html">pymc.step_methods.UniformProposal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.CompoundStep.html">pymc.step_methods.CompoundStep</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.step_methods.Slice.html">pymc.step_methods.Slice</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../vi.html">Variational Inference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.ADVI.html">pymc.ADVI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.ASVGD.html">pymc.ASVGD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.SVGD.html">pymc.SVGD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.FullRankADVI.html">pymc.FullRankADVI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.fit.html">pymc.fit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.ImplicitGradient.html">pymc.variational.ImplicitGradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.Inference.html">pymc.variational.Inference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.KLqp.html">pymc.variational.KLqp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.Empirical.html">pymc.Empirical</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.FullRank.html">pymc.FullRank</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.MeanField.html">pymc.MeanField</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sample_approx.html">pymc.sample_approx</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.Group.html">pymc.Group</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.Approximation.html">pymc.variational.Approximation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.operators.KL.html">pymc.variational.operators.KL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.operators.KSD.html">pymc.variational.operators.KSD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.variational.Stein.html">pymc.variational.Stein</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.adadelta.html">pymc.adadelta</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.adagrad.html">pymc.adagrad</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.adagrad_window.html">pymc.adagrad_window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.adam.html">pymc.adam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.adamax.html">pymc.adamax</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.apply_momentum.html">pymc.apply_momentum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.apply_nesterov_momentum.html">pymc.apply_nesterov_momentum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.momentum.html">pymc.momentum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.nesterov_momentum.html">pymc.nesterov_momentum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.norm_constraint.html">pymc.norm_constraint</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.rmsprop.html">pymc.rmsprop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.sgd.html">pymc.sgd</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.total_norm_constraint.html">pymc.total_norm_constraint</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../smc.html">Sequential Monte Carlo</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.smc.sample_smc.html">pymc.smc.sample_smc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.smc.kernels.SMC_KERNEL.html">pymc.smc.kernels.SMC_KERNEL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.smc.kernels.IMH.html">pymc.smc.kernels.IMH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.smc.kernels.MH.html">pymc.smc.kernels.MH</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../data.html">Data</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">pymc.Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.get_data.html">pymc.get_data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.Minibatch.html">pymc.Minibatch</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../ode.html">Ordinary differential equations (ODEs)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.ode.DifferentialEquation.html">pymc.ode.DifferentialEquation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../logprob.html">Probability</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.logp.html">pymc.logp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.logcdf.html">pymc.logcdf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.icdf.html">pymc.icdf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.logprob.conditional_logp.html">pymc.logprob.conditional_logp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.logprob.transformed_conditional_logp.html">pymc.logprob.transformed_conditional_logp</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../stats.html">Stats</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.stats.compute_log_prior.html">pymc.stats.compute_log_prior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.stats.compute_log_likelihood.html">pymc.stats.compute_log_likelihood</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tuning.html">Tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.find_hessian.html">pymc.find_hessian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.find_MAP.html">pymc.find_MAP</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../math.html">Math</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../pytensorf.html">PyTensor utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.compile.html">pymc.pytensorf.compile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.gradient.html">pymc.pytensorf.gradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.hessian.html">pymc.pytensorf.hessian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.hessian_diag.html">pymc.pytensorf.hessian_diag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.jacobian.html">pymc.pytensorf.jacobian</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.inputvars.html">pymc.pytensorf.inputvars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.cont_inputs.html">pymc.pytensorf.cont_inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.floatX.html">pymc.pytensorf.floatX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.intX.html">pymc.pytensorf.intX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.constant_fold.html">pymc.pytensorf.constant_fold</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.CallableTensor.html">pymc.pytensorf.CallableTensor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.join_nonshared_inputs.html">pymc.pytensorf.join_nonshared_inputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.make_shared_replacements.html">pymc.pytensorf.make_shared_replacements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.pytensorf.convert_data.html">pymc.pytensorf.convert_data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../shape_utils.html">shape_utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.distributions.shape_utils.to_tuple.html">pymc.distributions.shape_utils.to_tuple</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.distributions.shape_utils.rv_size_is_none.html">pymc.distributions.shape_utils.rv_size_is_none</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.distributions.shape_utils.change_dist_size.html">pymc.distributions.shape_utils.change_dist_size</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../backends.html">Storage backends</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.to_inference_data.html">pymc.to_inference_data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.predictions_to_inference_data.html">pymc.predictions_to_inference_data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.backends.NDArray.html">pymc.backends.NDArray</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.backends.base.BaseTrace.html">pymc.backends.base.BaseTrace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.backends.base.MultiTrace.html">pymc.backends.base.MultiTrace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.backends.zarr.ZarrTrace.html">pymc.backends.zarr.ZarrTrace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.backends.zarr.ZarrChain.html">pymc.backends.zarr.ZarrChain</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../misc.html">Other utils</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.find_constrained_prior.html">pymc.find_constrained_prior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.blocking.DictToArrayBijection.html">pymc.blocking.DictToArrayBijection</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../testing.html">Testing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="pymc.testing.mock_sample.html">pymc.testing.mock_sample</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pymc.testing.mock_sample_setup_and_teardown.html">pymc.testing.mock_sample_setup_and_teardown</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../dims.html">Dims</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dims/model.html">Model constructors</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Data.html">pymc.dims.Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Deterministic.html">pymc.dims.Deterministic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Potential.html">pymc.dims.Potential</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../dims/math.html">Mathematical operations with dimensions</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dims/distributions.html">Distributions</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Flat.html">pymc.dims.Flat</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.HalfFlat.html">pymc.dims.HalfFlat</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Normal.html">pymc.dims.Normal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.HalfNormal.html">pymc.dims.HalfNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.TruncatedNormal.html">pymc.dims.TruncatedNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.LogNormal.html">pymc.dims.LogNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.StudentT.html">pymc.dims.StudentT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.HalfStudentT.html">pymc.dims.HalfStudentT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Cauchy.html">pymc.dims.Cauchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.HalfCauchy.html">pymc.dims.HalfCauchy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Beta.html">pymc.dims.Beta</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Laplace.html">pymc.dims.Laplace</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Gamma.html">pymc.dims.Gamma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.InverseGamma.html">pymc.dims.InverseGamma</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Weibull.html">pymc.dims.Weibull</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Categorical.html">pymc.dims.Categorical</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.MvNormal.html">pymc.dims.MvNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.ZeroSumNormal.html">pymc.dims.ZeroSumNormal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.Censored.html">pymc.dims.Censored</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../dims/transforms.html">Distribution Transforms</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.transforms.LogTransform.html">pymc.dims.transforms.LogTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.transforms.LogOddsTransform.html">pymc.dims.transforms.LogOddsTransform</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dims/generated/pymc.dims.transforms.ZeroSumTransform.html">pymc.dims.transforms.ZeroSumTransform</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../api.html" class="nav-link">API</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../data.html" class="nav-link">Data</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">pymc.Data</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="pymc-data">
+<h1>pymc.Data<a class="headerlink" href="#pymc-data" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="pymc.Data">
+<span class="sig-prename descclassname"><span class="pre">pymc.</span></span><span class="sig-name descname"><span class="pre">Data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infer_dims_and_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/pymc/data.html#Data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pymc.Data" title="Link to this definition">#</a></dt>
+<dd><p>Create a data container that registers a data variable with the model.</p>
+<p>Depending on the <code class="docutils literal notranslate"><span class="pre">mutable</span></code> setting (default: True), the variable
+is registered as a <a class="reference external" href="https://pytensor.readthedocs.io/en/latest/library/compile/shared.html#pytensor.compile.sharedvalue.SharedVariable" title="(in PyTensor dev)"><code class="xref py py-class docutils literal notranslate"><span class="pre">SharedVariable</span></code></a>,
+enabling it to be altered in value and shape, but NOT in dimensionality using
+<code class="xref py py-func docutils literal notranslate"><span class="pre">pymc.set_data()</span></code>.</p>
+<p>To set the value of the data container variable, check out
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">pymc.Model.set_data()</span></code>.</p>
+<p>When making predictions or doing posterior predictive sampling, the shape of the
+registered data variable will most likely need to be changed.  If you encounter an
+PyTensor shape mismatch error, refer to the documentation for
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">pymc.model.set_data()</span></code>.</p>
+<p>For more information, read the notebook <a class="reference external" href="https://www.pymc.io/projects/examples/en/latest/fundamentals/data_container.html#data_container" title="(in PyMC main)"><span>Using Data Containers</span></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>name</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>The name for this variable.</p>
+</dd>
+<dt><strong>value</strong><span class="classifier"><a class="reference external" href="https://numpy.org/doc/stable/glossary.html#term-array_like" title="(in NumPy v2.5)"><span>array_like</span></a> or <code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Series</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Dataframe</span></code></span></dt><dd><p>A value to associate with this variable.</p>
+</dd>
+<dt><strong>dims</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">tuple</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">tuple</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a>, optional</span></dt><dd><p>Dimension names of the random variables (as opposed to the shapes of these
+random variables). Use this when <code class="docutils literal notranslate"><span class="pre">value</span></code> is a pandas Series or DataFrame. The
+<code class="docutils literal notranslate"><span class="pre">dims</span></code> will then be the name of the Series / DataFrame’s columns. See ArviZ
+documentation for more information about dimensions and coordinates:
+<span class="xref std std-ref">arviz:quickstart</span>.
+If this parameter is not specified, the random variables will not have dimension
+names.</p>
+</dd>
+<dt><strong>coords</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">dict</span></code></a>, optional</span></dt><dd><p>Coordinate values to set for new dimensions introduced by this <code class="docutils literal notranslate"><span class="pre">Data</span></code> variable.</p>
+</dd>
+<dt><strong>export_index_as_coords</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.14)"><span class="xref std std-ref">bool</span></a></span></dt><dd><p>Deprecated, previous version of “infer_dims_and_coords”</p>
+</dd>
+<dt><strong>infer_dims_and_coords</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.14)"><span class="xref std std-ref">bool</span></a>, default=False</span></dt><dd><p>If True, the <code class="docutils literal notranslate"><span class="pre">Data</span></code> container will try to infer what the coordinates
+and dimension names should be if there is an index in <code class="docutils literal notranslate"><span class="pre">value</span></code>.</p>
+</dd>
+<dt><strong>**kwargs</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="docutils literal notranslate"><span class="pre">dict</span></code></a>, optional</span></dt><dd><p>Extra arguments passed to <a class="reference external" href="https://pytensor.readthedocs.io/en/latest/library/index.html#pytensor.shared" title="(in PyTensor dev)"><code class="xref py py-func docutils literal notranslate"><span class="pre">pytensor.shared()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">pymc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># We generate 10 datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">true_mu</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">observed_data</span> <span class="o">=</span> <span class="p">[</span><span class="n">mu</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span> <span class="k">for</span> <span class="n">mu</span> <span class="ow">in</span> <span class="n">true_mu</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">pm</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span> <span class="k">as</span> <span class="n">model</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="n">data</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">Data</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">observed_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">... </span>    <span class="n">mu</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s2">&quot;mu&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">pm</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">observed</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Generate one trace for each dataset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">idatas</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">data_vals</span> <span class="ow">in</span> <span class="n">observed_data</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">with</span> <span class="n">model</span><span class="p">:</span>
+<span class="gp">... </span>        <span class="c1"># Switch out the observed dataset</span>
+<span class="gp">... </span>        <span class="n">model</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">data_vals</span><span class="p">)</span>
+<span class="gp">... </span>        <span class="n">idatas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pm</span><span class="o">.</span><span class="n">sample</span><span class="p">())</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../data.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Data</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="pymc.get_data.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">pymc.get_data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pymc.Data"><code class="docutils literal notranslate"><span class="pre">Data()</span></code></a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+<div id="searchbox"></div></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../../_sources/api/generated/pymc.Data.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+<div class="tocsection editthispage">
+
+    <a href="https://numfocus.org/donate-to-pymc">
+      <i class="far fa-heart"></i> Support PyMC
+    </a>
+</div></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=26a4bc78f4c0ddb94549"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=26a4bc78f4c0ddb94549"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2020-present, The PyMC Development Team.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
