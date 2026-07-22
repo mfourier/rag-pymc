@@ -27,11 +27,12 @@ frameworks. Infrastructure satisfies project-owned protocols and converts extern
 the boundary. Presentation layers call application use cases rather than storage or indexes
 directly.
 
-Phases 1 through 4 add only packages with exercised behavior. The CLI calls project-owned
-services and protocols, while the domain remains independent of Beautiful Soup, filesystems,
-JSONL, ranking implementations, embedding providers, and presentation concerns.
+Phases 1 through 4 and the first Phase 5 slice add only packages with exercised behavior. The
+CLI calls project-owned services and protocols, while the domain remains independent of
+Beautiful Soup, filesystems, JSONL, ranking implementations, embedding providers, and
+presentation concerns.
 
-## Architecture through Phase 4
+## Architecture through the initial Phase 5 slice
 
 ### Phase 0: Foundation
 
@@ -125,22 +126,51 @@ sequence. ADR-0007 fixes and evaluates the cross-encoder, which remains availabl
 adopted as the default because measured quality decreases. Results and error analysis are in
 `docs/evaluation/phase4-hybrid-baseline.md`.
 
+### Phase 5: Deterministic context construction
+
+The first grounded-response slice contains:
+
+- immutable `ContextItem` and `ConstructedContext` domain models;
+- project-owned `ContextBuilder` and `TokenCounter` protocols;
+- canonical ordering by retrieval rank and chunk ID;
+- duplicate suppression by chunk ID with explicit conflicting-payload rejection;
+- a versioned rendering that preserves source URL, library version, section, API symbols,
+  retrieval provenance, and complete chunk content;
+- additive per-item budgeting with the deterministic `technical-v1` accounting policy;
+- complete-item rank-prefix admission with explicit tail omission and no content truncation;
+- fail-closed validation that admits only one normalized library and one version of each
+  library before budgeting.
+
+The returned value has no timestamp or latency, so fixed inputs produce a deterministic,
+JSON-serializable artifact. `technical-v1` is not an LLM tokenizer, and a nonempty context
+does not establish evidence sufficiency. ADR-0008 fixes this initial policy. CLI inspection,
+citations, generation, and abstention remain later Phase 5 slices.
+
+The structured `ContextItem` and `ConstructedContext` JSON fields are the authoritative
+artifact. `rendered_text` is derived from those fields for deterministic accounting and human
+inspection; it is neither a prompt nor trusted framing for a generator. A future provider and
+prompt-versioning ADR must define prompt-safe framing and escaping before generation is
+implemented.
+
 ## Provenance and version boundaries
 
 Every ingested document records its library version and source URL. Chunks repeat the fields
 needed for retrieval-time filtering and citation, while `document_id` preserves the parent
 relationship. A corpus build must never silently combine incompatible library versions.
+Context v1 additionally rejects candidate sets spanning more than one normalized library.
+Cross-library compatibility among PyMC, ArviZ, and PyTensor remains a separate decision.
 
 Source manifests, processed artifacts, datasets, and experiment inputs are content-addressed.
 Download time, release, commit, license, raw hash, parser version, chunker version, index
 configuration, corpus hash, dataset hash, and software versions are recorded. See ADR-0002
 for source identity and ADR-0004 for experiment provenance.
 
-## Deferred after Phase 4
+## Deferred after the initial context slice
 
-The following are explicitly outside the implemented Phase 4 baseline:
+The following are explicitly outside the implemented initial Phase 5 context slice:
 
 - LLM generation and provider-specific prompt APIs;
+- prompt-safe framed and escaped serialization for a selected generator;
 - learned abstention and score-threshold calibration;
 - approximate vector indexes and vector stores;
 - PostgreSQL, pgvector, and Alembic;
@@ -155,10 +185,11 @@ The following are explicitly outside the implemented Phase 4 baseline:
 Unit tests exercise domain validation, source integrity, parsing, chunking, BM25 behavior,
 exact cosine behavior, weighted RRF behavior, metadata filters, provider-boundary validation,
 cross-encoder adapter validation, candidate reranking, metric calculations, category slices,
-comparison invariants, CLI behavior, and persistence without network access. Integration tests
-run ingestion, sparse retrieval, dense retrieval, hybrid fusion, and reranking with
-deterministic fakes. Actual model acquisition and execution remain explicit experiment steps
-whose revisions, seeds, software versions, and outputs are recorded.
+comparison invariants, deterministic context construction and budgeting, CLI behavior, and
+persistence without network access. Integration tests run ingestion, sparse retrieval, dense
+retrieval, hybrid fusion, reranking with deterministic fakes, and an offline
+fixture-to-retrieval-to-context path. Actual model acquisition and execution remain explicit
+experiment steps whose revisions, seeds, software versions, and outputs are recorded.
 
 No retrieval or generation quality claim is valid without a committed dataset, an executable
 configuration, and stored per-query results.
@@ -168,5 +199,7 @@ configuration, and stored per-query results.
 The following decisions are intentionally deferred until their first implementation phase:
 
 - abstention policy, threshold-selection dataset, and calibration metric;
+- cross-library compatibility for mixed PyMC, ArviZ, and PyTensor context;
+- LLM provider contracts, prompt versioning, and prompt-safe serialization;
 - approximate-index and vector-store adapter contracts;
 - criteria and migration path from JSONL to a transactional database.

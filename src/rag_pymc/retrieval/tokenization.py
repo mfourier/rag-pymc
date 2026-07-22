@@ -15,3 +15,7 @@ class TechnicalTokenizer:
     def tokenize(self, text: str) -> tuple[str, ...]:
         """Return case-folded technical and natural-language tokens."""
         return tuple(match.group(0).casefold() for match in TECHNICAL_TOKEN_PATTERN.finditer(text))
+
+    def count_tokens(self, text: str) -> int:
+        """Count deterministic technical-v1 accounting units in text."""
+        return len(self.tokenize(text))

@@ -1,7 +1,7 @@
 """Sparse retrieval adapters."""
 
 from rag_pymc.domain import RetrievedChunk, SearchQuery
-from rag_pymc.indexing import SparseIndex
+from rag_pymc.indexing.protocols import SparseIndex
 
 
 class SparseRetriever:

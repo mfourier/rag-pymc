@@ -1,7 +1,7 @@
 """Validated domain models shared by ingestion and retrieval components."""
 
 from enum import StrEnum
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import (
     AnyUrl,
@@ -15,6 +15,7 @@ from pydantic import (
 )
 
 NonEmptyString = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
+RenderedText = Annotated[str, StringConstraints(min_length=1)]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 
 
@@ -143,3 +144,141 @@ class RetrievedChunk(DomainModel):
     score: FiniteFloat
     rank: int = Field(ge=1)
     retriever: NonEmptyString
+
+
+def render_context_item_v1(
+    *,
+    position: int,
+    retrieval_rank: int,
+    retriever: str,
+    chunk_id: str,
+    document_id: str,
+    source_url: AnyUrl,
+    library: str,
+    library_version: str,
+    source_type: SourceType,
+    title: str,
+    section: str | None,
+    api_symbols: tuple[str, ...],
+    content: str,
+) -> str:
+    """Render the canonical, provider-neutral context item representation."""
+    rendered_api_symbols = ", ".join(api_symbols) if api_symbols else "None"
+    rendered_section = section if section is not None else "Unsectioned"
+    return "\n".join(
+        (
+            f"Context item: {position}",
+            f"Retrieval rank: {retrieval_rank}",
+            f"Retrieval strategy: {retriever}",
+            f"Chunk ID: {chunk_id}",
+            f"Document ID: {document_id}",
+            f"Source URL: {source_url}",
+            f"Library: {library}",
+            f"Library version: {library_version}",
+            f"Source type: {source_type.value}",
+            f"Title: {title}",
+            f"Section: {rendered_section}",
+            f"API symbols: {rendered_api_symbols}",
+            "",
+            "Content:",
+            content,
+        )
+    )
+
+
+class ContextItem(DomainModel):
+    """One complete ranked evidence item admitted to a constructed context."""
+
+    position: int = Field(ge=1, strict=True)
+    retrieval_rank: int = Field(ge=1, strict=True)
+    retriever: NonEmptyString
+    chunk_id: NonEmptyString
+    document_id: NonEmptyString
+    library: NonEmptyString
+    library_version: NonEmptyString
+    source_type: SourceType
+    source_url: AnyUrl
+    title: NonEmptyString
+    section: NonEmptyString | None = None
+    api_symbols: tuple[NonEmptyString, ...] = ()
+    content: NonEmptyString
+    rendered_text: RenderedText
+    token_count: int = Field(gt=0, strict=True)
+
+    @model_validator(mode="after")
+    def rendered_text_matches_structured_evidence(self) -> Self:
+        """Reject context text that diverges from its structured provenance and content."""
+        expected = render_context_item_v1(
+            position=self.position,
+            retrieval_rank=self.retrieval_rank,
+            retriever=self.retriever,
+            chunk_id=self.chunk_id,
+            document_id=self.document_id,
+            source_url=self.source_url,
+            library=self.library,
+            library_version=self.library_version,
+            source_type=self.source_type,
+            title=self.title,
+            section=self.section,
+            api_symbols=self.api_symbols,
+            content=self.content,
+        )
+        if self.rendered_text != expected:
+            msg = "rendered_text must match the canonical context-item-text-v1 representation"
+            raise ValueError(msg)
+        return self
+
+
+class ConstructedContext(DomainModel):
+    """A deterministic, budget-bounded sequence of traceable evidence items."""
+
+    schema_version: Literal["1"] = "1"
+    builder_version: NonEmptyString
+    rendering_policy: Literal["context-item-text-v1"]
+    truncation_policy: Literal["rank-prefix-whole-item-v1"]
+    query: SearchQuery
+    token_counter: NonEmptyString
+    token_budget: int = Field(gt=0, strict=True)
+    used_tokens: int = Field(ge=0, strict=True)
+    items: tuple[ContextItem, ...] = ()
+    included_chunk_ids: tuple[NonEmptyString, ...] = ()
+    omitted_chunk_ids: tuple[NonEmptyString, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_accounting_and_identity(self) -> Self:
+        """Require canonical item identity and internally consistent token accounting."""
+        expected_positions = tuple(range(1, len(self.items) + 1))
+        positions = tuple(item.position for item in self.items)
+        if positions != expected_positions:
+            msg = "context item positions must be contiguous and start at one"
+            raise ValueError(msg)
+
+        canonical_order = tuple(
+            sorted(self.items, key=lambda item: (item.retrieval_rank, item.chunk_id))
+        )
+        if self.items != canonical_order:
+            msg = "context items must be ordered by retrieval_rank and chunk_id"
+            raise ValueError(msg)
+
+        item_ids = tuple(item.chunk_id for item in self.items)
+        if self.included_chunk_ids != item_ids:
+            msg = "included_chunk_ids must match context items in order"
+            raise ValueError(msg)
+        if len(set(item_ids)) != len(item_ids):
+            msg = "context item chunk IDs must be unique"
+            raise ValueError(msg)
+        if len(set(self.omitted_chunk_ids)) != len(self.omitted_chunk_ids):
+            msg = "omitted_chunk_ids must be unique"
+            raise ValueError(msg)
+        if set(item_ids) & set(self.omitted_chunk_ids):
+            msg = "included and omitted chunk IDs must not overlap"
+            raise ValueError(msg)
+
+        expected_used_tokens = sum(item.token_count for item in self.items)
+        if self.used_tokens != expected_used_tokens:
+            msg = "used_tokens must equal the sum of context item token counts"
+            raise ValueError(msg)
+        if self.used_tokens > self.token_budget:
+            msg = "used_tokens must not exceed token_budget"
+            raise ValueError(msg)
+        return self

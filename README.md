@@ -8,8 +8,17 @@ The repository has completed **Phase 4: hybrid retrieval and reranking**. It can
 controlled PyMC 6.1.0 API pages, search 15 structure-aware chunks with BM25, exact dense
 retrieval, weighted Reciprocal Rank Fusion, or cross-encoder reranking, and compare all methods
 on a versioned 30-query dataset. Equal-weight RRF remains the selected ranking policy because
-the measured cross-encoder reduces quality and adds substantial CPU latency. Learned
-abstention and generation are not yet implemented.
+the measured cross-encoder reduces quality and adds substantial CPU latency. The first
+Phase 5 slice now converts ranked chunks into deterministic, budget-bounded context while
+preserving exact evidence provenance. CLI context inspection, learned abstention, and
+generation are not yet implemented.
+
+Context v1 admits candidates from only one normalized library; a compatibility policy must
+exist before PyMC, ArviZ, and PyTensor evidence can share one context. The structured
+`ContextItem` and `ConstructedContext` JSON fields are authoritative. `rendered_text` is a
+derived accounting and inspection representation, not a prompt or trusted generator framing.
+Prompt-safe framing and escaping remain deferred to the provider and prompt-versioning ADR
+required before generation.
 
 ## Design principles
 
@@ -26,8 +35,9 @@ Architecture decisions are documented in the [architecture overview](docs/archit
 [ADR-0003](docs/adr/0003-use-jsonl-for-the-local-corpus-baseline.md),
 [ADR-0004](docs/adr/0004-use-explicit-bm25-and-versioned-evaluation-artifacts.md),
 [ADR-0005](docs/adr/0005-use-pinned-bge-and-exact-cosine-for-the-dense-baseline.md),
-[ADR-0006](docs/adr/0006-use-weighted-rrf-before-cross-encoder-reranking.md), and
-[ADR-0007](docs/adr/0007-evaluate-pinned-ms-marco-cross-encoder-without-adopting-it.md).
+[ADR-0006](docs/adr/0006-use-weighted-rrf-before-cross-encoder-reranking.md),
+[ADR-0007](docs/adr/0007-evaluate-pinned-ms-marco-cross-encoder-without-adopting-it.md), and
+[ADR-0008](docs/adr/0008-define-deterministic-context-construction.md).
 Measured behavior is documented in the
 [Phase 2 sparse](docs/evaluation/phase2-sparse-baseline.md),
 [Phase 3 dense](docs/evaluation/phase3-dense-baseline.md), and
@@ -244,7 +254,8 @@ datasets/
 `-- raw/manifests/                  # Source, embedding, and reranker provenance
 reports/evaluation/                  # Machine-readable experiment results
 src/rag_pymc/
-|-- domain/                          # Stable source and retrieval contracts
+|-- domain/                          # Stable source, retrieval, and context contracts
+|-- context/                         # Deterministic context construction
 |-- embeddings/                      # Pinned dense embedding adapter
 |-- ingestion/                       # Integrity checks and orchestration
 |-- parsing/                         # Sphinx API parser
@@ -266,8 +277,10 @@ docs/
 
 ## Near-term roadmap
 
-- **Phase 5:** construct bounded context, grounded answers with precise citations, and an
-  explicit abstention policy behind provider-neutral interfaces.
+- **Phase 5:** expose bounded context for CLI inspection, then add precise citation and
+  evidence-sufficiency contracts before provider-backed generation.
+- Define cross-library compatibility before admitting evidence from multiple normalized
+  libraries into one context.
 - Create a development split before tuning rerankers or abstention thresholds.
 - Evaluate truncation-aware parent-child chunking separately from rank fusion.
 
