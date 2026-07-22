@@ -8,10 +8,13 @@ The repository has completed **Phase 4: hybrid retrieval and reranking**. It can
 controlled PyMC 6.1.0 API pages, search 15 structure-aware chunks with BM25, exact dense
 retrieval, weighted Reciprocal Rank Fusion, or cross-encoder reranking, and compare all methods
 on a versioned 30-query dataset. Equal-weight RRF remains the selected ranking policy because
-the measured cross-encoder reduces quality and adds substantial CPU latency. The first
-Phase 5 slice now converts ranked chunks into deterministic, budget-bounded context while
-preserving exact evidence provenance. CLI context inspection, learned abstention, and
-generation are not yet implemented.
+the measured cross-encoder reduces quality and adds substantial CPU latency. The implemented
+Phase 5 foundations convert ranked chunks into deterministic, budget-bounded context, expose
+that artifact for local CLI inspection, add a conservative evidence-assessment boundary,
+define provider-neutral grounded-answer contracts, and measure structural response validity
+and citation traceability deterministically. The current policy always abstains and never
+claims that evidence is sufficient. Answer-permitting calibration, semantic response
+evaluation, generation, and a Phase 5 dataset are not yet implemented.
 
 Context v1 admits candidates from only one normalized library; a compatibility policy must
 exist before PyMC, ArviZ, and PyTensor evidence can share one context. The structured
@@ -36,8 +39,9 @@ Architecture decisions are documented in the [architecture overview](docs/archit
 [ADR-0004](docs/adr/0004-use-explicit-bm25-and-versioned-evaluation-artifacts.md),
 [ADR-0005](docs/adr/0005-use-pinned-bge-and-exact-cosine-for-the-dense-baseline.md),
 [ADR-0006](docs/adr/0006-use-weighted-rrf-before-cross-encoder-reranking.md),
-[ADR-0007](docs/adr/0007-evaluate-pinned-ms-marco-cross-encoder-without-adopting-it.md), and
-[ADR-0008](docs/adr/0008-define-deterministic-context-construction.md).
+[ADR-0007](docs/adr/0007-evaluate-pinned-ms-marco-cross-encoder-without-adopting-it.md),
+[ADR-0008](docs/adr/0008-define-deterministic-context-construction.md), and
+[ADR-0009](docs/adr/0009-fail-closed-with-a-conservative-no-threshold-evidence-policy.md).
 Measured behavior is documented in the
 [Phase 2 sparse](docs/evaluation/phase2-sparse-baseline.md),
 [Phase 3 dense](docs/evaluation/phase3-dense-baseline.md), and
@@ -143,6 +147,80 @@ uv run rag-pymc search-hybrid "How do I update predictors for prediction?" \
 
 The command fuses ten BM25 and ten dense candidates with equal-weight RRF, then returns the
 top three. Use `--allow-download` only when the pinned embedding revision is not cached.
+
+## Inspect deterministic grounded context
+
+```bash
+uv run rag-pymc inspect-context \
+  "How do I update predictors for prediction?" \
+  --token-budget 2048
+```
+
+`inspect-context` runs the selected Phase 4 retrieval policy over
+`datasets/processed/phase4`: BM25 (`k1=1.5`, `b=0.75`) and exact cosine retrieval with the
+pinned BGE model feed equal-weight RRF with ten candidates per component, `rrf_k=60`, and a
+default final depth of three. The final depth can be set from one through ten with `--top-k`.
+The command defaults to PyMC 6.1.0, accepts repeated `--source-type` and `--api-symbol`
+filters, and keeps the model manifest, CPU device, batch size, and seed fixed internally.
+
+`--token-budget` is required and uses the deterministic `technical-v1` accounting policy.
+The count includes each admitted item's provenance metadata and complete content; it is not
+an LLM token count. Standard output contains only the indented `ConstructedContext` JSON, so
+fixed inputs and a locally cached model produce the same inspectable artifact. Model loading
+defaults to local files only; use `--allow-download` solely for explicit first acquisition.
+
+An empty context is a valid JSON result when retrieval returns no candidates or the first
+ranked item exceeds the budget. It does not itself implement an evidence-sufficiency or
+abstention decision. The command does not generate an answer and does not persist the
+artifact.
+
+## Assess evidence conservatively
+
+`EvidenceAssessment` records a versioned sufficiency value, an explicit abstention decision,
+deterministic reason codes, and the exact included and omitted chunk IDs. The
+`ConservativeAbstentionPolicy` is identified as `conservative-no-threshold-v1` and behaves as
+follows:
+
+- no retrieved evidence is `insufficient`;
+- evidence entirely excluded by the context budget is `insufficient` with a distinct reason;
+- every nonempty context is `not_assessed`, with budget omission recorded when present;
+- every outcome abstains, and this policy never returns `sufficient`.
+
+This zero-answer-coverage behavior is an intentional fail-closed boundary, not a measured
+abstention-quality result. It uses no retrieval score, confidence, or threshold. A future
+answer-permitting policy requires a separately authored development dataset, a richer
+versioned evidence-signal contract, predefined calibration metrics, and an untouched Phase 5
+evaluation set. The final Phase 4 dataset remains unavailable for threshold tuning.
+
+## Define and evaluate grounded response structures
+
+Immutable provider-neutral contracts now represent `Citation`, `AtomicClaim`,
+`GroundedAnswerSection`, `GroundedAnswer`, `GeneratorInput`, and `GeneratorOutput`.
+Non-abstaining answers contain ordered atomic claims, their declared citations, and
+organizational headings; headings are metadata and must not be treated as factual answer
+content. Abstaining answers contain neither claims nor citations. `GeneratorInput` binds the
+exact query, context, and assessment and requires an explicitly sufficient, non-abstaining
+decision. `GeneratorOutput` then resolves every citation to an included context item and
+requires exact chunk, document, URL, library/version, section, and API-symbol provenance.
+Uncited claims remain representable so citation completeness can later be measured instead
+of being enforced away.
+
+The pure `evaluate_structural_response` function implements the versioned
+`structural-citation-v1` evaluator. It strictly parses one raw JSON answer, validates the
+answer and output contracts in stages, records sanitized failures, and reports citation
+resolution and provenance diagnostics without retaining claim text, headings, query text, or
+context content. It does retain caller- and provider-controlled identifiers plus linkable
+hashes, so reports remain potentially sensitive and identifiers must not contain prose or
+secrets. `aggregate_structural_responses` canonically orders unique response IDs, embeds the
+exact revalidated records, and computes a deterministic structural funnel plus micro citation
+and reference rates. Undefined zero-denominator rates remain `null`.
+
+These checks establish syntax, contract validity, and structural traceability only. They do
+not establish answer correctness, semantic citation correctness, citation completeness, or
+evidence-policy quality. The conservative production policy cannot construct a
+`GeneratorInput`; tests use an explicit sufficient fixture solely to exercise the positive
+contract boundary. There is still no generator protocol, fake or provider implementation,
+generation orchestration, response-evaluation CLI, or automatic report persistence.
 
 ## Search with the experimental reranker
 
@@ -254,7 +332,9 @@ datasets/
 `-- raw/manifests/                  # Source, embedding, and reranker provenance
 reports/evaluation/                  # Machine-readable experiment results
 src/rag_pymc/
-|-- domain/                          # Stable source, retrieval, and context contracts
+|-- abstention/                      # Conservative evidence assessment boundary
+|-- application/                     # Retrieval-to-context inspection use case
+|-- domain/                          # Source, context, assessment, and answer contracts
 |-- context/                         # Deterministic context construction
 |-- embeddings/                      # Pinned dense embedding adapter
 |-- ingestion/                       # Integrity checks and orchestration
@@ -264,8 +344,8 @@ src/rag_pymc/
 |-- indexing/                        # Explicit BM25 and exact cosine indexes
 |-- retrieval/                       # Sparse, dense, and RRF retrieval
 |-- reranking/                       # Provider-neutral cross-encoder boundary
-|-- evaluation/                      # Metrics, category slices, and comparisons
-`-- cli.py                           # Reproducible local workflows
+|-- evaluation/                      # Retrieval and structural-response evaluation
+`-- cli.py                           # Reproducible workflows and JSON context inspection
 tests/
 |-- unit/
 `-- integration/
@@ -277,11 +357,13 @@ docs/
 
 ## Near-term roadmap
 
-- **Phase 5:** expose bounded context for CLI inspection, then add precise citation and
-  evidence-sufficiency contracts before provider-backed generation.
+- **Phase 5:** define the development-data annotation and deterministic JSONL-loading
+  contracts, then add gold-backed evaluators before authoring and hashing development data.
+  Add a deterministic generator fake and orchestration only after those evaluation gates.
 - Define cross-library compatibility before admitting evidence from multiple normalized
   libraries into one context.
-- Create a development split before tuning rerankers or abstention thresholds.
+- Create a separate Phase 5 development dataset before calibrating any evidence signal or
+  selecting an abstention threshold; keep the Phase 4 final set frozen.
 - Evaluate truncation-aware parent-child chunking separately from rank fusion.
 
 LLM generation, PostgreSQL, vector databases, code execution, web APIs, and user interfaces

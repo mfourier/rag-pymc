@@ -1,4 +1,4 @@
-"""Retrieval evaluation datasets, metrics, and experiment runner."""
+"""Versioned retrieval and structural response evaluation contracts."""
 
 from rag_pymc.evaluation.comparison import (
     QueryRankComparison,
@@ -12,6 +12,9 @@ from rag_pymc.evaluation.errors import EvaluationDatasetError, EvaluationError
 from rag_pymc.evaluation.evaluator import RetrievalEvaluator, write_experiment_report
 from rag_pymc.evaluation.models import (
     AggregateRetrievalMetrics,
+    AggregateStructuralResponseMetrics,
+    CitationTraceabilityReason,
+    CitationTraceabilityResult,
     DenseRetrievalExperimentConfig,
     EvaluationQuery,
     ExperimentConfig,
@@ -21,10 +24,22 @@ from rag_pymc.evaluation.models import (
     RetrievalExperimentConfig,
     RetrievalExperimentReport,
     RetrievalMetricsSlice,
+    StructuralFailureReason,
+    StructuralResponseAggregateReport,
+    StructuralResponseEvaluation,
+    StructuralValidationFailure,
+    StructuralValidationStage,
+)
+from rag_pymc.evaluation.structural_response import (
+    aggregate_structural_responses,
+    evaluate_structural_response,
 )
 
 __all__ = [
     "AggregateRetrievalMetrics",
+    "AggregateStructuralResponseMetrics",
+    "CitationTraceabilityReason",
+    "CitationTraceabilityResult",
     "DenseRetrievalExperimentConfig",
     "EvaluationDatasetError",
     "EvaluationError",
@@ -40,7 +55,14 @@ __all__ = [
     "RetrievalExperimentReport",
     "RetrievalMetricsSlice",
     "RetrievalSliceComparison",
+    "StructuralFailureReason",
+    "StructuralResponseAggregateReport",
+    "StructuralResponseEvaluation",
+    "StructuralValidationFailure",
+    "StructuralValidationStage",
+    "aggregate_structural_responses",
     "compare_retrieval_reports",
+    "evaluate_structural_response",
     "load_evaluation_queries",
     "write_comparison_report",
     "write_experiment_report",

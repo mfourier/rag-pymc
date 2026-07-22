@@ -1,12 +1,13 @@
 from collections.abc import Sequence
 from pathlib import Path
+from typing import ClassVar
 
 import numpy as np
 import pytest
 from typer.testing import CliRunner
 
 from rag_pymc.cli import app
-from rag_pymc.domain import Chunk
+from rag_pymc.domain import Chunk, ConstructedContext
 from rag_pymc.embeddings import EmbeddingMatrix, EmbeddingModelSpec
 from rag_pymc.reranking import RerankingModelSpec
 
@@ -133,6 +134,237 @@ class FakeCliEmbedder:
         matrix = np.zeros((1, self.dimension), dtype=np.float32)
         matrix[0, 0] = 1.0
         return matrix
+
+
+class TrackingFakeCliEmbedder(FakeCliEmbedder):
+    local_files_only_values: ClassVar[list[bool]] = []
+
+    def __init__(
+        self,
+        spec: EmbeddingModelSpec,
+        *,
+        device: str,
+        batch_size: int,
+        seed: int,
+        local_files_only: bool,
+    ) -> None:
+        super().__init__(
+            spec,
+            device=device,
+            batch_size=batch_size,
+            seed=seed,
+            local_files_only=local_files_only,
+        )
+        self.local_files_only_values.append(local_files_only)
+
+
+@pytest.fixture
+def context_cli_corpus(
+    manifest_path: Path,
+    source_path: Path,
+    tmp_path: Path,
+) -> Path:
+    corpus_dir = tmp_path / "context-corpus"
+    result = runner.invoke(
+        app,
+        [
+            "ingest",
+            "--manifest",
+            str(manifest_path),
+            "--source",
+            str(source_path),
+            "--output-dir",
+            str(corpus_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    return corpus_dir
+
+
+def test_inspect_context_emits_deterministic_domain_json_offline(
+    context_cli_corpus: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    TrackingFakeCliEmbedder.local_files_only_values.clear()
+    monkeypatch.setattr(
+        "rag_pymc.embeddings.sentence_transformer.SentenceTransformerEmbedder",
+        TrackingFakeCliEmbedder,
+    )
+    arguments = [
+        "inspect-context",
+        "What does pymc.sample do?",
+        "--corpus-dir",
+        str(context_cli_corpus),
+        "--token-budget",
+        "100000",
+    ]
+
+    first = runner.invoke(app, arguments)
+    second = runner.invoke(app, arguments)
+    download_enabled = runner.invoke(app, [*arguments, "--allow-download"])
+
+    assert first.exit_code == 0
+    assert second.exit_code == 0
+    assert download_enabled.exit_code == 0
+    assert first.stdout == second.stdout
+    assert download_enabled.stdout == first.stdout
+    context = ConstructedContext.model_validate_json(first.stdout)
+    assert context.query.library == "pymc"
+    assert context.query.library_version == "6.1.0"
+    assert context.query.top_k == 3
+    assert context.token_counter == "technical-v1"
+    assert context.token_budget == 100000
+    assert len(context.items) == 3
+    assert context.included_chunk_ids == tuple(item.chunk_id for item in context.items)
+    assert context.omitted_chunk_ids == ()
+    assert all(item.retriever == "weighted-rrf-v1" for item in context.items)
+    assert all(str(item.source_url).startswith("https://www.pymc.io/") for item in context.items)
+    assert TrackingFakeCliEmbedder.local_files_only_values == [True, True, False]
+
+
+def test_inspect_context_accepts_exact_budget_and_omits_from_first_overflow(
+    context_cli_corpus: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "rag_pymc.embeddings.sentence_transformer.SentenceTransformerEmbedder",
+        FakeCliEmbedder,
+    )
+    common_arguments = [
+        "inspect-context",
+        "What does pymc.sample do?",
+        "--corpus-dir",
+        str(context_cli_corpus),
+    ]
+    full_result = runner.invoke(app, [*common_arguments, "--token-budget", "100000"])
+    assert full_result.exit_code == 0
+    full = ConstructedContext.model_validate_json(full_result.stdout)
+    first_item_cost = full.items[0].token_count
+
+    exact_result = runner.invoke(
+        app,
+        [*common_arguments, "--token-budget", str(first_item_cost)],
+    )
+    under_result = runner.invoke(
+        app,
+        [*common_arguments, "--token-budget", str(first_item_cost - 1)],
+    )
+
+    assert exact_result.exit_code == 0
+    assert under_result.exit_code == 0
+    exact = ConstructedContext.model_validate_json(exact_result.stdout)
+    under = ConstructedContext.model_validate_json(under_result.stdout)
+    assert exact.included_chunk_ids == full.included_chunk_ids[:1]
+    assert exact.omitted_chunk_ids == full.included_chunk_ids[1:]
+    assert exact.used_tokens == exact.token_budget
+    assert under.included_chunk_ids == ()
+    assert under.omitted_chunk_ids == full.included_chunk_ids
+    assert under.used_tokens == 0
+
+
+def test_inspect_context_treats_no_matches_as_a_valid_empty_context(
+    context_cli_corpus: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "rag_pymc.embeddings.sentence_transformer.SentenceTransformerEmbedder",
+        FakeCliEmbedder,
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "inspect-context",
+            "How do I summarize an InferenceData object?",
+            "--corpus-dir",
+            str(context_cli_corpus),
+            "--token-budget",
+            "1000",
+            "--library",
+            "arviz",
+            "--library-version",
+            "1.2.0",
+        ],
+    )
+
+    assert result.exit_code == 0
+    context = ConstructedContext.model_validate_json(result.stdout)
+    assert context.query.library == "arviz"
+    assert context.query.library_version == "1.2.0"
+    assert context.items == ()
+    assert context.included_chunk_ids == ()
+    assert context.omitted_chunk_ids == ()
+    assert context.used_tokens == 0
+
+
+def test_inspect_context_reports_runtime_failures_without_partial_json(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "inspect-context",
+            "What does pymc.sample do?",
+            "--corpus-dir",
+            str(tmp_path / "empty-corpus"),
+            "--token-budget",
+            "1000",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "context inspection failed:" in result.stderr
+
+
+def test_inspect_context_validates_query_before_loading_the_corpus(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unexpected_load(_: object) -> tuple[Chunk, ...]:
+        pytest.fail("corpus loading must not run for an invalid query")
+
+    monkeypatch.setattr(
+        "rag_pymc.cli.JsonlDocumentRepository.load_chunks",
+        unexpected_load,
+    )
+
+    result = runner.invoke(
+        app,
+        ["inspect-context", "   ", "--token-budget", "100"],
+    )
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "context inspection failed:" in result.stderr
+
+
+def test_inspect_context_help_describes_the_explicit_bounded_interface() -> None:
+    result = runner.invoke(
+        app,
+        ["inspect-context", "--help"],
+        env={"COLUMNS": "160"},
+    )
+
+    assert result.exit_code == 0
+    assert "--token-budget" in result.stdout
+    assert "--top-k" in result.stdout
+    assert "--local-files-only" in result.stdout
+    assert "--allow-download" in result.stdout
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["inspect-context", "query"],
+        ["inspect-context", "query", "--token-budget", "0"],
+        ["inspect-context", "query", "--token-budget", "100", "--top-k", "11"],
+    ],
+)
+def test_inspect_context_rejects_missing_or_out_of_range_arguments(
+    arguments: list[str],
+) -> None:
+    result = runner.invoke(app, arguments)
+
+    assert result.exit_code == 2
 
 
 def test_dense_cli_commands_write_reports_without_network(

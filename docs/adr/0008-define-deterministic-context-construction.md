@@ -155,4 +155,5 @@ threshold selection require a separate development dataset and policy.
 - Context construction exposes what evidence is available; it does not validate claims,
   produce citations, or decide whether to answer.
 - Citation correctness and completeness, unsupported-claim evaluation, generator behavior,
-  abstention threshold selection, and CLI inspection remain subsequent Phase 5 units.
+  and abstention threshold selection remain subsequent Phase 5 units. CLI inspection is
+  implemented separately as a consumer of this contract and does not alter this decision.

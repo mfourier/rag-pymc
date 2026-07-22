@@ -27,12 +27,12 @@ frameworks. Infrastructure satisfies project-owned protocols and converts extern
 the boundary. Presentation layers call application use cases rather than storage or indexes
 directly.
 
-Phases 1 through 4 and the first Phase 5 slice add only packages with exercised behavior. The
-CLI calls project-owned services and protocols, while the domain remains independent of
-Beautiful Soup, filesystems, JSONL, ranking implementations, embedding providers, and
-presentation concerns.
+Phases 1 through 4 and the implemented Phase 5 foundations add only packages with exercised
+behavior. The CLI calls project-owned services and protocols, while the domain remains
+independent of Beautiful Soup, filesystems, JSONL, ranking implementations, embedding
+providers, generator providers, and presentation concerns.
 
-## Architecture through the initial Phase 5 slice
+## Architecture through deterministic Phase 5 structural response evaluation
 
 ### Phase 0: Foundation
 
@@ -126,9 +126,9 @@ sequence. ADR-0007 fixes and evaluates the cross-encoder, which remains availabl
 adopted as the default because measured quality decreases. Results and error analysis are in
 `docs/evaluation/phase4-hybrid-baseline.md`.
 
-### Phase 5: Deterministic context construction
+### Phase 5: Grounded response foundations
 
-The first grounded-response slice contains:
+The implemented Phase 5 slices contain:
 
 - immutable `ContextItem` and `ConstructedContext` domain models;
 - project-owned `ContextBuilder` and `TokenCounter` protocols;
@@ -139,12 +139,55 @@ The first grounded-response slice contains:
 - additive per-item budgeting with the deterministic `technical-v1` accounting policy;
 - complete-item rank-prefix admission with explicit tail omission and no content truncation;
 - fail-closed validation that admits only one normalized library and one version of each
-  library before budgeting.
+  library before budgeting;
+- a `ContextInspectionService` application use case that composes any project-owned
+  `Retriever` and `ContextBuilder` without depending on Typer or model providers;
+- `rag-pymc inspect-context`, which combines fixed BM25 (`k1=1.5`, `b=0.75`) and pinned BGE
+  exact cosine retrieval through equal-weight RRF with component candidate depth 10,
+  `rrf_k=60`, and default `top_k=3` over the Phase 4 corpus;
+- a required `technical-v1` budget and pure indented `ConstructedContext` JSON on stdout,
+  without timestamps, latency, status text, or an implicit output file;
+- `EvidenceSufficiency` and immutable `EvidenceAssessment` domain contracts that preserve the
+  policy version, abstention decision, deterministic reason codes, and exact included and
+  omitted chunk IDs;
+- a project-owned `AbstentionPolicy` protocol and `ConservativeAbstentionPolicy` identified
+  as `conservative-no-threshold-v1`;
+- immutable provider-neutral `Citation`, `AtomicClaim`, `GroundedAnswerSection`,
+  `GroundedAnswer`, `GeneratorInput`, and `GeneratorOutput` contracts;
+- exact binding among the generation query, constructed context, and sufficient evidence
+  assessment, followed by exact citation resolution and provenance validation against
+  included context items;
+- organizational headings treated as untrusted metadata rather than factual answer content;
+- the pure `structural-citation-v1` evaluator, which strictly parses raw answer JSON and
+  records staged contract failures plus per-citation traceability diagnostics;
+- content hashes and sanitized structural records that omit claim text, headings, query text,
+  context content, and arbitrary unknown field values, while retaining opaque identifiers;
+- deterministic aggregate metrics and `StructuralResponseAggregateReport`, with canonical
+  response ordering, duplicate-ID rejection, embedded revalidated records, explicit
+  conditional denominators, and `None` for undefined rates.
 
-The returned value has no timestamp or latency, so fixed inputs produce a deterministic,
-JSON-serializable artifact. `technical-v1` is not an LLM tokenizer, and a nonempty context
-does not establish evidence sufficiency. ADR-0008 fixes this initial policy. CLI inspection,
-citations, generation, and abstention remain later Phase 5 slices.
+The constructed context artifact has no timestamp or latency, so fixed inputs produce a
+deterministic, JSON-serializable value. `technical-v1` is not an LLM tokenizer, and a
+nonempty context does not establish evidence sufficiency. ADR-0008 fixes this initial policy.
+The inspection command requires an explicit token budget, defaults to PyMC 6.1.0 and three
+final results, and permits at most ten. Its embedding adapter remains local-files-only unless
+the user explicitly selects `--allow-download`.
+
+The conservative policy classifies an empty context without omissions as
+`no_retrieved_evidence` and an empty context with omitted candidates as
+`budget_excluded_all_evidence`; both are `insufficient`. Every nonempty context is
+`not_assessed` with `no_calibrated_criterion`, adding `budget_omitted_evidence` for a partial
+context. All four paths abstain, and the policy never emits `sufficient`. It therefore has
+zero answer coverage by design and makes no abstention-quality claim. ADR-0009 fixes these
+conservative semantics and the prerequisites for any future threshold selection.
+
+Citation contracts and structural traceability are implemented. A `Generator` protocol and
+fake, generation orchestration, semantic support, correctness, and completeness evaluation,
+Phase 5 development and held-out datasets, and an answer-permitting evidence policy remain
+later slices. Structural traceability does not establish that a claim is true or supported,
+that every claim is cited, or that an answer is useful. Opaque identifiers and linkable
+hashes remain potentially sensitive evaluation metadata; callers must not encode prose or
+secrets in identifiers.
 
 The structured `ContextItem` and `ConstructedContext` JSON fields are the authoritative
 artifact. `rendered_text` is derived from those fields for deterministic accounting and human
@@ -165,13 +208,19 @@ Download time, release, commit, license, raw hash, parser version, chunker versi
 configuration, corpus hash, dataset hash, and software versions are recorded. See ADR-0002
 for source identity and ADR-0004 for experiment provenance.
 
-## Deferred after the initial context slice
+## Deferred after the implemented Phase 5 slices
 
-The following are explicitly outside the implemented initial Phase 5 context slice:
+The following are explicitly outside the implemented Phase 5 slices:
 
-- LLM generation and provider-specific prompt APIs;
+- a `Generator` protocol, deterministic fake, end-to-end response orchestration, and
+  provider-specific generation APIs;
 - prompt-safe framed and escaped serialization for a selected generator;
-- learned abstention and score-threshold calibration;
+- an answer-permitting evidence policy, richer inference signals, and score-threshold
+  calibration;
+- semantic claim support, citation correctness, citation completeness, answer correctness,
+  and pedagogical-usefulness evaluation;
+- Phase 5 development and held-out response datasets;
+- persistence or automatic report writing for constructed context artifacts;
 - approximate vector indexes and vector stores;
 - PostgreSQL, pgvector, and Alembic;
 - FastAPI, authentication, React, and other presentation work;
@@ -186,19 +235,31 @@ Unit tests exercise domain validation, source integrity, parsing, chunking, BM25
 exact cosine behavior, weighted RRF behavior, metadata filters, provider-boundary validation,
 cross-encoder adapter validation, candidate reranking, metric calculations, category slices,
 comparison invariants, deterministic context construction and budgeting, CLI behavior, and
-persistence without network access. Integration tests run ingestion, sparse retrieval, dense
-retrieval, hybrid fusion, reranking with deterministic fakes, and an offline
-fixture-to-retrieval-to-context path. Actual model acquisition and execution remain explicit
-experiment steps whose revisions, seeds, software versions, and outputs are recorded.
+persistence without network access. Evidence-assessment tests cover every conservative reason
+path and verify that the policy always abstains without scores or thresholds. CLI tests
+validate pure context JSON with deterministic retrieval substitutes. Grounded-response tests
+cover authorization, answer invariants, abstentions, exact provenance, and rejection of
+omitted evidence. Structural-evaluation tests cover staged validation, strict JSON and
+diagnostic sanitization, citation traceability, aggregation arithmetic, explicit
+denominators, canonical ordering, and nested revalidation. Integration tests run ingestion,
+sparse retrieval, dense retrieval, hybrid fusion, reranking with deterministic fakes, and an
+offline fixture-to-retrieval-to-context path. Actual model acquisition and execution remain
+explicit experiment steps whose revisions, seeds, software versions, and outputs are
+recorded.
 
 No retrieval or generation quality claim is valid without a committed dataset, an executable
 configuration, and stored per-query results.
+
+`structural-citation-v1` establishes only syntax, contract validity, and provenance
+traceability. A structurally valid response is not evidence of semantic correctness,
+citation support or completeness, or answer usefulness.
 
 ## Decisions still requiring ADRs
 
 The following decisions are intentionally deferred until their first implementation phase:
 
-- abstention policy, threshold-selection dataset, and calibration metric;
+- an answer-permitting evidence signal, threshold-selection experiment, and calibration
+  metric;
 - cross-library compatibility for mixed PyMC, ArviZ, and PyTensor context;
 - LLM provider contracts, prompt versioning, and prompt-safe serialization;
 - approximate-index and vector-store adapter contracts;

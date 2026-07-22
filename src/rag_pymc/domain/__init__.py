@@ -1,11 +1,19 @@
 """Public domain contracts for documents, retrieval, and constructed context."""
 
 from rag_pymc.domain.models import (
+    AtomicClaim,
     Chunk,
+    Citation,
     ConstructedContext,
     ContextItem,
     Difficulty,
     Document,
+    EvidenceAssessment,
+    EvidenceSufficiency,
+    GeneratorInput,
+    GeneratorOutput,
+    GroundedAnswer,
+    GroundedAnswerSection,
     RetrievedChunk,
     SearchQuery,
     SourceManifest,
@@ -14,11 +22,19 @@ from rag_pymc.domain.models import (
 )
 
 __all__ = [
+    "AtomicClaim",
     "Chunk",
+    "Citation",
     "ConstructedContext",
     "ContextItem",
     "Difficulty",
     "Document",
+    "EvidenceAssessment",
+    "EvidenceSufficiency",
+    "GeneratorInput",
+    "GeneratorOutput",
+    "GroundedAnswer",
+    "GroundedAnswerSection",
     "RetrievedChunk",
     "SearchQuery",
     "SourceManifest",

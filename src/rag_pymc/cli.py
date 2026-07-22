@@ -14,7 +14,9 @@ import typer
 from pydantic import ValidationError
 
 from rag_pymc import __version__
+from rag_pymc.application import ContextInspectionService
 from rag_pymc.chunking import ApiReferenceChunker
+from rag_pymc.context import RankedContextBuilder
 from rag_pymc.domain import Chunk, SearchQuery, SourceManifest, SourceType
 from rag_pymc.embeddings import (
     EmbeddingError,
@@ -61,6 +63,17 @@ app = typer.Typer(
 
 MINIMUM_PYTHON = (3, 12)
 SCIENTIFIC_DISTRIBUTIONS = ("pymc", "arviz", "pytensor")
+DEFAULT_EMBEDDING_MANIFEST = Path("datasets/raw/manifests/embeddings/bge-small-en-v1.5.json")
+
+
+@dataclass(frozen=True, slots=True)
+class _HybridRuntime:
+    """Fully configured weighted-RRF retrieval stack."""
+
+    embedding_spec: EmbeddingModelSpec
+    tokenizer: TechnicalTokenizer
+    retriever: Retriever
+    setup_latency_ms: float
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,6 +90,51 @@ class _RerankingRuntime:
     candidate_setup_latency_ms: float
     setup_latency_ms: float
     truncated_document_count: int
+
+
+def _build_hybrid_runtime(
+    chunks: Sequence[Chunk],
+    *,
+    embedding_manifest: Path,
+    candidate_k: int,
+    rrf_k: int,
+    sparse_weight: float,
+    dense_weight: float,
+    seed: int,
+    device: str,
+    batch_size: int,
+    local_files_only: bool,
+) -> _HybridRuntime:
+    """Build the selected weighted-RRF retrieval stack."""
+    from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
+
+    embedding_spec = load_embedding_model_spec(embedding_manifest)
+    setup_started_at = perf_counter_ns()
+    tokenizer = TechnicalTokenizer()
+    sparse_index = BM25Index(chunks, tokenizer=tokenizer, k1=1.5, b=0.75)
+    embedder = SentenceTransformerEmbedder(
+        embedding_spec,
+        device=device,
+        batch_size=batch_size,
+        seed=seed,
+        local_files_only=local_files_only,
+    )
+    dense_index = ExactCosineIndex(chunks, embedder=embedder)
+    retriever = ReciprocalRankFusionRetriever(
+        (
+            WeightedRetriever("sparse", SparseRetriever(sparse_index), sparse_weight),
+            WeightedRetriever("dense", DenseRetriever(dense_index), dense_weight),
+        ),
+        rrf_k=rrf_k,
+        candidate_k=candidate_k,
+    )
+    setup_latency_ms = (perf_counter_ns() - setup_started_at) / 1_000_000
+    return _HybridRuntime(
+        embedding_spec=embedding_spec,
+        tokenizer=tokenizer,
+        retriever=retriever,
+        setup_latency_ms=setup_latency_ms,
+    )
 
 
 def _build_reranking_runtime(
@@ -657,32 +715,22 @@ def search_hybrid(
 ) -> None:
     """Search with weighted Reciprocal Rank Fusion over BM25 and dense retrieval."""
     try:
-        from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
-
         chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
         if not chunks:
             msg = f"corpus contains no chunks: {corpus_dir}"
             raise CorpusPersistenceError(msg)
-        spec = load_embedding_model_spec(model_manifest)
-        setup_started_at = perf_counter_ns()
-        sparse_index = BM25Index(chunks)
-        embedder = SentenceTransformerEmbedder(
-            spec,
+        runtime = _build_hybrid_runtime(
+            chunks,
+            embedding_manifest=model_manifest,
+            candidate_k=candidate_k,
+            rrf_k=rrf_k,
+            sparse_weight=sparse_weight,
+            dense_weight=dense_weight,
+            seed=seed,
             device=device,
             batch_size=batch_size,
-            seed=seed,
             local_files_only=local_files_only,
         )
-        dense_index = ExactCosineIndex(chunks, embedder=embedder)
-        retriever = ReciprocalRankFusionRetriever(
-            (
-                WeightedRetriever("sparse", SparseRetriever(sparse_index), sparse_weight),
-                WeightedRetriever("dense", DenseRetriever(dense_index), dense_weight),
-            ),
-            rrf_k=rrf_k,
-            candidate_k=candidate_k,
-        )
-        setup_latency_ms = (perf_counter_ns() - setup_started_at) / 1_000_000
         query = SearchQuery(
             text=query_text,
             top_k=top_k,
@@ -691,7 +739,7 @@ def search_hybrid(
             source_types=tuple(source_types or ()),
             api_symbols=tuple(api_symbols or ()),
         )
-        results = retriever.retrieve(query)
+        results = runtime.retriever.retrieve(query)
     except (
         CorpusPersistenceError,
         DenseIndexError,
@@ -705,10 +753,10 @@ def search_hybrid(
 
     typer.echo("rag-pymc search-hybrid")
     typer.echo(f"query: {query.text}")
-    typer.echo(f"model: {spec.model_id}@{spec.revision}")
+    typer.echo(f"model: {runtime.embedding_spec.model_id}@{runtime.embedding_spec.revision}")
     typer.echo(f"rrf_k: {rrf_k}")
     typer.echo(f"candidate_k: {candidate_k}")
-    typer.echo(f"setup_latency_ms: {setup_latency_ms:.6f}")
+    typer.echo(f"setup_latency_ms: {runtime.setup_latency_ms:.6f}")
     typer.echo(f"matches: {len(results)}")
     for result in results:
         chunk = result.chunk
@@ -721,6 +769,82 @@ def search_hybrid(
         )
         typer.echo(f"   source={chunk.source_url}")
     typer.echo("status: ok")
+
+
+@app.command("inspect-context")
+def inspect_context(
+    query_text: Annotated[str, typer.Argument(help="Natural-language retrieval query.")],
+    token_budget: Annotated[
+        int,
+        typer.Option(
+            "--token-budget",
+            min=1,
+            help="Required context budget in deterministic technical-v1 units.",
+        ),
+    ],
+    corpus_dir: Annotated[
+        Path,
+        typer.Option("--corpus-dir", file_okay=False),
+    ] = Path("datasets/processed/phase4"),
+    top_k: Annotated[int, typer.Option("--top-k", min=1, max=10)] = 3,
+    library: Annotated[str, typer.Option("--library")] = "pymc",
+    library_version: Annotated[str, typer.Option("--library-version")] = "6.1.0",
+    source_types: Annotated[
+        list[SourceType] | None,
+        typer.Option("--source-type"),
+    ] = None,
+    api_symbols: Annotated[
+        list[str] | None,
+        typer.Option("--api-symbol"),
+    ] = None,
+    local_files_only: Annotated[
+        bool,
+        typer.Option("--local-files-only/--allow-download"),
+    ] = True,
+) -> None:
+    """Retrieve and print deterministic, budget-bounded context as JSON."""
+    try:
+        query = SearchQuery(
+            text=query_text,
+            top_k=top_k,
+            library=library,
+            library_version=library_version,
+            source_types=tuple(source_types or ()),
+            api_symbols=tuple(api_symbols or ()),
+        )
+        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+        if not chunks:
+            msg = f"corpus contains no chunks: {corpus_dir}"
+            raise CorpusPersistenceError(msg)
+        runtime = _build_hybrid_runtime(
+            chunks,
+            embedding_manifest=DEFAULT_EMBEDDING_MANIFEST,
+            candidate_k=10,
+            rrf_k=60,
+            sparse_weight=1.0,
+            dense_weight=1.0,
+            seed=20260720,
+            device="cpu",
+            batch_size=16,
+            local_files_only=local_files_only,
+        )
+        service = ContextInspectionService(
+            runtime.retriever,
+            RankedContextBuilder(runtime.tokenizer),
+        )
+        context = service.inspect(query, token_budget=token_budget)
+    except (
+        CorpusPersistenceError,
+        DenseIndexError,
+        EmbeddingError,
+        OSError,
+        ValidationError,
+        ValueError,
+    ) as error:
+        typer.echo(f"context inspection failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo(context.model_dump_json(indent=2))
 
 
 @app.command("evaluate-hybrid")

@@ -40,10 +40,22 @@ class Difficulty(StrEnum):
     ADVANCED = "advanced"
 
 
+class EvidenceSufficiency(StrEnum):
+    """Whether available context has been assessed as sufficient for answering."""
+
+    SUFFICIENT = "sufficient"
+    INSUFFICIENT = "insufficient"
+    NOT_ASSESSED = "not_assessed"
+
+
 class DomainModel(BaseModel):
     """Strict and immutable base for values crossing component boundaries."""
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        revalidate_instances="always",
+    )
 
 
 class SourceManifest(DomainModel):
@@ -281,4 +293,237 @@ class ConstructedContext(DomainModel):
         if self.used_tokens > self.token_budget:
             msg = "used_tokens must not exceed token_budget"
             raise ValueError(msg)
+        return self
+
+
+class EvidenceAssessment(DomainModel):
+    """A deterministic policy decision over traceable context chunk identities."""
+
+    schema_version: Literal["1"] = "1"
+    policy_version: NonEmptyString
+    sufficiency: EvidenceSufficiency
+    should_abstain: bool = Field(strict=True)
+    reason_codes: tuple[NonEmptyString, ...] = Field(min_length=1)
+    context_chunk_ids: tuple[NonEmptyString, ...] = ()
+    omitted_chunk_ids: tuple[NonEmptyString, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_decision_and_traceability(self) -> Self:
+        """Require consistent abstention semantics and deterministic identity tuples."""
+        expected_abstention = self.sufficiency is not EvidenceSufficiency.SUFFICIENT
+        if self.should_abstain is not expected_abstention:
+            msg = "should_abstain must be true unless evidence sufficiency is sufficient"
+            raise ValueError(msg)
+
+        requires_context = self.sufficiency in {
+            EvidenceSufficiency.SUFFICIENT,
+            EvidenceSufficiency.NOT_ASSESSED,
+        }
+        if requires_context and not self.context_chunk_ids:
+            msg = "sufficient and not_assessed decisions require context chunk IDs"
+            raise ValueError(msg)
+
+        if len(set(self.reason_codes)) != len(self.reason_codes):
+            msg = "evidence assessment reason codes must be unique"
+            raise ValueError(msg)
+        if self.reason_codes != tuple(sorted(self.reason_codes)):
+            msg = "evidence assessment reason codes must be lexicographically ordered"
+            raise ValueError(msg)
+
+        if len(set(self.context_chunk_ids)) != len(self.context_chunk_ids):
+            msg = "evidence assessment context chunk IDs must be unique"
+            raise ValueError(msg)
+        if len(set(self.omitted_chunk_ids)) != len(self.omitted_chunk_ids):
+            msg = "evidence assessment omitted chunk IDs must be unique"
+            raise ValueError(msg)
+        if set(self.context_chunk_ids) & set(self.omitted_chunk_ids):
+            msg = "evidence assessment context and omitted chunk IDs must not overlap"
+            raise ValueError(msg)
+        return self
+
+
+class Citation(DomainModel):
+    """A traceable reference to one complete item in the supplied context."""
+
+    citation_id: NonEmptyString
+    chunk_id: NonEmptyString
+    document_id: NonEmptyString
+    source_url: AnyUrl
+    library: NonEmptyString
+    library_version: NonEmptyString
+    section: NonEmptyString | None = None
+    api_symbols: tuple[NonEmptyString, ...] = ()
+
+
+class AtomicClaim(DomainModel):
+    """One independently assessable answer claim and its citation references."""
+
+    claim_id: NonEmptyString
+    text: NonEmptyString
+    citation_ids: tuple[NonEmptyString, ...] = ()
+
+    @model_validator(mode="after")
+    def citation_references_must_be_unique(self) -> Self:
+        """Reject duplicate references while permitting measurable uncited claims."""
+        if len(set(self.citation_ids)) != len(self.citation_ids):
+            msg = "atomic claim citation IDs must be unique"
+            raise ValueError(msg)
+        return self
+
+
+class GroundedAnswerSection(DomainModel):
+    """An ordered group of atomic claims with a non-factual organizational label."""
+
+    section_id: NonEmptyString
+    heading: NonEmptyString = Field(
+        description=(
+            "Organizational metadata only; consumers must not treat it as factual answer content."
+        )
+    )
+    claims: tuple[AtomicClaim, ...] = Field(min_length=1)
+
+
+class GroundedAnswer(DomainModel):
+    """A structured answer or an explicit claim-free abstention."""
+
+    schema_version: Literal["1"] = "1"
+    is_abstaining: bool = Field(strict=True)
+    sections: tuple[GroundedAnswerSection, ...] = ()
+    citations: tuple[Citation, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_structure_and_references(self) -> Self:
+        """Require unique identities, resolved references, and empty abstentions."""
+        if self.is_abstaining:
+            if self.sections or self.citations:
+                msg = "abstaining answers must not contain sections, claims, or citations"
+                raise ValueError(msg)
+            return self
+
+        if not self.sections:
+            msg = "non-abstaining answers must contain at least one section"
+            raise ValueError(msg)
+
+        section_ids = tuple(section.section_id for section in self.sections)
+        if len(set(section_ids)) != len(section_ids):
+            msg = "grounded answer section IDs must be unique"
+            raise ValueError(msg)
+
+        claims = tuple(claim for section in self.sections for claim in section.claims)
+        claim_ids = tuple(claim.claim_id for claim in claims)
+        if len(set(claim_ids)) != len(claim_ids):
+            msg = "grounded answer claim IDs must be unique"
+            raise ValueError(msg)
+
+        citation_ids = tuple(citation.citation_id for citation in self.citations)
+        if len(set(citation_ids)) != len(citation_ids):
+            msg = "grounded answer citation IDs must be unique"
+            raise ValueError(msg)
+
+        cited_chunk_ids = tuple(citation.chunk_id for citation in self.citations)
+        if len(set(cited_chunk_ids)) != len(cited_chunk_ids):
+            msg = "grounded answer cited chunk IDs must be unique"
+            raise ValueError(msg)
+
+        known_citation_ids = set(citation_ids)
+        referenced_citation_ids: set[str] = set()
+        for claim in claims:
+            referenced_citation_ids.update(claim.citation_ids)
+            unknown_ids = tuple(
+                citation_id
+                for citation_id in claim.citation_ids
+                if citation_id not in known_citation_ids
+            )
+            if unknown_ids:
+                rendered_ids = ", ".join(unknown_ids)
+                msg = f"claim {claim.claim_id} references unknown citation IDs: {rendered_ids}"
+                raise ValueError(msg)
+
+        orphan_ids = tuple(
+            citation_id
+            for citation_id in citation_ids
+            if citation_id not in referenced_citation_ids
+        )
+        if orphan_ids:
+            rendered_ids = ", ".join(orphan_ids)
+            msg = f"grounded answer contains unreferenced citation IDs: {rendered_ids}"
+            raise ValueError(msg)
+        return self
+
+
+class GeneratorInput(DomainModel):
+    """Evidence and policy decision that explicitly authorize grounded generation."""
+
+    schema_version: Literal["1"] = "1"
+    query: SearchQuery
+    context: ConstructedContext
+    assessment: EvidenceAssessment
+
+    @model_validator(mode="after")
+    def validate_generation_authorization(self) -> Self:
+        """Bind the assessment to the context and require explicit sufficiency."""
+        if self.query != self.context.query:
+            msg = "generator input query must exactly match the constructed context query"
+            raise ValueError(msg)
+        if self.assessment.context_chunk_ids != self.context.included_chunk_ids:
+            msg = "assessment context chunk IDs must exactly match the constructed context"
+            raise ValueError(msg)
+        if self.assessment.omitted_chunk_ids != self.context.omitted_chunk_ids:
+            msg = "assessment omitted chunk IDs must exactly match the constructed context"
+            raise ValueError(msg)
+        if (
+            self.assessment.sufficiency is not EvidenceSufficiency.SUFFICIENT
+            or self.assessment.should_abstain
+        ):
+            msg = "generator input requires an explicitly sufficient non-abstaining assessment"
+            raise ValueError(msg)
+        return self
+
+
+class GeneratorOutput(DomainModel):
+    """A grounded answer validated against the exact evidence supplied for generation."""
+
+    schema_version: Literal["1"] = "1"
+    generator_input: GeneratorInput
+    answer: GroundedAnswer
+
+    @model_validator(mode="after")
+    def citations_must_match_included_context(self) -> Self:
+        """Resolve citations only to included items with identical provenance."""
+        context = self.generator_input.context
+        items_by_chunk_id = {item.chunk_id: item for item in context.items}
+        omitted_chunk_ids = set(context.omitted_chunk_ids)
+        provenance_fields = (
+            "document_id",
+            "source_url",
+            "library",
+            "library_version",
+            "section",
+            "api_symbols",
+        )
+
+        for citation in self.answer.citations:
+            if citation.chunk_id in omitted_chunk_ids:
+                msg = (
+                    f"citation {citation.citation_id} references omitted chunk {citation.chunk_id}"
+                )
+                raise ValueError(msg)
+
+            context_item = items_by_chunk_id.get(citation.chunk_id)
+            if context_item is None:
+                msg = f"citation {citation.citation_id} must resolve to an included context item"
+                raise ValueError(msg)
+
+            mismatched_fields = tuple(
+                field
+                for field in provenance_fields
+                if getattr(citation, field) != getattr(context_item, field)
+            )
+            if mismatched_fields:
+                rendered_fields = ", ".join(mismatched_fields)
+                msg = (
+                    f"citation {citation.citation_id} provenance does not match included "
+                    f"context item {citation.chunk_id}: {rendered_fields}"
+                )
+                raise ValueError(msg)
         return self
