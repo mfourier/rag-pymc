@@ -1,0 +1,4 @@
+interface:
+  display_name: "Model Imperfect Data"
+  short_description: "Model missingness, measurement, and censoring"
+  default_prompt: "Use $model-imperfect-data to represent the observation, missingness, measurement, or censoring process in this Bayesian model."

@@ -1,0 +1,18 @@
+{
+  "manifest_version": "1",
+  "source_id": "pymc-6.1.0-notebook-dimensionality",
+  "library": "pymc",
+  "library_version": "6.1.0",
+  "source_type": "notebook",
+  "source_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/docs/source/learn/core_notebooks/dimensionality.ipynb",
+  "release_tag": "v6.1.0",
+  "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.1.0",
+  "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5",
+  "source_last_modified_at": "2026-04-05T00:48:43+02:00",
+  "downloaded_at": "2026-07-24T04:20:06.133185Z",
+  "content_hash": "57681694be2ccc0bc03163b6c9eaf23669459416691e868fc843431fc95deb18",
+  "media_type": "application/x-ipynb+json",
+  "source_path": "docs/source/learn/core_notebooks/dimensionality.ipynb",
+  "license_name": "Apache-2.0",
+  "license_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/LICENSE"
+}

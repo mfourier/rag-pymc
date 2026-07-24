@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Bayesian Analysis"
+  short_description: "Audit Bayesian analyses end to end"
+  default_prompt: "Use $audit-bayesian-analysis to audit this Bayesian model, its inference results, and its supporting evidence."

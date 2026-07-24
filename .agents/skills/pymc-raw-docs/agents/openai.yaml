@@ -1,0 +1,4 @@
+interface:
+  display_name: "PyMC Raw Documentation"
+  short_description: "Search and assess the local raw PyMC docs"
+  default_prompt: "Use $pymc-raw-docs to answer this question from the local raw PyMC documentation with source and version caveats."

@@ -1,0 +1,18 @@
+{
+  "manifest_version": "1",
+  "source_id": "pymc-6.1.0-notebook-model_comparison",
+  "library": "pymc",
+  "library_version": "6.1.0",
+  "source_type": "notebook",
+  "source_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/docs/source/learn/core_notebooks/model_comparison.ipynb",
+  "release_tag": "v6.1.0",
+  "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.1.0",
+  "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5",
+  "source_last_modified_at": "2026-05-04T12:59:13+02:00",
+  "downloaded_at": "2026-07-24T04:20:06.133185Z",
+  "content_hash": "87434588f5477fcb4bfa7317560709859400ec5af78e0eb3d7cd6ec8b6d94a46",
+  "media_type": "application/x-ipynb+json",
+  "source_path": "docs/source/learn/core_notebooks/model_comparison.ipynb",
+  "license_name": "Apache-2.0",
+  "license_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/LICENSE"
+}

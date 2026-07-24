@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop PyMC Models"
+  short_description: "Design, implement, and diagnose PyMC models"
+  default_prompt: "Use $develop-pymc-models to design, implement, and validate a probabilistic model compatible with PyMC 6.1.0."

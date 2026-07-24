@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Bayesian Studies"
+  short_description: "Design studies with simulation and utility"
+  default_prompt: "Use $design-bayesian-studies to compare candidate study designs using Bayesian simulation and decision criteria."

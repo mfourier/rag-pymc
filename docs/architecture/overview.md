@@ -126,6 +126,34 @@ sequence. ADR-0007 fixes and evaluates the cross-encoder, which remains availabl
 adopted as the default because measured quality decreases. Results and error analysis are in
 `docs/evaluation/phase4-hybrid-baseline.md`.
 
+### Experimental repository-code evidence layer
+
+An orthogonal ingestion slice snapshots complete Python files from the exact PyMC `v6.1.0`
+Git object and selects four public implementations with the standard-library AST. Manifests add
+the repository-relative path and require the expected symbol and source commit. Definition
+chunks retain signatures and one docstring summary; implementation chunks group complete
+top-level statements under a bounded character policy. The current slice produces four
+documents and 19 chunks under `source_type=repository_code`.
+
+This corpus is not part of the Phase 4 baseline or default context inspection. It supports a
+separate implementation-query evaluation and must pass a mixed-corpus regression experiment
+before adoption. ADR-0010 records the source/version boundary, AST policy, and decision to defer
+upstream tests until evidence roles can distinguish implementation from asserted test behavior.
+
+### Experimental conceptual-notebook evidence layer
+
+A second ingestion slice snapshots three complete notebooks from the exact PyMC `v6.1.0` Git
+object. The notebook parser normalizes only nonempty Markdown and code inputs while preserving
+one-based cell identity and heading hierarchy. Outputs, execution counters, kernel information,
+other metadata, and raw cells do not enter retrieval content. The cell-aware chunker groups only
+adjacent cells in the same section and never splits one cell. It extracts conservative PyMC
+symbol metadata from code inputs.
+
+The current notebook corpus contains three documents and 34 chunks under
+`source_type=notebook`. It is evaluated independently and is not part of default context
+inspection. ADR-0012 fixes the raw-acquisition, normalization, chunking, and large-artifact
+boundaries.
+
 ### Phase 5: Grounded response foundations
 
 The implemented Phase 5 slices contain:
@@ -165,6 +193,24 @@ The implemented Phase 5 slices contain:
 - deterministic aggregate metrics and `StructuralResponseAggregateReport`, with canonical
   response ordering, duplicate-ID rejection, embedded revalidated records, explicit
   conditional denominators, and `None` for undefined rates.
+- immutable corpus-relative Phase 5 development annotations with atomic gold claims,
+  alternative minimal chunk-support sets, query/template families, hard-negative categories,
+  and mandatory human annotation and adjudication provenance;
+- strict deterministic JSONL loading that hashes exact bytes, rejects duplicate keys and
+  non-finite values, preserves record order, and requires globally unique identities in one
+  corpus namespace;
+- canonical Phase 5 corpus hashing over sorted chunk ID/content-hash records plus validation
+  that resolves every gold support reference against the exact library/version corpus before
+  a dataset is evaluated;
+- `rag-pymc validate-development-data`, which requires explicit dataset and corpus paths and
+  emits the deterministic corpus-validation JSON without partial standard output on failure;
+- the pure `phase5-gold-evidence-v1` evaluator, which binds corpus, query, context, and
+  assessment identities, then measures gold claim support in admitted context and in the
+  admitted-plus-budget-omitted candidate set;
+- deterministic gold-evidence aggregation with exact development-dataset coverage,
+  annotation revalidation, one evidence-policy version, canonical query ordering, and fixed
+  coverage, selective-risk, false-answer, false-abstention, decision, and claim-coverage
+  denominators.
 
 The constructed context artifact has no timestamp or latency, so fixed inputs produce a
 deterministic, JSON-serializable value. `technical-v1` is not an LLM tokenizer, and a
@@ -181,13 +227,14 @@ context. All four paths abstain, and the policy never emits `sufficient`. It the
 zero answer coverage by design and makes no abstention-quality claim. ADR-0009 fixes these
 conservative semantics and the prerequisites for any future threshold selection.
 
-Citation contracts and structural traceability are implemented. A `Generator` protocol and
-fake, generation orchestration, semantic support, correctness, and completeness evaluation,
-Phase 5 development and held-out datasets, and an answer-permitting evidence policy remain
-later slices. Structural traceability does not establish that a claim is true or supported,
-that every claim is cited, or that an answer is useful. Opaque identifiers and linkable
-hashes remain potentially sensitive evaluation metadata; callers must not encode prose or
-secrets in identifiers.
+Citation contracts, structural traceability, development-annotation contracts, and gold
+chunk-support evaluation are implemented. A `Generator` protocol and fake, generation
+orchestration, semantic support, correctness, and completeness evaluation, authored Phase 5
+development and held-out datasets, and an answer-permitting evidence policy remain later
+slices. Gold chunk-identity coverage does not establish that a claim is semantically true or
+supported, that every generated claim is cited, or that an answer is useful. Opaque
+identifiers and linkable hashes remain potentially sensitive evaluation metadata; callers
+must not encode prose or secrets in identifiers.
 
 The structured `ContextItem` and `ConstructedContext` JSON fields are the authoritative
 artifact. `rendered_text` is derived from those fields for deterministic accounting and human
@@ -219,7 +266,7 @@ The following are explicitly outside the implemented Phase 5 slices:
   calibration;
 - semantic claim support, citation correctness, citation completeness, answer correctness,
   and pedagogical-usefulness evaluation;
-- Phase 5 development and held-out response datasets;
+- human-authored Phase 5 development and held-out response datasets;
 - persistence or automatic report writing for constructed context artifacts;
 - approximate vector indexes and vector stores;
 - PostgreSQL, pgvector, and Alembic;

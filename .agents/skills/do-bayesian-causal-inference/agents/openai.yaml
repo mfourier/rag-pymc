@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bayesian Causal Inference"
+  short_description: "Identify and estimate Bayesian causal effects"
+  default_prompt: "Use $do-bayesian-causal-inference to define, identify, estimate, and stress-test this causal estimand."

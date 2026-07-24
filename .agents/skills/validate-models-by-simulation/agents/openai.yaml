@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Models by Simulation"
+  short_description: "Test recovery, robustness, and identification"
+  default_prompt: "Use $validate-models-by-simulation to design and summarize a simulation study for this Bayesian model."

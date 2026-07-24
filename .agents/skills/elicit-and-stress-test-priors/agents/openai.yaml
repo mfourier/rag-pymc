@@ -1,0 +1,4 @@
+interface:
+  display_name: "Elicit and Stress-Test Priors"
+  short_description: "Elicit, check, and stress-test priors"
+  default_prompt: "Use $elicit-and-stress-test-priors to elicit defensible priors and test their predictive implications and sensitivity."

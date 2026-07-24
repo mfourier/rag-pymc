@@ -4,6 +4,15 @@
 with PyMC. The project is designed as an Applied Science system: retrieval quality,
 version correctness, pedagogical behavior, and reproducibility are first-class concerns.
 
+An experimental repository-code ingestion slice now complements the frozen Phase 4 API
+baseline. It snapshots four exact PyMC 6.1.0 implementation files, selects public symbols with
+the Python AST, and keeps this evidence in a separate corpus until retrieval regressions are
+measured.
+
+An additional conceptual-notebook slice snapshots three exact PyMC 6.1.0 notebooks and indexes
+only their Markdown and code inputs. Execution outputs and environment metadata are excluded
+from normalized retrieval content. This corpus also remains opt-in.
+
 The repository has completed **Phase 4: hybrid retrieval and reranking**. It can ingest four
 controlled PyMC 6.1.0 API pages, search 15 structure-aware chunks with BM25, exact dense
 retrieval, weighted Reciprocal Rank Fusion, or cross-encoder reranking, and compare all methods
@@ -12,9 +21,12 @@ the measured cross-encoder reduces quality and adds substantial CPU latency. The
 Phase 5 foundations convert ranked chunks into deterministic, budget-bounded context, expose
 that artifact for local CLI inspection, add a conservative evidence-assessment boundary,
 define provider-neutral grounded-answer contracts, and measure structural response validity
-and citation traceability deterministically. The current policy always abstains and never
-claims that evidence is sufficient. Answer-permitting calibration, semantic response
-evaluation, generation, and a Phase 5 dataset are not yet implemented.
+and citation traceability deterministically. Phase 5 development annotations now have strict
+immutable contracts, deterministic JSONL loading, and a gold-evidence evaluator that separates
+retrieval coverage from budget loss and scores abstention decisions with fixed denominators.
+The current policy always abstains and never claims that evidence is sufficient. A
+human-authored Phase 5 dataset, answer-permitting calibration, semantic response evaluation,
+and generation are not yet implemented.
 
 Context v1 admits candidates from only one normalized library; a compatibility policy must
 exist before PyMC, ArviZ, and PyTensor evidence can share one context. The structured
@@ -40,12 +52,19 @@ Architecture decisions are documented in the [architecture overview](docs/archit
 [ADR-0005](docs/adr/0005-use-pinned-bge-and-exact-cosine-for-the-dense-baseline.md),
 [ADR-0006](docs/adr/0006-use-weighted-rrf-before-cross-encoder-reranking.md),
 [ADR-0007](docs/adr/0007-evaluate-pinned-ms-marco-cross-encoder-without-adopting-it.md),
-[ADR-0008](docs/adr/0008-define-deterministic-context-construction.md), and
-[ADR-0009](docs/adr/0009-fail-closed-with-a-conservative-no-threshold-evidence-policy.md).
+[ADR-0008](docs/adr/0008-define-deterministic-context-construction.md),
+[ADR-0009](docs/adr/0009-fail-closed-with-a-conservative-no-threshold-evidence-policy.md),
+[ADR-0010](docs/adr/0010-separate-versioned-repository-code-from-documentation.md), and
+[ADR-0011](docs/adr/0011-evaluate-gold-evidence-before-calibrating-abstention.md), and
+[ADR-0012](docs/adr/0012-normalize-versioned-notebook-inputs-without-execution-outputs.md).
 Measured behavior is documented in the
 [Phase 2 sparse](docs/evaluation/phase2-sparse-baseline.md),
 [Phase 3 dense](docs/evaluation/phase3-dense-baseline.md), and
-[Phase 4 hybrid](docs/evaluation/phase4-hybrid-baseline.md) reports.
+[Phase 4 hybrid](docs/evaluation/phase4-hybrid-baseline.md) reports. The opt-in source-code
+slice has a separate
+[repository-code BM25 development baseline](docs/evaluation/repository-code-bm25-baseline.md),
+and the conceptual slice has a
+[notebook BM25 development baseline](docs/evaluation/notebook-bm25-development.md).
 
 ## Requirements
 
@@ -112,6 +131,58 @@ uv run rag-pymc ingest \
 A successful Phase 4 build writes four documents and 15 deterministic chunks. Repeating the
 commands upserts the same records. Local processed output is ignored by Git; source fixtures
 and manifests are tracked.
+
+## Ingest the experimental PyMC implementation corpus
+
+The repository-code slice mirrors the same four public symbols as Phase 4 and is pinned to
+PyMC tag `v6.1.0` at commit `56384e5afed6d1ad122e19b1bf3a7885fc38e5e5`.
+
+```bash
+uv run python scripts/snapshot_pymc_repository.py \
+  --repository /home/mlioi/pymc \
+  --project-root /home/mlioi/rag-pymc
+
+for symbol in pymc.sample pymc.Data pymc.model.core.set_data pymc.sample_posterior_predictive
+do
+  case "$symbol" in
+    pymc.sample) source=pymc/sampling/mcmc.py ;;
+    pymc.Data) source=pymc/data.py ;;
+    pymc.model.core.set_data) source=pymc/model/core.py ;;
+    pymc.sample_posterior_predictive) source=pymc/sampling/forward.py ;;
+  esac
+  uv run rag-pymc ingest-code \
+    --manifest "datasets/raw/manifests/pymc/6.1.0/repository/$symbol.json" \
+    --source "datasets/fixtures/pymc/6.1.0/repository/$source" \
+    --output-dir datasets/processed/repository-code
+done
+```
+
+This produces four documents and 19 deterministic AST chunks. It does not change the Phase 4
+corpus or the default context policy. See
+[`docs/corpus/pymc-source-selection.md`](docs/corpus/pymc-source-selection.md) for the source
+selection, exclusions, query routing, and adoption gate.
+
+## Ingest the experimental conceptual notebooks
+
+```bash
+uv run rag-pymc ingest-notebook \
+  --manifest datasets/raw/manifests/pymc/6.1.0/notebooks/dimensionality.json \
+  --source datasets/fixtures/pymc/6.1.0/notebooks/docs/source/learn/core_notebooks/dimensionality.ipynb \
+  --output-dir datasets/processed/notebooks
+
+uv run rag-pymc ingest-notebook \
+  --manifest datasets/raw/manifests/pymc/6.1.0/notebooks/pymc_pytensor.json \
+  --source datasets/fixtures/pymc/6.1.0/notebooks/docs/source/learn/core_notebooks/pymc_pytensor.ipynb \
+  --output-dir datasets/processed/notebooks
+
+uv run rag-pymc ingest-notebook \
+  --manifest datasets/raw/manifests/pymc/6.1.0/notebooks/model_comparison.json \
+  --source datasets/fixtures/pymc/6.1.0/notebooks/docs/source/learn/core_notebooks/model_comparison.ipynb \
+  --output-dir datasets/processed/notebooks
+```
+
+The result is three documents and 34 deterministic chunks. Outputs and notebook metadata remain
+in the hash-verified raw fixtures but are deliberately absent from normalized documents.
 
 ## Search the local corpus with BM25
 
@@ -191,6 +262,48 @@ abstention-quality result. It uses no retrieval score, confidence, or threshold.
 answer-permitting policy requires a separately authored development dataset, a richer
 versioned evidence-signal contract, predefined calibration metrics, and an untouched Phase 5
 evaluation set. The final Phase 4 dataset remains unavailable for threshold tuning.
+
+## Evaluate development evidence against atomic gold support
+
+`Phase5DevelopmentExample` separates corpus answerability from runtime outcomes and records
+atomic claims with alternative minimal chunk-support sets. Annotation and adjudication
+provenance are mandatory and adjudicators cannot also be annotators for the same example.
+`load_phase5_development_dataset` strictly reads JSONL, rejects duplicate JSON keys and
+non-finite numbers, preserves file order, hashes exact raw bytes, and requires one corpus
+SHA-256 namespace under `canonical-chunk-identity-json-v1`.
+
+`hash_phase5_corpus` computes that order-invariant identity from canonical chunk ID/content
+hash records. Before evaluation, `validate_phase5_development_corpus` verifies the declared
+hash, rejects duplicate corpus chunk IDs, resolves every gold support reference, and requires
+each referenced chunk to match the annotated library and version. The accepted workflow is
+documented in the
+[Phase 5 annotation guidelines](docs/evaluation/phase5-development-annotation-guidelines-v1.md).
+
+The preflight command emits only the deterministic validation report JSON on standard output:
+
+```bash
+uv run rag-pymc validate-development-data \
+  --dataset datasets/evaluation/phase5/development.jsonl \
+  --corpus-dir datasets/processed/phase5
+```
+
+Both paths are required because no development dataset or corpus is silently selected. On a
+validation failure, standard output remains empty and a controlled diagnostic is written to
+standard error.
+
+The pure `evaluate_gold_evidence` evaluator binds an annotation to an exact corpus, query,
+constructed context, and evidence assessment. It measures claim coverage first over admitted
+context and then over admitted plus budget-omitted candidates. This distinguishes a retrieval
+miss from evidence found by retrieval but lost to the context budget. A query is answerable
+from runtime context only when every atomic gold claim has at least one complete support set
+in that context.
+
+`aggregate_gold_evidence` requires exactly one result for every development example and one
+policy version. It reports answer coverage, selective risk, false-answer rate,
+false-abstention rate, decision accuracy, and micro claim coverage with explicit counts and
+`null` for undefined conditional rates. The evaluator compares adjudicated chunk identities;
+it does not establish semantic correctness, citation quality, or answer usefulness. ADR-0011
+fixes these definitions before any human development data or threshold is selected.
 
 ## Define and evaluate grounded response structures
 
@@ -357,13 +470,15 @@ docs/
 
 ## Near-term roadmap
 
-- **Phase 5:** define the development-data annotation and deterministic JSONL-loading
-  contracts, then add gold-backed evaluators before authoring and hashing development data.
-  Add a deterministic generator fake and orchestration only after those evaluation gates.
+- **Phase 5:** author and independently adjudicate the first development dataset using the
+  frozen annotation, loading, and `phase5-gold-evidence-v1` evaluation contracts; bind it to
+  an exact corpus hash and record the conservative-policy baseline before designing any
+  answer-permitting signal or threshold. Add a deterministic generator fake and orchestration
+  only after those evaluation gates.
 - Define cross-library compatibility before admitting evidence from multiple normalized
   libraries into one context.
-- Create a separate Phase 5 development dataset before calibrating any evidence signal or
-  selecting an abstention threshold; keep the Phase 4 final set frozen.
+- Keep the Phase 4 final set frozen and create a separate untouched Phase 5 held-out set only
+  after the development policy, loss, threshold rule, and metrics are fixed.
 - Evaluate truncation-aware parent-child chunking separately from rank fusion.
 
 LLM generation, PostgreSQL, vector databases, code execution, web APIs, and user interfaces

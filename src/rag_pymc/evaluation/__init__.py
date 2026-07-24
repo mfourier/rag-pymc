@@ -8,17 +8,37 @@ from rag_pymc.evaluation.comparison import (
     write_comparison_report,
 )
 from rag_pymc.evaluation.dataset import load_evaluation_queries
+from rag_pymc.evaluation.development_dataset import (
+    hash_phase5_corpus,
+    load_phase5_development_dataset,
+    validate_phase5_development_corpus,
+)
 from rag_pymc.evaluation.errors import EvaluationDatasetError, EvaluationError
 from rag_pymc.evaluation.evaluator import RetrievalEvaluator, write_experiment_report
+from rag_pymc.evaluation.gold_evidence import (
+    aggregate_gold_evidence,
+    evaluate_gold_evidence,
+)
 from rag_pymc.evaluation.models import (
+    AdjudicationProvenance,
+    AggregateGoldEvidenceMetrics,
     AggregateRetrievalMetrics,
     AggregateStructuralResponseMetrics,
+    AnnotationProvenance,
+    AtomicGoldClaim,
     CitationTraceabilityReason,
     CitationTraceabilityResult,
     DenseRetrievalExperimentConfig,
     EvaluationQuery,
     ExperimentConfig,
+    GoldClaimCoverage,
+    GoldEvidenceCaseEvaluation,
+    GoldEvidenceEvaluationReport,
+    GoldEvidenceSupportSet,
     HybridRetrievalExperimentConfig,
+    Phase5DevelopmentCorpusValidation,
+    Phase5DevelopmentDataset,
+    Phase5DevelopmentExample,
     QueryEvaluationResult,
     RerankedRetrievalExperimentConfig,
     RetrievalExperimentConfig,
@@ -36,8 +56,12 @@ from rag_pymc.evaluation.structural_response import (
 )
 
 __all__ = [
+    "AdjudicationProvenance",
+    "AggregateGoldEvidenceMetrics",
     "AggregateRetrievalMetrics",
     "AggregateStructuralResponseMetrics",
+    "AnnotationProvenance",
+    "AtomicGoldClaim",
     "CitationTraceabilityReason",
     "CitationTraceabilityResult",
     "DenseRetrievalExperimentConfig",
@@ -45,7 +69,14 @@ __all__ = [
     "EvaluationError",
     "EvaluationQuery",
     "ExperimentConfig",
+    "GoldClaimCoverage",
+    "GoldEvidenceCaseEvaluation",
+    "GoldEvidenceEvaluationReport",
+    "GoldEvidenceSupportSet",
     "HybridRetrievalExperimentConfig",
+    "Phase5DevelopmentCorpusValidation",
+    "Phase5DevelopmentDataset",
+    "Phase5DevelopmentExample",
     "QueryEvaluationResult",
     "QueryRankComparison",
     "RerankedRetrievalExperimentConfig",
@@ -60,10 +91,15 @@ __all__ = [
     "StructuralResponseEvaluation",
     "StructuralValidationFailure",
     "StructuralValidationStage",
+    "aggregate_gold_evidence",
     "aggregate_structural_responses",
     "compare_retrieval_reports",
+    "evaluate_gold_evidence",
     "evaluate_structural_response",
+    "hash_phase5_corpus",
     "load_evaluation_queries",
+    "load_phase5_development_dataset",
+    "validate_phase5_development_corpus",
     "write_comparison_report",
     "write_experiment_report",
 ]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Communicate Bayesian Results"
+  short_description: "Report Bayesian evidence and uncertainty clearly"
+  default_prompt: "Use $communicate-bayesian-results to turn this Bayesian analysis into a transparent report and model card."

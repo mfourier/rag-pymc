@@ -47,6 +47,11 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = [
+  "datasets/fixtures/pymc/*/notebooks/**",
+  "datasets/fixtures/pymc/*/repository/**",
+]
+force-exclude = true
 
 [tool.ruff.lint]
 select = ["ANN", "B", "D", "E", "F", "I", "RUF", "SIM", "UP"]

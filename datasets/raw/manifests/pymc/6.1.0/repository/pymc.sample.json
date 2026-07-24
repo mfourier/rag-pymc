@@ -1,0 +1,19 @@
+{
+  "manifest_version": "1",
+  "source_id": "pymc-6.1.0-repository-code-pymc.sample",
+  "library": "pymc",
+  "library_version": "6.1.0",
+  "source_type": "repository_code",
+  "source_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/pymc/sampling/mcmc.py",
+  "release_tag": "v6.1.0",
+  "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.1.0",
+  "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5",
+  "source_last_modified_at": "2026-05-12T20:44:17+02:00",
+  "downloaded_at": "2026-07-24T04:05:16.019735Z",
+  "content_hash": "c362f4a431a1538bb1cdf81429af6a58370e856d06d862573830f98fcf7b9242",
+  "media_type": "text/x-python",
+  "expected_api_symbol": "pymc.sample",
+  "source_path": "pymc/sampling/mcmc.py",
+  "license_name": "Apache-2.0",
+  "license_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/LICENSE"
+}

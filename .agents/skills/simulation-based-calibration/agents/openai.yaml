@@ -1,0 +1,4 @@
+interface:
+  display_name: "Simulation-Based Calibration"
+  short_description: "Diseña y diagnostica calibración SBC bayesiana"
+  default_prompt: "Usa $simulation-based-calibration para diseñar o revisar un estudio SBC y explicar sus diagnósticos con respaldo de las fuentes."

@@ -1,0 +1,18 @@
+{
+  "manifest_version": "1",
+  "source_id": "pymc-6.1.0-notebook-pymc_pytensor",
+  "library": "pymc",
+  "library_version": "6.1.0",
+  "source_type": "notebook",
+  "source_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/docs/source/learn/core_notebooks/pymc_pytensor.ipynb",
+  "release_tag": "v6.1.0",
+  "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.1.0",
+  "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5",
+  "source_last_modified_at": "2025-01-17T13:47:19+01:00",
+  "downloaded_at": "2026-07-24T04:20:06.133185Z",
+  "content_hash": "df98cf57f3972b5f29334dc00211058b4c45b06512923e4ef4e975e502eb5731",
+  "media_type": "application/x-ipynb+json",
+  "source_path": "docs/source/learn/core_notebooks/pymc_pytensor.ipynb",
+  "license_name": "Apache-2.0",
+  "license_url": "https://github.com/pymc-devs/pymc/blob/v6.1.0/LICENSE"
+}

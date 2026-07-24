@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fundamentos de Estadística Bayesiana"
+  short_description: "Razona, diagnostica y comunica análisis bayesianos"
+  default_prompt: "Usa $bayesian-statistics-foundations para explicar, evaluar o diseñar este análisis bayesiano y justificar las métricas elegidas."

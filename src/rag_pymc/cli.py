@@ -15,7 +15,7 @@ from pydantic import ValidationError
 
 from rag_pymc import __version__
 from rag_pymc.application import ContextInspectionService
-from rag_pymc.chunking import ApiReferenceChunker
+from rag_pymc.chunking import ApiReferenceChunker, NotebookChunker, RepositoryCodeChunker
 from rag_pymc.context import RankedContextBuilder
 from rag_pymc.domain import Chunk, SearchQuery, SourceManifest, SourceType
 from rag_pymc.embeddings import (
@@ -32,13 +32,15 @@ from rag_pymc.evaluation import (
     RetrievalExperimentConfig,
     compare_retrieval_reports,
     load_evaluation_queries,
+    load_phase5_development_dataset,
+    validate_phase5_development_corpus,
     write_comparison_report,
     write_experiment_report,
 )
 from rag_pymc.indexing import BM25Index, DenseIndexError, ExactCosineIndex
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.ingestion.errors import CorpusPersistenceError, IngestionError
-from rag_pymc.parsing import SphinxApiParser
+from rag_pymc.parsing import NotebookParser, PythonRepositoryParser, SphinxApiParser
 from rag_pymc.persistence import JsonlDocumentRepository
 from rag_pymc.reranking import (
     RerankedRetriever,
@@ -340,6 +342,80 @@ def ingest_api_reference(
     typer.echo("status: ok")
 
 
+@app.command("ingest-code")
+def ingest_repository_code(
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest", exists=True, dir_okay=False, readable=True),
+    ],
+    source_path: Annotated[
+        Path,
+        typer.Option("--source", exists=True, dir_okay=False, readable=True),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", file_okay=False),
+    ] = Path("datasets/processed/repository-code"),
+) -> None:
+    """Ingest one verified Python implementation into a local JSONL corpus."""
+    try:
+        manifest = SourceManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
+        service = IngestionService(
+            fetcher=LocalFileSourceFetcher(source_path),
+            parser=PythonRepositoryParser(),
+            chunker=RepositoryCodeChunker(),
+            repository=JsonlDocumentRepository(output_dir),
+        )
+        result = service.run(manifest)
+    except (IngestionError, OSError, ValidationError, ValueError) as error:
+        typer.echo(f"repository-code ingestion failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo("rag-pymc ingest-code")
+    typer.echo(f"source: {manifest.source_id}")
+    typer.echo(f"document: {result.document.document_id}")
+    typer.echo(f"chunks: {len(result.chunks)}")
+    typer.echo(f"output: {output_dir}")
+    typer.echo("status: ok")
+
+
+@app.command("ingest-notebook")
+def ingest_notebook(
+    manifest_path: Annotated[
+        Path,
+        typer.Option("--manifest", exists=True, dir_okay=False, readable=True),
+    ],
+    source_path: Annotated[
+        Path,
+        typer.Option("--source", exists=True, dir_okay=False, readable=True),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", file_okay=False),
+    ] = Path("datasets/processed/notebooks"),
+) -> None:
+    """Ingest one verified notebook without execution outputs."""
+    try:
+        manifest = SourceManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
+        service = IngestionService(
+            fetcher=LocalFileSourceFetcher(source_path),
+            parser=NotebookParser(),
+            chunker=NotebookChunker(),
+            repository=JsonlDocumentRepository(output_dir),
+        )
+        result = service.run(manifest)
+    except (IngestionError, OSError, ValidationError, ValueError) as error:
+        typer.echo(f"notebook ingestion failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo("rag-pymc ingest-notebook")
+    typer.echo(f"source: {manifest.source_id}")
+    typer.echo(f"document: {result.document.document_id}")
+    typer.echo(f"chunks: {len(result.chunks)}")
+    typer.echo(f"output: {output_dir}")
+    typer.echo("status: ok")
+
+
 @app.command()
 def search(
     query_text: Annotated[str, typer.Argument(help="Natural-language or API query.")],
@@ -413,8 +489,10 @@ def evaluate(
     seed: Annotated[int, typer.Option("--seed")] = 20260719,
     k1: Annotated[float, typer.Option("--k1", min=0.000001)] = 1.5,
     b: Annotated[float, typer.Option("--b", min=0.0, max=1.0)] = 0.75,
+    experiment_id: Annotated[str, typer.Option("--experiment-id")] = "phase2-bm25-baseline",
+    limitations: Annotated[list[str] | None, typer.Option("--limitation")] = None,
 ) -> None:
-    """Evaluate BM25 against the committed Phase 2 query judgments."""
+    """Evaluate BM25 against committed query judgments."""
     try:
         chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
         if not chunks:
@@ -437,6 +515,8 @@ def evaluate(
             chunks=chunks,
             tokenizer=tokenizer,
             config=config,
+            experiment_id=experiment_id,
+            limitations=limitations,
         )
         report = evaluator.evaluate(queries, dataset_path=dataset_path)
         write_experiment_report(report, output_path)
@@ -454,6 +534,35 @@ def evaluate(
     typer.echo(f"correct_abstention: {metrics.correct_abstention_rate:.6f}")
     typer.echo(f"output: {output_path}")
     typer.echo("status: ok")
+
+
+@app.command("validate-development-data")
+def validate_development_data(
+    dataset_path: Annotated[
+        Path,
+        typer.Option("--dataset", exists=True, dir_okay=False, readable=True),
+    ],
+    corpus_dir: Annotated[
+        Path,
+        typer.Option("--corpus-dir", exists=True, file_okay=False, readable=True),
+    ],
+) -> None:
+    """Validate Phase 5 development annotations against an exact local corpus."""
+    try:
+        dataset = load_phase5_development_dataset(dataset_path)
+        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+        report = validate_phase5_development_corpus(dataset, chunks)
+    except (
+        CorpusPersistenceError,
+        EvaluationError,
+        OSError,
+        ValidationError,
+        ValueError,
+    ) as error:
+        typer.echo(f"development-data validation failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo(report.model_dump_json(indent=2))
 
 
 @app.command("search-dense")

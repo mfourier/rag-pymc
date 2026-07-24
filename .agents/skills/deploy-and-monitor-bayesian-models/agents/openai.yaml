@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deploy and Monitor Bayesian Models"
+  short_description: "Deploy, monitor, update, and roll back models"
+  default_prompt: "Use $deploy-and-monitor-bayesian-models to design a safe deployment, monitoring, update, and rollback plan for this model."

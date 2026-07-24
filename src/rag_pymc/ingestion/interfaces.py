@@ -1,10 +1,20 @@
 """Small project-owned interfaces for the ingestion pipeline."""
 
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, TypeVar
 
 from rag_pymc.domain import Chunk, Document, SourceManifest
-from rag_pymc.parsing.models import ParsedApiDocument
+
+ParsedDocumentT_co = TypeVar("ParsedDocumentT_co", covariant=True)
+ParsedDocumentT_contra = TypeVar("ParsedDocumentT_contra", contravariant=True)
+
+
+class ParsedDocument(Protocol):
+    """Minimum parsed-document contract needed by ingestion orchestration."""
+
+    @property
+    def document(self) -> Document:
+        """Return the normalized document shared by all parser outputs."""
 
 
 class SourceFetcher(Protocol):
@@ -14,17 +24,17 @@ class SourceFetcher(Protocol):
         """Return verified source bytes."""
 
 
-class DocumentParser(Protocol):
+class DocumentParser(Protocol[ParsedDocumentT_co]):
     """Transform source bytes into a normalized document."""
 
-    def parse(self, source: bytes, manifest: SourceManifest) -> ParsedApiDocument:
+    def parse(self, source: bytes, manifest: SourceManifest) -> ParsedDocumentT_co:
         """Parse one source artifact."""
 
 
-class Chunker(Protocol):
+class Chunker(Protocol[ParsedDocumentT_contra]):
     """Create structure-aware retrieval units from a parsed document."""
 
-    def chunk(self, parsed: ParsedApiDocument) -> list[Chunk]:
+    def chunk(self, parsed: ParsedDocumentT_contra) -> list[Chunk]:
         """Create deterministic chunks."""
 
 

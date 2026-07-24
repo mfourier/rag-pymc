@@ -4,7 +4,13 @@ from dataclasses import dataclass
 
 from rag_pymc.domain import Chunk, Document, SourceManifest
 from rag_pymc.ingestion.errors import IngestionError
-from rag_pymc.ingestion.interfaces import Chunker, DocumentParser, DocumentRepository, SourceFetcher
+from rag_pymc.ingestion.interfaces import (
+    Chunker,
+    DocumentParser,
+    DocumentRepository,
+    ParsedDocument,
+    SourceFetcher,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,12 +22,12 @@ class IngestionResult:
 
 
 @dataclass(frozen=True, slots=True)
-class IngestionService:
+class IngestionService[ParsedDocumentT: ParsedDocument]:
     """Coordinate acquisition, parsing, chunking, and persistence."""
 
     fetcher: SourceFetcher
-    parser: DocumentParser
-    chunker: Chunker
+    parser: DocumentParser[ParsedDocumentT]
+    chunker: Chunker[ParsedDocumentT]
     repository: DocumentRepository
 
     def run(self, manifest: SourceManifest) -> IngestionResult:
