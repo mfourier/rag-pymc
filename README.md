@@ -263,6 +263,23 @@ answer-permitting policy requires a separately authored development dataset, a r
 versioned evidence-signal contract, predefined calibration metrics, and an untouched Phase 5
 evaluation set. The final Phase 4 dataset remains unavailable for threshold tuning.
 
+## Freeze the first Phase 5 annotation corpus
+
+Before authoring Phase 5 examples, freeze the exact processed annotation corpus with
+`rag-pymc freeze-annotation-corpus`. The command requires an explicit stable annotation
+namespace, logical project-relative corpus path, library/version boundary, admitted source
+types, limitations, and output path. It validates document/chunk parentage and transformation
+versions, fails on undeclared evidence layers, and writes a deterministic
+`phase5-annotation-corpus-freeze-v1` record.
+
+The first Gate A artifact freezes only the four selected PyMC 6.1.0 API pages: four documents,
+15 chunks, `sphinx-api-v1`, `api-reference-v1`, and corpus SHA-256
+`af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2`. Rebuild instructions,
+controlled input hashes, limitations, and the exact command are recorded in the
+[Phase 5 annotation corpus freeze](docs/evaluation/phase5-annotation-corpus-freeze-v1.md).
+This artifact contains no candidate queries or human judgments; Gate B batch preregistration
+must precede annotation.
+
 ## Evaluate development evidence against atomic gold support
 
 `Phase5DevelopmentExample` separates corpus answerability from runtime outcomes and records

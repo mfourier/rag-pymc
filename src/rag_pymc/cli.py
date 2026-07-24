@@ -3,7 +3,6 @@
 import platform
 import sys
 from collections.abc import Sequence
-from dataclasses import dataclass
 from importlib import import_module
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -15,43 +14,44 @@ from pydantic import ValidationError
 
 from rag_pymc import __version__
 from rag_pymc.application import ContextInspectionService
+from rag_pymc.application.retrieval_runtime import (
+    build_dense_experiment_config,
+    build_hybrid_experiment_config,
+    build_hybrid_runtime,
+    build_reranking_runtime,
+    build_sparse_experiment_config,
+)
 from rag_pymc.chunking import ApiReferenceChunker, NotebookChunker, RepositoryCodeChunker
 from rag_pymc.context import RankedContextBuilder
 from rag_pymc.domain import Chunk, SearchQuery, SourceManifest, SourceType
 from rag_pymc.embeddings import (
     EmbeddingError,
-    EmbeddingModelSpec,
     load_embedding_model_spec,
 )
 from rag_pymc.evaluation import (
-    DenseRetrievalExperimentConfig,
     EvaluationError,
-    HybridRetrievalExperimentConfig,
-    RerankedRetrievalExperimentConfig,
     RetrievalEvaluator,
-    RetrievalExperimentConfig,
+    build_phase5_annotation_corpus_freeze,
     compare_retrieval_reports,
     load_evaluation_queries,
     load_phase5_development_dataset,
     validate_phase5_development_corpus,
     write_comparison_report,
     write_experiment_report,
+    write_phase5_annotation_corpus_freeze,
 )
 from rag_pymc.indexing import BM25Index, DenseIndexError, ExactCosineIndex
-from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
+from rag_pymc.ingestion import IngestionResult, IngestionService, LocalFileSourceFetcher
 from rag_pymc.ingestion.errors import CorpusPersistenceError, IngestionError
+from rag_pymc.ingestion.interfaces import Chunker, DocumentParser, ParsedDocument
 from rag_pymc.parsing import NotebookParser, PythonRepositoryParser, SphinxApiParser
 from rag_pymc.persistence import JsonlDocumentRepository
 from rag_pymc.reranking import (
-    RerankedRetriever,
     RerankingError,
-    RerankingModelSpec,
-    load_reranking_model_spec,
 )
 from rag_pymc.retrieval import (
     DenseRetriever,
     ReciprocalRankFusionRetriever,
-    Retriever,
     SparseRetriever,
     TechnicalTokenizer,
     WeightedRetriever,
@@ -68,203 +68,61 @@ SCIENTIFIC_DISTRIBUTIONS = ("pymc", "arviz", "pytensor")
 DEFAULT_EMBEDDING_MANIFEST = Path("datasets/raw/manifests/embeddings/bge-small-en-v1.5.json")
 
 
-@dataclass(frozen=True, slots=True)
-class _HybridRuntime:
-    """Fully configured weighted-RRF retrieval stack."""
-
-    embedding_spec: EmbeddingModelSpec
-    tokenizer: TechnicalTokenizer
-    retriever: Retriever
-    setup_latency_ms: float
-
-
-@dataclass(frozen=True, slots=True)
-class _RerankingRuntime:
-    """Fully configured candidate and reranked retrieval stack."""
-
-    embedding_spec: EmbeddingModelSpec
-    reranking_spec: RerankingModelSpec
-    tokenizer: TechnicalTokenizer
-    candidate_retriever: Retriever
-    reranked_retriever: Retriever
-    candidate_config: HybridRetrievalExperimentConfig
-    reranked_config: RerankedRetrievalExperimentConfig
-    candidate_setup_latency_ms: float
-    setup_latency_ms: float
-    truncated_document_count: int
-
-
-def _build_hybrid_runtime(
-    chunks: Sequence[Chunk],
+def _run_local_ingestion[ParsedDocumentT: ParsedDocument](
+    manifest_path: Path,
+    source_path: Path,
+    output_dir: Path,
     *,
-    embedding_manifest: Path,
-    candidate_k: int,
-    rrf_k: int,
-    sparse_weight: float,
-    dense_weight: float,
-    seed: int,
-    device: str,
-    batch_size: int,
-    local_files_only: bool,
-) -> _HybridRuntime:
-    """Build the selected weighted-RRF retrieval stack."""
-    from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
-
-    embedding_spec = load_embedding_model_spec(embedding_manifest)
-    setup_started_at = perf_counter_ns()
-    tokenizer = TechnicalTokenizer()
-    sparse_index = BM25Index(chunks, tokenizer=tokenizer, k1=1.5, b=0.75)
-    embedder = SentenceTransformerEmbedder(
-        embedding_spec,
-        device=device,
-        batch_size=batch_size,
-        seed=seed,
-        local_files_only=local_files_only,
-    )
-    dense_index = ExactCosineIndex(chunks, embedder=embedder)
-    retriever = ReciprocalRankFusionRetriever(
-        (
-            WeightedRetriever("sparse", SparseRetriever(sparse_index), sparse_weight),
-            WeightedRetriever("dense", DenseRetriever(dense_index), dense_weight),
-        ),
-        rrf_k=rrf_k,
-        candidate_k=candidate_k,
-    )
-    setup_latency_ms = (perf_counter_ns() - setup_started_at) / 1_000_000
-    return _HybridRuntime(
-        embedding_spec=embedding_spec,
-        tokenizer=tokenizer,
-        retriever=retriever,
-        setup_latency_ms=setup_latency_ms,
-    )
+    parser: DocumentParser[ParsedDocumentT],
+    chunker: Chunker[ParsedDocumentT],
+) -> tuple[SourceManifest, IngestionResult]:
+    manifest = SourceManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
+    result = IngestionService(
+        fetcher=LocalFileSourceFetcher(source_path),
+        parser=parser,
+        chunker=chunker,
+        repository=JsonlDocumentRepository(output_dir),
+    ).run(manifest)
+    return manifest, result
 
 
-def _build_reranking_runtime(
-    chunks: Sequence[Chunk],
-    *,
-    embedding_manifest: Path,
-    reranking_manifest: Path,
+def _echo_ingestion_success(
+    command: str,
+    manifest: SourceManifest,
+    result: IngestionResult,
+    output_dir: Path,
+) -> None:
+    typer.echo(f"rag-pymc {command}")
+    typer.echo(f"source: {manifest.source_id}")
+    typer.echo(f"document: {result.document.document_id}")
+    typer.echo(f"chunks: {len(result.chunks)}")
+    typer.echo(f"output: {output_dir}")
+    typer.echo("status: ok")
+
+
+def _load_corpus_chunks(corpus_dir: Path) -> tuple[Chunk, ...]:
+    chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+    if not chunks:
+        msg = f"corpus contains no chunks: {corpus_dir}"
+        raise CorpusPersistenceError(msg)
+    return chunks
+
+
+def _build_search_query(
+    query_text: str,
     top_k: int,
-    fusion_candidate_k: int,
-    rerank_candidate_k: int,
-    rrf_k: int,
-    sparse_weight: float,
-    dense_weight: float,
-    seed: int,
-    device: str,
-    embedding_batch_size: int,
-    reranking_batch_size: int,
-    local_files_only: bool,
-) -> _RerankingRuntime:
-    """Build the fixed Phase 4 candidate generator and cross-encoder stage."""
-    from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
-    from rag_pymc.reranking.sentence_transformer import (
-        SentenceTransformerCrossEncoderReranker,
-    )
-
-    embedding_spec = load_embedding_model_spec(embedding_manifest)
-    reranking_spec = load_reranking_model_spec(reranking_manifest)
-    tokenizer = TechnicalTokenizer()
-    setup_started_at = perf_counter_ns()
-
-    sparse_index = BM25Index(chunks, tokenizer=tokenizer, k1=1.5, b=0.75)
-    embedder = SentenceTransformerEmbedder(
-        embedding_spec,
-        device=device,
-        batch_size=embedding_batch_size,
-        seed=seed,
-        local_files_only=local_files_only,
-    )
-    dense_index = ExactCosineIndex(chunks, embedder=embedder)
-    candidate_retriever = ReciprocalRankFusionRetriever(
-        (
-            WeightedRetriever("sparse", SparseRetriever(sparse_index), sparse_weight),
-            WeightedRetriever("dense", DenseRetriever(dense_index), dense_weight),
-        ),
-        rrf_k=rrf_k,
-        candidate_k=fusion_candidate_k,
-    )
-    candidate_setup_latency_ms = (perf_counter_ns() - setup_started_at) / 1_000_000
-
-    reranker = SentenceTransformerCrossEncoderReranker(
-        reranking_spec,
-        device=device,
-        batch_size=reranking_batch_size,
-        seed=seed,
-        local_files_only=local_files_only,
-    )
-    reranked_retriever = RerankedRetriever(
-        candidate_retriever,
-        reranker,
-        candidate_k=rerank_candidate_k,
-    )
-    setup_latency_ms = (perf_counter_ns() - setup_started_at) / 1_000_000
-    truncated_document_count = sum(
-        embedder.token_count(chunk.content) > embedding_spec.max_sequence_length for chunk in chunks
-    )
-
-    sparse_config = RetrievalExperimentConfig(
-        seed=seed,
+    library: str | None,
+    library_version: str | None,
+    source_types: Sequence[SourceType] | None,
+    api_symbols: Sequence[str] | None,
+) -> SearchQuery:
+    return SearchQuery(
+        text=query_text,
         top_k=top_k,
-        retriever=sparse_index.name,
-        tokenizer=tokenizer.name,
-        k1=sparse_index.k1,
-        b=sparse_index.b,
-        corpus_chunk_count=len(chunks),
-    )
-    dense_config = DenseRetrievalExperimentConfig(
-        seed=seed,
-        top_k=top_k,
-        retriever=dense_index.name,
-        corpus_chunk_count=len(chunks),
-        embedder=embedder.name,
-        model_id=embedding_spec.model_id,
-        model_revision=embedding_spec.revision,
-        dimension=embedding_spec.dimension,
-        max_sequence_length=embedding_spec.max_sequence_length,
-        truncated_document_count=truncated_document_count,
-        normalize_embeddings=embedding_spec.normalize_embeddings,
-        query_prefix=embedding_spec.query_prefix,
-        device=device,
-        batch_size=embedding_batch_size,
-    )
-    candidate_config = HybridRetrievalExperimentConfig(
-        seed=seed,
-        top_k=top_k,
-        retriever=candidate_retriever.name,
-        corpus_chunk_count=len(chunks),
-        candidate_k=fusion_candidate_k,
-        rrf_k=rrf_k,
-        sparse_weight=sparse_weight,
-        dense_weight=dense_weight,
-        sparse=sparse_config,
-        dense=dense_config,
-    )
-    reranked_config = RerankedRetrievalExperimentConfig(
-        seed=seed,
-        top_k=top_k,
-        retriever=reranked_retriever.name,
-        corpus_chunk_count=len(chunks),
-        candidate_k=rerank_candidate_k,
-        candidate=candidate_config,
-        reranker=reranker.name,
-        model_id=reranking_spec.model_id,
-        model_revision=reranking_spec.revision,
-        max_sequence_length=reranking_spec.max_sequence_length,
-        device=device,
-        batch_size=reranking_batch_size,
-    )
-    return _RerankingRuntime(
-        embedding_spec=embedding_spec,
-        reranking_spec=reranking_spec,
-        tokenizer=tokenizer,
-        candidate_retriever=candidate_retriever,
-        reranked_retriever=reranked_retriever,
-        candidate_config=candidate_config,
-        reranked_config=reranked_config,
-        candidate_setup_latency_ms=candidate_setup_latency_ms,
-        setup_latency_ms=setup_latency_ms,
-        truncated_document_count=truncated_document_count,
+        library=library,
+        library_version=library_version,
+        source_types=tuple(source_types or ()),
+        api_symbols=tuple(api_symbols or ()),
     )
 
 
@@ -322,24 +180,18 @@ def ingest_api_reference(
 ) -> None:
     """Ingest one verified Sphinx API source into a local JSONL corpus."""
     try:
-        manifest = SourceManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
-        service = IngestionService(
-            fetcher=LocalFileSourceFetcher(source_path),
+        manifest, result = _run_local_ingestion(
+            manifest_path,
+            source_path,
+            output_dir,
             parser=SphinxApiParser(),
             chunker=ApiReferenceChunker(),
-            repository=JsonlDocumentRepository(output_dir),
         )
-        result = service.run(manifest)
     except (IngestionError, OSError, ValidationError) as error:
         typer.echo(f"ingestion failed: {error}", err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo("rag-pymc ingest")
-    typer.echo(f"source: {manifest.source_id}")
-    typer.echo(f"document: {result.document.document_id}")
-    typer.echo(f"chunks: {len(result.chunks)}")
-    typer.echo(f"output: {output_dir}")
-    typer.echo("status: ok")
+    _echo_ingestion_success("ingest", manifest, result, output_dir)
 
 
 @app.command("ingest-code")
@@ -359,24 +211,18 @@ def ingest_repository_code(
 ) -> None:
     """Ingest one verified Python implementation into a local JSONL corpus."""
     try:
-        manifest = SourceManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
-        service = IngestionService(
-            fetcher=LocalFileSourceFetcher(source_path),
+        manifest, result = _run_local_ingestion(
+            manifest_path,
+            source_path,
+            output_dir,
             parser=PythonRepositoryParser(),
             chunker=RepositoryCodeChunker(),
-            repository=JsonlDocumentRepository(output_dir),
         )
-        result = service.run(manifest)
     except (IngestionError, OSError, ValidationError, ValueError) as error:
         typer.echo(f"repository-code ingestion failed: {error}", err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo("rag-pymc ingest-code")
-    typer.echo(f"source: {manifest.source_id}")
-    typer.echo(f"document: {result.document.document_id}")
-    typer.echo(f"chunks: {len(result.chunks)}")
-    typer.echo(f"output: {output_dir}")
-    typer.echo("status: ok")
+    _echo_ingestion_success("ingest-code", manifest, result, output_dir)
 
 
 @app.command("ingest-notebook")
@@ -396,24 +242,18 @@ def ingest_notebook(
 ) -> None:
     """Ingest one verified notebook without execution outputs."""
     try:
-        manifest = SourceManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
-        service = IngestionService(
-            fetcher=LocalFileSourceFetcher(source_path),
+        manifest, result = _run_local_ingestion(
+            manifest_path,
+            source_path,
+            output_dir,
             parser=NotebookParser(),
             chunker=NotebookChunker(),
-            repository=JsonlDocumentRepository(output_dir),
         )
-        result = service.run(manifest)
     except (IngestionError, OSError, ValidationError, ValueError) as error:
         typer.echo(f"notebook ingestion failed: {error}", err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo("rag-pymc ingest-notebook")
-    typer.echo(f"source: {manifest.source_id}")
-    typer.echo(f"document: {result.document.document_id}")
-    typer.echo(f"chunks: {len(result.chunks)}")
-    typer.echo(f"output: {output_dir}")
-    typer.echo("status: ok")
+    _echo_ingestion_success("ingest-notebook", manifest, result, output_dir)
 
 
 @app.command()
@@ -437,18 +277,10 @@ def search(
 ) -> None:
     """Search the local corpus with the explicit BM25 baseline."""
     try:
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
+        chunks = _load_corpus_chunks(corpus_dir)
         retriever = SparseRetriever(BM25Index(chunks))
-        query = SearchQuery(
-            text=query_text,
-            top_k=top_k,
-            library=library,
-            library_version=library_version,
-            source_types=tuple(source_types or ()),
-            api_symbols=tuple(api_symbols or ()),
+        query = _build_search_query(
+            query_text, top_k, library, library_version, source_types, api_symbols
         )
         results = retriever.retrieve(query)
     except (CorpusPersistenceError, ValidationError, ValueError) as error:
@@ -494,21 +326,16 @@ def evaluate(
 ) -> None:
     """Evaluate BM25 against committed query judgments."""
     try:
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
+        chunks = _load_corpus_chunks(corpus_dir)
         queries = load_evaluation_queries(dataset_path)
         tokenizer = TechnicalTokenizer()
         index = BM25Index(chunks, tokenizer=tokenizer, k1=k1, b=b)
-        config = RetrievalExperimentConfig(
+        config = build_sparse_experiment_config(
+            chunks,
+            index=index,
+            tokenizer=tokenizer,
             seed=seed,
             top_k=top_k,
-            retriever=index.name,
-            tokenizer=tokenizer.name,
-            k1=k1,
-            b=b,
-            corpus_chunk_count=len(chunks),
         )
         evaluator = RetrievalEvaluator(
             retriever=SparseRetriever(index),
@@ -565,6 +392,55 @@ def validate_development_data(
     typer.echo(report.model_dump_json(indent=2))
 
 
+@app.command("freeze-annotation-corpus")
+def freeze_annotation_corpus(
+    corpus_dir: Annotated[
+        Path,
+        typer.Option("--corpus-dir", exists=True, file_okay=False, readable=True),
+    ],
+    corpus_path: Annotated[
+        str,
+        typer.Option(
+            "--corpus-path",
+            help="Stable project-relative path recorded in the freeze artifact.",
+        ),
+    ],
+    annotation_namespace: Annotated[str, typer.Option("--annotation-namespace")],
+    library: Annotated[str, typer.Option("--library")],
+    library_version: Annotated[str, typer.Option("--library-version")],
+    source_types: Annotated[list[SourceType], typer.Option("--source-type")],
+    limitations: Annotated[list[str], typer.Option("--limitation")],
+    output_path: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Freeze a validated processed corpus before Phase 5 annotation begins."""
+    try:
+        repository = JsonlDocumentRepository(corpus_dir)
+        documents = repository.load_documents()
+        chunks = repository.load_chunks()
+        report = build_phase5_annotation_corpus_freeze(
+            documents,
+            chunks,
+            annotation_namespace=annotation_namespace,
+            corpus_path=corpus_path,
+            library=library,
+            library_version=library_version,
+            source_types=source_types,
+            limitations=limitations,
+        )
+        write_phase5_annotation_corpus_freeze(report, output_path)
+    except (
+        CorpusPersistenceError,
+        EvaluationError,
+        OSError,
+        ValidationError,
+        ValueError,
+    ) as error:
+        typer.echo(f"annotation-corpus freeze failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo(report.model_dump_json(indent=2))
+
+
 @app.command("search-dense")
 def search_dense(
     query_text: Annotated[str, typer.Argument(help="Natural-language retrieval query.")],
@@ -599,10 +475,7 @@ def search_dense(
     try:
         from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
 
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
+        chunks = _load_corpus_chunks(corpus_dir)
         spec = load_embedding_model_spec(model_manifest)
         setup_started_at = perf_counter_ns()
         embedder = SentenceTransformerEmbedder(
@@ -614,13 +487,8 @@ def search_dense(
         )
         retriever = DenseRetriever(ExactCosineIndex(chunks, embedder=embedder))
         setup_latency_ms = (perf_counter_ns() - setup_started_at) / 1_000_000
-        query = SearchQuery(
-            text=query_text,
-            top_k=top_k,
-            library=library,
-            library_version=library_version,
-            source_types=tuple(source_types or ()),
-            api_symbols=tuple(api_symbols or ()),
+        query = _build_search_query(
+            query_text, top_k, library, library_version, source_types, api_symbols
         )
         results = retriever.retrieve(query)
     except (
@@ -687,10 +555,7 @@ def evaluate_dense(
     try:
         from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
 
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
+        chunks = _load_corpus_chunks(corpus_dir)
         queries = load_evaluation_queries(dataset_path)
         spec = load_embedding_model_spec(model_manifest)
         tokenizer = TechnicalTokenizer()
@@ -708,19 +573,13 @@ def evaluate_dense(
         truncated_document_count = sum(
             embedder.token_count(chunk.content) > spec.max_sequence_length for chunk in chunks
         )
-        dense_config = DenseRetrievalExperimentConfig(
+        dense_config = build_dense_experiment_config(
+            chunks,
+            index=dense_index,
+            spec=spec,
+            truncated_document_count=truncated_document_count,
             seed=seed,
             top_k=top_k,
-            retriever=dense_index.name,
-            corpus_chunk_count=len(chunks),
-            embedder=embedder.name,
-            model_id=spec.model_id,
-            model_revision=spec.revision,
-            dimension=spec.dimension,
-            max_sequence_length=spec.max_sequence_length,
-            truncated_document_count=truncated_document_count,
-            normalize_embeddings=spec.normalize_embeddings,
-            query_prefix=spec.query_prefix,
             device=device,
             batch_size=batch_size,
         )
@@ -741,14 +600,12 @@ def evaluate_dense(
         ).evaluate(queries, dataset_path=dataset_path)
 
         sparse_index = BM25Index(chunks, tokenizer=tokenizer, k1=1.5, b=0.75)
-        sparse_config = RetrievalExperimentConfig(
+        sparse_config = build_sparse_experiment_config(
+            chunks,
+            index=sparse_index,
+            tokenizer=tokenizer,
             seed=seed,
             top_k=top_k,
-            retriever=sparse_index.name,
-            tokenizer=tokenizer.name,
-            k1=sparse_index.k1,
-            b=sparse_index.b,
-            corpus_chunk_count=len(chunks),
         )
         sparse_report = RetrievalEvaluator(
             retriever=SparseRetriever(sparse_index),
@@ -824,11 +681,8 @@ def search_hybrid(
 ) -> None:
     """Search with weighted Reciprocal Rank Fusion over BM25 and dense retrieval."""
     try:
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
-        runtime = _build_hybrid_runtime(
+        chunks = _load_corpus_chunks(corpus_dir)
+        runtime = build_hybrid_runtime(
             chunks,
             embedding_manifest=model_manifest,
             candidate_k=candidate_k,
@@ -840,13 +694,8 @@ def search_hybrid(
             batch_size=batch_size,
             local_files_only=local_files_only,
         )
-        query = SearchQuery(
-            text=query_text,
-            top_k=top_k,
-            library=library,
-            library_version=library_version,
-            source_types=tuple(source_types or ()),
-            api_symbols=tuple(api_symbols or ()),
+        query = _build_search_query(
+            query_text, top_k, library, library_version, source_types, api_symbols
         )
         results = runtime.retriever.retrieve(query)
     except (
@@ -913,19 +762,11 @@ def inspect_context(
 ) -> None:
     """Retrieve and print deterministic, budget-bounded context as JSON."""
     try:
-        query = SearchQuery(
-            text=query_text,
-            top_k=top_k,
-            library=library,
-            library_version=library_version,
-            source_types=tuple(source_types or ()),
-            api_symbols=tuple(api_symbols or ()),
+        query = _build_search_query(
+            query_text, top_k, library, library_version, source_types, api_symbols
         )
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
-        runtime = _build_hybrid_runtime(
+        chunks = _load_corpus_chunks(corpus_dir)
+        runtime = build_hybrid_runtime(
             chunks,
             embedding_manifest=DEFAULT_EMBEDDING_MANIFEST,
             candidate_k=10,
@@ -1007,10 +848,7 @@ def evaluate_hybrid(
     try:
         from rag_pymc.embeddings.sentence_transformer import SentenceTransformerEmbedder
 
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
+        chunks = _load_corpus_chunks(corpus_dir)
         queries = load_evaluation_queries(dataset_path)
         spec = load_embedding_model_spec(model_manifest)
         tokenizer = TechnicalTokenizer()
@@ -1043,42 +881,34 @@ def evaluate_hybrid(
             embedder.token_count(chunk.content) > spec.max_sequence_length for chunk in chunks
         )
 
-        sparse_config = RetrievalExperimentConfig(
+        sparse_config = build_sparse_experiment_config(
+            chunks,
+            index=sparse_index,
+            tokenizer=tokenizer,
             seed=seed,
             top_k=top_k,
-            retriever=sparse_index.name,
-            tokenizer=tokenizer.name,
-            k1=sparse_index.k1,
-            b=sparse_index.b,
-            corpus_chunk_count=len(chunks),
         )
-        dense_config = DenseRetrievalExperimentConfig(
+        dense_config = build_dense_experiment_config(
+            chunks,
+            index=dense_index,
+            spec=spec,
+            truncated_document_count=truncated_document_count,
             seed=seed,
             top_k=top_k,
-            retriever=dense_index.name,
-            corpus_chunk_count=len(chunks),
-            embedder=embedder.name,
-            model_id=spec.model_id,
-            model_revision=spec.revision,
-            dimension=spec.dimension,
-            max_sequence_length=spec.max_sequence_length,
-            truncated_document_count=truncated_document_count,
-            normalize_embeddings=spec.normalize_embeddings,
-            query_prefix=spec.query_prefix,
             device=device,
             batch_size=batch_size,
         )
-        hybrid_config = HybridRetrievalExperimentConfig(
-            seed=seed,
-            top_k=top_k,
-            retriever=hybrid_retriever.name,
-            corpus_chunk_count=len(chunks),
+        hybrid_config = build_hybrid_experiment_config(
+            chunks,
+            retriever_name=hybrid_retriever.name,
+            sparse=sparse_config,
+            dense=dense_config,
             candidate_k=candidate_k,
             rrf_k=rrf_k,
             sparse_weight=sparse_weight,
             dense_weight=dense_weight,
-            sparse=sparse_config,
-            dense=dense_config,
+            seed=seed,
+            top_k=top_k,
         )
         common_limitations = (
             f"The corpus contains {document_count} PyMC API pages and {len(chunks)} chunks.",
@@ -1222,11 +1052,8 @@ def search_reranked(
 ) -> None:
     """Search hybrid candidates and rerank them with a pinned cross-encoder."""
     try:
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
-        runtime = _build_reranking_runtime(
+        chunks = _load_corpus_chunks(corpus_dir)
+        runtime = build_reranking_runtime(
             chunks,
             embedding_manifest=embedding_manifest,
             reranking_manifest=reranker_manifest,
@@ -1242,13 +1069,8 @@ def search_reranked(
             reranking_batch_size=reranking_batch_size,
             local_files_only=local_files_only,
         )
-        query = SearchQuery(
-            text=query_text,
-            top_k=top_k,
-            library=library,
-            library_version=library_version,
-            source_types=tuple(source_types or ()),
-            api_symbols=tuple(api_symbols or ()),
+        query = _build_search_query(
+            query_text, top_k, library, library_version, source_types, api_symbols
         )
         results = runtime.reranked_retriever.retrieve(query)
     except (
@@ -1343,12 +1165,9 @@ def evaluate_reranked(
 ) -> None:
     """Evaluate cross-encoder reranking against a fresh hybrid control."""
     try:
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
-        if not chunks:
-            msg = f"corpus contains no chunks: {corpus_dir}"
-            raise CorpusPersistenceError(msg)
+        chunks = _load_corpus_chunks(corpus_dir)
         queries = load_evaluation_queries(dataset_path)
-        runtime = _build_reranking_runtime(
+        runtime = build_reranking_runtime(
             chunks,
             embedding_manifest=embedding_manifest,
             reranking_manifest=reranker_manifest,

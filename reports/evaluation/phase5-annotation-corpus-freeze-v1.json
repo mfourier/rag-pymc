@@ -1,0 +1,67 @@
+{
+  "schema_version": "1",
+  "freeze_version": "phase5-annotation-corpus-freeze-v1",
+  "corpus_role": "phase5-development-annotation",
+  "annotation_namespace": "pymc-6.1.0-api-phase5-development-v1",
+  "corpus_path": "datasets/processed/phase5-annotation-api-v1",
+  "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+  "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+  "library": "pymc",
+  "library_version": "6.1.0",
+  "source_types": [
+    "api_reference"
+  ],
+  "parser_versions": [
+    "sphinx-api-v1"
+  ],
+  "chunker_versions": [
+    "api-reference-v1"
+  ],
+  "api_symbols": [
+    "pymc.Data",
+    "pymc.model.core.set_data",
+    "pymc.sample",
+    "pymc.sample_posterior_predictive"
+  ],
+  "documents": [
+    {
+      "document_id": "doc_16037e242e11d70fa4d5",
+      "content_sha256": "16037e242e11d70fa4d5c74c54e0e03ee1fbf55df0ea0d45231874b2006d8034",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.Data.html",
+      "source_type": "api_reference",
+      "parser_version": "sphinx-api-v1",
+      "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5"
+    },
+    {
+      "document_id": "doc_9411eb3cb4de154ce8e3",
+      "content_sha256": "9411eb3cb4de154ce8e32b77396f9697f28013806868934e0da5d8cf4c81b2c3",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample_posterior_predictive.html",
+      "source_type": "api_reference",
+      "parser_version": "sphinx-api-v1",
+      "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5"
+    },
+    {
+      "document_id": "doc_9cabb930971b31b5f763",
+      "content_sha256": "9cabb930971b31b5f76324607d8a29afc9976542d07b1525ae07b4be9104f8ac",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/model/generated/pymc.model.core.set_data.html",
+      "source_type": "api_reference",
+      "parser_version": "sphinx-api-v1",
+      "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5"
+    },
+    {
+      "document_id": "doc_c7542318b80e10fd1370",
+      "content_sha256": "c7542318b80e10fd1370285a6b2ba1ac16f2b517dce168246e6901ceaf6c8edc",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample.html",
+      "source_type": "api_reference",
+      "parser_version": "sphinx-api-v1",
+      "source_commit": "56384e5afed6d1ad122e19b1bf3a7885fc38e5e5"
+    }
+  ],
+  "document_count": 4,
+  "chunk_count": 15,
+  "limitations": [
+    "Chunk-identity coverage does not establish semantic support, citation correctness, answer correctness, or usefulness.",
+    "The corpus contains generated API reference pages for only four PyMC public symbols.",
+    "The corpus excludes conceptual notebooks, repository code, ArviZ, and PyTensor sources."
+  ]
+}

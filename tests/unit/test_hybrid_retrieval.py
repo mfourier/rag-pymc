@@ -1,8 +1,4 @@
-from datetime import UTC, datetime
-from hashlib import sha256
-
 import pytest
-from pydantic import AnyUrl
 
 from rag_pymc.domain import Chunk, RetrievedChunk, SearchQuery, SourceType
 from rag_pymc.retrieval import (
@@ -10,23 +6,7 @@ from rag_pymc.retrieval import (
     ReciprocalRankFusionRetriever,
     WeightedRetriever,
 )
-
-
-def make_chunk(chunk_id: str) -> Chunk:
-    content = f"content for {chunk_id}"
-    return Chunk(
-        chunk_id=chunk_id,
-        document_id=f"doc_{chunk_id}",
-        library="pymc",
-        library_version="6.1.0",
-        source_type=SourceType.API_REFERENCE,
-        source_url=AnyUrl("https://example.test/source"),
-        title="Test source",
-        section="Test",
-        content=content,
-        content_hash=sha256(content.encode()).hexdigest(),
-        created_at=datetime(2026, 7, 20, tzinfo=UTC),
-    )
+from tests.factories import make_chunk
 
 
 class StaticRetriever:

@@ -8,9 +8,11 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from rag_pymc.domain import Chunk
+from rag_pymc.domain import Chunk, Document, SourceType
 from rag_pymc.evaluation.errors import EvaluationDatasetError
 from rag_pymc.evaluation.models import (
+    Phase5AnnotationCorpusDocument,
+    Phase5AnnotationCorpusFreeze,
     Phase5DevelopmentCorpusValidation,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
@@ -120,6 +122,159 @@ def hash_phase5_corpus(chunks: Sequence[Chunk]) -> str:
         sort_keys=True,
     )
     return sha256(canonical_json.encode("ascii")).hexdigest()
+
+
+def build_phase5_annotation_corpus_freeze(
+    documents: Sequence[Document],
+    chunks: Sequence[Chunk],
+    *,
+    annotation_namespace: str,
+    corpus_path: str,
+    library: str,
+    library_version: str,
+    source_types: Sequence[SourceType],
+    limitations: Sequence[str],
+) -> Phase5AnnotationCorpusFreeze:
+    """Validate and describe the exact processed corpus used for Phase 5 annotation."""
+    validated_documents = tuple(Document.model_validate(document) for document in documents)
+    validated_chunks = tuple(Chunk.model_validate(chunk) for chunk in chunks)
+    if not validated_documents:
+        msg = "Phase 5 annotation corpus must contain at least one document"
+        raise EvaluationDatasetError(msg)
+    if not validated_chunks:
+        msg = "Phase 5 annotation corpus must contain at least one chunk"
+        raise EvaluationDatasetError(msg)
+
+    document_ids = tuple(document.document_id for document in validated_documents)
+    if len(set(document_ids)) != len(document_ids):
+        msg = "Phase 5 annotation corpus contains duplicate document IDs"
+        raise EvaluationDatasetError(msg)
+    chunk_ids = tuple(chunk.chunk_id for chunk in validated_chunks)
+    if len(set(chunk_ids)) != len(chunk_ids):
+        msg = "Phase 5 annotation corpus contains duplicate chunk IDs"
+        raise EvaluationDatasetError(msg)
+
+    expected_source_types = tuple(source_types)
+    if not expected_source_types:
+        msg = "Phase 5 annotation corpus requires at least one expected source type"
+        raise EvaluationDatasetError(msg)
+    if len(set(expected_source_types)) != len(expected_source_types):
+        msg = "Phase 5 annotation corpus expected source types must be unique"
+        raise EvaluationDatasetError(msg)
+
+    actual_source_types = tuple(
+        sorted(
+            {document.source_type for document in validated_documents}
+            | {chunk.source_type for chunk in validated_chunks},
+            key=lambda item: item.value,
+        )
+    )
+    canonical_expected_source_types = tuple(
+        sorted(expected_source_types, key=lambda item: item.value)
+    )
+    if actual_source_types != canonical_expected_source_types:
+        msg = (
+            "Phase 5 annotation corpus source types do not match the declared source types: "
+            f"expected {[item.value for item in canonical_expected_source_types]}, "
+            f"got {[item.value for item in actual_source_types]}"
+        )
+        raise EvaluationDatasetError(msg)
+
+    normalized_library = library.casefold()
+    document_outside_namespace = any(
+        document.library.casefold() != normalized_library
+        or document.library_version != library_version
+        for document in validated_documents
+    )
+    chunk_outside_namespace = any(
+        chunk.library.casefold() != normalized_library or chunk.library_version != library_version
+        for chunk in validated_chunks
+    )
+    if document_outside_namespace or chunk_outside_namespace:
+        msg = (
+            "Phase 5 annotation corpus contains a record outside the declared "
+            f"{library} {library_version} namespace"
+        )
+        raise EvaluationDatasetError(msg)
+
+    documents_by_id = {document.document_id: document for document in validated_documents}
+    chunk_parent_ids: set[str] = set()
+    for chunk in validated_chunks:
+        document = documents_by_id.get(chunk.document_id)
+        if document is None:
+            msg = f"Phase 5 annotation chunk {chunk.chunk_id} references a missing document"
+            raise EvaluationDatasetError(msg)
+        if (
+            chunk.library.casefold() != document.library.casefold()
+            or chunk.library_version != document.library_version
+            or chunk.source_type != document.source_type
+            or chunk.source_url != document.source_url
+        ):
+            msg = f"Phase 5 annotation chunk {chunk.chunk_id} conflicts with its parent document"
+            raise EvaluationDatasetError(msg)
+        chunk_parent_ids.add(chunk.document_id)
+
+    document_id_set = set(document_ids)
+    if chunk_parent_ids != document_id_set:
+        empty_document_id = min(document_id_set - chunk_parent_ids)
+        msg = f"Phase 5 annotation document {empty_document_id} has no chunks"
+        raise EvaluationDatasetError(msg)
+
+    if any(document.parser_version is None for document in validated_documents):
+        msg = "Phase 5 annotation corpus documents require parser versions"
+        raise EvaluationDatasetError(msg)
+    if any(chunk.chunker_version is None for chunk in validated_chunks):
+        msg = "Phase 5 annotation corpus chunks require chunker versions"
+        raise EvaluationDatasetError(msg)
+
+    parser_versions = tuple(
+        sorted(
+            {document.parser_version for document in validated_documents if document.parser_version}
+        )
+    )
+    chunker_versions = tuple(
+        sorted({chunk.chunker_version for chunk in validated_chunks if chunk.chunker_version})
+    )
+    api_symbols = tuple(
+        sorted({symbol for chunk in validated_chunks for symbol in chunk.api_symbols})
+    )
+    document_records = tuple(
+        Phase5AnnotationCorpusDocument(
+            document_id=document.document_id,
+            content_sha256=document.content_hash,
+            source_url=document.source_url,
+            source_type=document.source_type,
+            parser_version=document.parser_version,
+            source_commit=document.source_commit,
+        )
+        for document in sorted(validated_documents, key=lambda item: item.document_id)
+        if document.parser_version is not None
+    )
+    return Phase5AnnotationCorpusFreeze(
+        annotation_namespace=annotation_namespace,
+        corpus_path=corpus_path,
+        corpus_sha256=hash_phase5_corpus(validated_chunks),
+        library=library,
+        library_version=library_version,
+        source_types=actual_source_types,
+        parser_versions=parser_versions,
+        chunker_versions=chunker_versions,
+        api_symbols=api_symbols,
+        documents=document_records,
+        document_count=len(validated_documents),
+        chunk_count=len(validated_chunks),
+        limitations=tuple(sorted(limitations)),
+    )
+
+
+def write_phase5_annotation_corpus_freeze(
+    report: Phase5AnnotationCorpusFreeze,
+    path: Path,
+) -> None:
+    """Write one validated, deterministic annotation-corpus freeze artifact."""
+    validated = Phase5AnnotationCorpusFreeze.model_validate(report)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f"{validated.model_dump_json(indent=2)}\n", encoding="utf-8")
 
 
 def validate_phase5_development_corpus(

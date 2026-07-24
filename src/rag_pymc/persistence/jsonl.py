@@ -70,6 +70,12 @@ class JsonlDocumentRepository:
             except ValidationError as error:
                 msg = f"invalid document at {self.documents_path}:{line_number}"
                 raise CorpusPersistenceError(msg) from error
+            if document.document_id in documents:
+                msg = (
+                    f"duplicate document ID at {self.documents_path}:{line_number}: "
+                    f"{document.document_id}"
+                )
+                raise CorpusPersistenceError(msg)
             documents[document.document_id] = document
         return documents
 
@@ -81,6 +87,9 @@ class JsonlDocumentRepository:
             except ValidationError as error:
                 msg = f"invalid chunk at {self.chunks_path}:{line_number}"
                 raise CorpusPersistenceError(msg) from error
+            if chunk.chunk_id in chunks:
+                msg = f"duplicate chunk ID at {self.chunks_path}:{line_number}: {chunk.chunk_id}"
+                raise CorpusPersistenceError(msg)
             chunks[chunk.chunk_id] = chunk
         return chunks
 

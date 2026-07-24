@@ -3,33 +3,11 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import AnyUrl, ValidationError
 
-from rag_pymc.domain import Chunk, Difficulty, Document, RetrievedChunk, SearchQuery, SourceType
+from rag_pymc.domain import Document, RetrievedChunk, SearchQuery, SourceType
+from tests.factories import make_chunk
 
 NOW = datetime(2026, 7, 19, 12, 0, tzinfo=UTC)
 HASH = "a" * 64
-
-
-def make_chunk(**overrides: object) -> Chunk:
-    values: dict[str, object] = {
-        "chunk_id": "chunk_001",
-        "document_id": "document_001",
-        "library": "pymc",
-        "library_version": "6.1.0",
-        "source_type": SourceType.API_REFERENCE,
-        "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample.html",
-        "title": "pymc.sample",
-        "section": "Parameters",
-        "content": "Draw samples from the posterior using a step method.",
-        "content_hash": HASH,
-        "api_symbols": ("pymc.sample",),
-        "concepts": ("posterior_sampling",),
-        "difficulty": Difficulty.INTERMEDIATE,
-        "prerequisites": ("pymc.Model",),
-        "contains_code": True,
-        "created_at": NOW,
-    }
-    values.update(overrides)
-    return Chunk.model_validate(values)
 
 
 def test_document_preserves_provenance() -> None:

@@ -55,9 +55,9 @@ families. Include:
 near-duplicate templates remain visible. Do not randomly split templated paraphrases and call
 the result independent evaluation data.
 
-`expected_api_symbols` is a query-level routing aid, not a substitute for evidence. Store
-unique symbols in lexicographic order. An empty tuple is valid when no public symbol is the
-right expectation.
+`expected_api_symbols` is a query-level routing aid, not a substitute for evidence. Symbols
+must be unique; the loader stores them in lexicographic order. An empty tuple is valid when no
+public symbol is the right expectation.
 
 ## Corpus answerability
 
@@ -95,7 +95,7 @@ Each support set is a set of chunk IDs that jointly supports one atomic claim.
 
 - A support set must be sufficient as a whole.
 - It must be minimal: removing any member makes it insufficient for that claim.
-- Store chunk IDs in lexicographic order with no duplicates.
+- Chunk IDs must be unique; the loader stores them in lexicographic order.
 - Record distinct alternative minimal sets when either alternative independently supports the
   claim.
 - Do not record both a set and one of its strict supersets. The contract enforces this

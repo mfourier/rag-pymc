@@ -4,12 +4,13 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from rag_pymc.cli import app
-from rag_pymc.domain import Chunk, Difficulty
+from rag_pymc.domain import Chunk, Difficulty, SourceType
 from rag_pymc.evaluation import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
     GoldEvidenceSupportSet,
+    Phase5AnnotationCorpusFreeze,
     Phase5DevelopmentCorpusValidation,
     Phase5DevelopmentExample,
     hash_phase5_corpus,
@@ -152,3 +153,128 @@ def test_validate_development_data_fails_without_partial_json_on_hash_mismatch(
     assert result.stdout == ""
     assert "development-data validation failed:" in result.stderr
     assert "SHA-256 mismatch" in result.stderr
+
+
+def test_freeze_annotation_corpus_writes_one_deterministic_gate_a_artifact(
+    manifest_path: Path,
+    source_path: Path,
+    tmp_path: Path,
+) -> None:
+    corpus_dir = tmp_path / "corpus"
+    output_path = tmp_path / "freeze.json"
+    chunks = build_corpus(manifest_path, source_path, corpus_dir)
+    arguments = [
+        "freeze-annotation-corpus",
+        "--corpus-dir",
+        str(corpus_dir),
+        "--corpus-path",
+        "datasets/processed/phase5-annotation-api-v1",
+        "--annotation-namespace",
+        "pymc-6.1.0-api-phase5-development-v1",
+        "--library",
+        "pymc",
+        "--library-version",
+        "6.1.0",
+        "--source-type",
+        "api_reference",
+        "--limitation",
+        "The first annotation corpus covers one synthetic test source.",
+        "--output",
+        str(output_path),
+    ]
+
+    first = runner.invoke(app, arguments)
+    second = runner.invoke(app, arguments)
+
+    assert first.exit_code == 0
+    assert first.stderr == ""
+    assert first.stdout == second.stdout
+    assert output_path.read_text(encoding="utf-8") == first.stdout
+    report = Phase5AnnotationCorpusFreeze.model_validate_json(first.stdout)
+    assert report.corpus_sha256 == hash_phase5_corpus(chunks)
+    assert report.document_count == 1
+    assert report.chunk_count == len(chunks)
+    assert report.source_types == (SourceType.API_REFERENCE,)
+
+
+def test_freeze_annotation_corpus_rejects_an_unexpected_source_layer(
+    manifest_path: Path,
+    source_path: Path,
+    tmp_path: Path,
+) -> None:
+    corpus_dir = tmp_path / "corpus"
+    output_path = tmp_path / "freeze.json"
+    build_corpus(manifest_path, source_path, corpus_dir)
+
+    result = runner.invoke(
+        app,
+        [
+            "freeze-annotation-corpus",
+            "--corpus-dir",
+            str(corpus_dir),
+            "--corpus-path",
+            "datasets/processed/phase5-annotation-api-v1",
+            "--annotation-namespace",
+            "pymc-6.1.0-api-phase5-development-v1",
+            "--library",
+            "pymc",
+            "--library-version",
+            "6.1.0",
+            "--source-type",
+            "notebook",
+            "--limitation",
+            "The first annotation corpus covers one synthetic test source.",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "annotation-corpus freeze failed:" in result.stderr
+    assert "source types do not match" in result.stderr
+    assert not output_path.exists()
+
+
+def test_freeze_annotation_corpus_rejects_duplicate_jsonl_chunk_records(
+    manifest_path: Path,
+    source_path: Path,
+    tmp_path: Path,
+) -> None:
+    corpus_dir = tmp_path / "corpus"
+    output_path = tmp_path / "freeze.json"
+    build_corpus(manifest_path, source_path, corpus_dir)
+    chunks_path = corpus_dir / "chunks.jsonl"
+    chunk_lines = chunks_path.read_text(encoding="utf-8").splitlines()
+    chunks_path.write_text(
+        f"{chunks_path.read_text(encoding='utf-8')}{chunk_lines[0]}\n",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "freeze-annotation-corpus",
+            "--corpus-dir",
+            str(corpus_dir),
+            "--corpus-path",
+            "datasets/processed/phase5-annotation-api-v1",
+            "--annotation-namespace",
+            "pymc-6.1.0-api-phase5-development-v1",
+            "--library",
+            "pymc",
+            "--library-version",
+            "6.1.0",
+            "--source-type",
+            "api_reference",
+            "--limitation",
+            "The first annotation corpus covers one synthetic test source.",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "duplicate chunk ID" in result.stderr
+    assert not output_path.exists()

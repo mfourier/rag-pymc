@@ -9,9 +9,11 @@ from rag_pymc.evaluation.comparison import (
 )
 from rag_pymc.evaluation.dataset import load_evaluation_queries
 from rag_pymc.evaluation.development_dataset import (
+    build_phase5_annotation_corpus_freeze,
     hash_phase5_corpus,
     load_phase5_development_dataset,
     validate_phase5_development_corpus,
+    write_phase5_annotation_corpus_freeze,
 )
 from rag_pymc.evaluation.errors import EvaluationDatasetError, EvaluationError
 from rag_pymc.evaluation.evaluator import RetrievalEvaluator, write_experiment_report
@@ -36,6 +38,8 @@ from rag_pymc.evaluation.models import (
     GoldEvidenceEvaluationReport,
     GoldEvidenceSupportSet,
     HybridRetrievalExperimentConfig,
+    Phase5AnnotationCorpusDocument,
+    Phase5AnnotationCorpusFreeze,
     Phase5DevelopmentCorpusValidation,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
@@ -74,6 +78,8 @@ __all__ = [
     "GoldEvidenceEvaluationReport",
     "GoldEvidenceSupportSet",
     "HybridRetrievalExperimentConfig",
+    "Phase5AnnotationCorpusDocument",
+    "Phase5AnnotationCorpusFreeze",
     "Phase5DevelopmentCorpusValidation",
     "Phase5DevelopmentDataset",
     "Phase5DevelopmentExample",
@@ -93,6 +99,7 @@ __all__ = [
     "StructuralValidationStage",
     "aggregate_gold_evidence",
     "aggregate_structural_responses",
+    "build_phase5_annotation_corpus_freeze",
     "compare_retrieval_reports",
     "evaluate_gold_evidence",
     "evaluate_structural_response",
@@ -102,4 +109,5 @@ __all__ = [
     "validate_phase5_development_corpus",
     "write_comparison_report",
     "write_experiment_report",
+    "write_phase5_annotation_corpus_freeze",
 ]

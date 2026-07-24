@@ -1,11 +1,10 @@
 from datetime import UTC, datetime
-from hashlib import sha256
 from typing import Literal
 
 import pytest
-from pydantic import AnyUrl, ValidationError
+from pydantic import ValidationError
 
-from rag_pymc.domain import Chunk, Difficulty, SourceType
+from rag_pymc.domain import Chunk, Difficulty
 from rag_pymc.evaluation import (
     AdjudicationProvenance,
     AnnotationProvenance,
@@ -17,6 +16,7 @@ from rag_pymc.evaluation import (
     hash_phase5_corpus,
     validate_phase5_development_corpus,
 )
+from tests.factories import make_chunk as make_test_chunk
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 CORPUS_HASH_POLICY: Literal["canonical-chunk-identity-json-v1"] = "canonical-chunk-identity-json-v1"
@@ -30,18 +30,15 @@ def make_chunk(
     library_version: str = "6.1.0",
 ) -> Chunk:
     resolved_content = content or f"Evidence in {chunk_id}."
-    return Chunk(
-        chunk_id=chunk_id,
-        document_id=f"document_{chunk_id}",
+    return make_test_chunk(
+        chunk_id,
+        resolved_content,
         library=library,
-        library_version=library_version,
-        source_type=SourceType.API_REFERENCE,
-        source_url=AnyUrl(f"https://docs.example.test/{chunk_id}.html"),
+        version=library_version,
+        source_url=f"https://docs.example.test/{chunk_id}.html",
         title="Synthetic API",
         section="Details",
-        content=resolved_content,
-        content_hash=sha256(resolved_content.encode()).hexdigest(),
-        api_symbols=("pymc.sample",),
+        symbols=("pymc.sample",),
         created_at=NOW,
     )
 

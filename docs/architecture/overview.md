@@ -202,6 +202,10 @@ The implemented Phase 5 slices contain:
 - canonical Phase 5 corpus hashing over sorted chunk ID/content-hash records plus validation
   that resolves every gold support reference against the exact library/version corpus before
   a dataset is evaluated;
+- a deterministic `phase5-annotation-corpus-freeze-v1` Gate A record and CLI that bind the
+  intended annotation namespace to its logical corpus path, exact corpus identity, admitted
+  library/version and source layers, normalized document identities, parser/chunker versions,
+  API-symbol coverage, and declared limitations before any examples are authored;
 - `rag-pymc validate-development-data`, which requires explicit dataset and corpus paths and
   emits the deterministic corpus-validation JSON without partial standard output on failure;
 - the pure `phase5-gold-evidence-v1` evaluator, which binds corpus, query, context, and

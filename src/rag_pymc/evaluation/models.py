@@ -3,15 +3,36 @@
 from collections.abc import Sequence
 from datetime import datetime
 from enum import StrEnum
+from pathlib import PurePosixPath
 from typing import Annotated, Any, Literal, Self, cast
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    AnyUrl,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 from rag_pymc.domain import Difficulty, EvidenceSufficiency, SourceType
 from rag_pymc.evaluation.errors import EvaluationError
 
 NonEmptyString = Annotated[str, StringConstraints(min_length=1, strip_whitespace=True)]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
+
+
+def _canonicalize_unique_strings(
+    values: tuple[str, ...],
+    *,
+    label: str,
+) -> tuple[str, ...]:
+    if len(set(values)) != len(values):
+        msg = f"{label} must be unique"
+        raise ValueError(msg)
+    return tuple(sorted(values))
 
 
 class EvaluationModel(BaseModel):
@@ -62,16 +83,11 @@ class AnnotationProvenance(EvaluationModel):
     batch_id: NonEmptyString
     annotated_at: AwareDatetime
 
-    @model_validator(mode="after")
-    def annotator_ids_must_be_canonical(self) -> Self:
-        """Require stable opaque annotator identity without duplicate reviewers."""
-        if len(set(self.annotator_ids)) != len(self.annotator_ids):
-            msg = "annotation annotator IDs must be unique"
-            raise ValueError(msg)
-        if self.annotator_ids != tuple(sorted(self.annotator_ids)):
-            msg = "annotation annotator IDs must be lexicographically ordered"
-            raise ValueError(msg)
-        return self
+    @field_validator("annotator_ids")
+    @classmethod
+    def canonicalize_annotator_ids(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        """Store unique opaque annotator identities in canonical order."""
+        return _canonicalize_unique_strings(values, label="annotation annotator IDs")
 
 
 class AdjudicationProvenance(EvaluationModel):
@@ -84,16 +100,11 @@ class AdjudicationProvenance(EvaluationModel):
     batch_id: NonEmptyString
     adjudicated_at: AwareDatetime
 
-    @model_validator(mode="after")
-    def adjudicator_ids_must_be_canonical(self) -> Self:
-        """Require stable opaque adjudicator identity without duplicate reviewers."""
-        if len(set(self.adjudicator_ids)) != len(self.adjudicator_ids):
-            msg = "adjudication adjudicator IDs must be unique"
-            raise ValueError(msg)
-        if self.adjudicator_ids != tuple(sorted(self.adjudicator_ids)):
-            msg = "adjudication adjudicator IDs must be lexicographically ordered"
-            raise ValueError(msg)
-        return self
+    @field_validator("adjudicator_ids")
+    @classmethod
+    def canonicalize_adjudicator_ids(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        """Store unique opaque adjudicator identities in canonical order."""
+        return _canonicalize_unique_strings(values, label="adjudication adjudicator IDs")
 
 
 class GoldEvidenceSupportSet(EvaluationModel):
@@ -101,16 +112,14 @@ class GoldEvidenceSupportSet(EvaluationModel):
 
     chunk_ids: tuple[NonEmptyString, ...] = Field(min_length=1)
 
-    @model_validator(mode="after")
-    def chunk_ids_must_be_canonical(self) -> Self:
-        """Require one nonredundant lexicographically ordered chunk identity tuple."""
-        if len(set(self.chunk_ids)) != len(self.chunk_ids):
-            msg = "gold evidence support-set chunk IDs must be unique"
-            raise ValueError(msg)
-        if self.chunk_ids != tuple(sorted(self.chunk_ids)):
-            msg = "gold evidence support-set chunk IDs must be lexicographically ordered"
-            raise ValueError(msg)
-        return self
+    @field_validator("chunk_ids")
+    @classmethod
+    def canonicalize_chunk_ids(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        """Store one nonredundant support-set identity in canonical order."""
+        return _canonicalize_unique_strings(
+            values,
+            label="gold evidence support-set chunk IDs",
+        )
 
 
 class AtomicGoldClaim(EvaluationModel):
@@ -120,17 +129,23 @@ class AtomicGoldClaim(EvaluationModel):
     text: NonEmptyString
     support_sets: tuple[GoldEvidenceSupportSet, ...] = Field(min_length=1)
 
-    @model_validator(mode="after")
-    def support_sets_must_be_unique_canonical_antichain(self) -> Self:
-        """Reject duplicate, noncanonical, and syntactically nonminimal alternatives."""
-        chunk_id_tuples = tuple(support_set.chunk_ids for support_set in self.support_sets)
+    @field_validator("support_sets")
+    @classmethod
+    def canonicalize_support_sets(
+        cls,
+        values: tuple[GoldEvidenceSupportSet, ...],
+    ) -> tuple[GoldEvidenceSupportSet, ...]:
+        """Store unique alternative support sets in canonical order."""
+        chunk_id_tuples = tuple(support_set.chunk_ids for support_set in values)
         if len(set(chunk_id_tuples)) != len(chunk_id_tuples):
             msg = "atomic gold claim support sets must be unique"
             raise ValueError(msg)
-        if chunk_id_tuples != tuple(sorted(chunk_id_tuples)):
-            msg = "atomic gold claim support sets must be lexicographically ordered"
-            raise ValueError(msg)
+        return tuple(sorted(values, key=lambda support_set: support_set.chunk_ids))
 
+    @model_validator(mode="after")
+    def support_sets_must_form_minimal_antichain(self) -> Self:
+        """Reject syntactically nonminimal alternative support sets."""
+        chunk_id_tuples = tuple(support_set.chunk_ids for support_set in self.support_sets)
         support_id_sets = tuple(set(chunk_ids) for chunk_ids in chunk_id_tuples)
         for index, candidate in enumerate(support_id_sets):
             if any(
@@ -164,16 +179,15 @@ class Phase5DevelopmentExample(EvaluationModel):
     annotation: AnnotationProvenance
     adjudication: AdjudicationProvenance
 
+    @field_validator("expected_api_symbols")
+    @classmethod
+    def canonicalize_expected_api_symbols(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        """Store unique expected API symbols in canonical order."""
+        return _canonicalize_unique_strings(values, label="Phase 5 expected API symbols")
+
     @model_validator(mode="after")
     def validate_corpus_annotation(self) -> Self:
         """Separate corpus answerability from runtime inference and preserve identity."""
-        if len(set(self.expected_api_symbols)) != len(self.expected_api_symbols):
-            msg = "Phase 5 expected API symbols must be unique"
-            raise ValueError(msg)
-        if self.expected_api_symbols != tuple(sorted(self.expected_api_symbols)):
-            msg = "Phase 5 expected API symbols must be lexicographically ordered"
-            raise ValueError(msg)
-
         claim_ids = tuple(claim.claim_id for claim in self.gold_claims)
         if len(set(claim_ids)) != len(claim_ids):
             msg = "Phase 5 gold claim IDs must be unique within an example"
@@ -280,6 +294,94 @@ class Phase5DevelopmentCorpusValidation(EvaluationModel):
         if self.referenced_chunk_count > self.corpus_chunk_count:
             msg = "referenced chunk count cannot exceed corpus chunk count"
             raise ValueError(msg)
+        return self
+
+
+class Phase5AnnotationCorpusDocument(EvaluationModel):
+    """One normalized source identity in a frozen Phase 5 annotation corpus."""
+
+    document_id: NonEmptyString
+    content_sha256: Sha256
+    source_url: AnyUrl
+    source_type: SourceType
+    parser_version: NonEmptyString
+    source_commit: NonEmptyString | None = None
+
+
+class Phase5AnnotationCorpusFreeze(EvaluationModel):
+    """Deterministic Gate A record for one corpus annotation namespace."""
+
+    schema_version: Literal["1"] = "1"
+    freeze_version: Literal["phase5-annotation-corpus-freeze-v1"] = (
+        "phase5-annotation-corpus-freeze-v1"
+    )
+    corpus_role: Literal["phase5-development-annotation"] = "phase5-development-annotation"
+    annotation_namespace: NonEmptyString
+    corpus_path: NonEmptyString
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"] = (
+        "canonical-chunk-identity-json-v1"
+    )
+    corpus_sha256: Sha256
+    library: NonEmptyString
+    library_version: NonEmptyString
+    source_types: tuple[SourceType, ...] = Field(min_length=1)
+    parser_versions: tuple[NonEmptyString, ...] = Field(min_length=1)
+    chunker_versions: tuple[NonEmptyString, ...] = Field(min_length=1)
+    api_symbols: tuple[NonEmptyString, ...] = ()
+    documents: tuple[Phase5AnnotationCorpusDocument, ...] = Field(min_length=1)
+    document_count: int = Field(ge=1, strict=True)
+    chunk_count: int = Field(ge=1, strict=True)
+    limitations: tuple[NonEmptyString, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_frozen_corpus_identity(self) -> Self:
+        """Require a portable path, canonical aggregates, and exact derived counts."""
+        corpus_path = PurePosixPath(self.corpus_path)
+        if corpus_path.is_absolute() or ".." in corpus_path.parts:
+            msg = "Phase 5 annotation corpus_path must be project-relative without traversal"
+            raise ValueError(msg)
+
+        document_ids = tuple(document.document_id for document in self.documents)
+        if len(set(document_ids)) != len(document_ids):
+            msg = "Phase 5 annotation corpus document IDs must be unique"
+            raise ValueError(msg)
+        if document_ids != tuple(sorted(document_ids)):
+            msg = "Phase 5 annotation corpus documents must be ordered by document ID"
+            raise ValueError(msg)
+        if self.document_count != len(self.documents):
+            msg = "Phase 5 annotation corpus document_count must match documents"
+            raise ValueError(msg)
+
+        document_source_types = tuple(
+            sorted(
+                {document.source_type for document in self.documents}, key=lambda item: item.value
+            )
+        )
+        if self.source_types != document_source_types:
+            msg = "Phase 5 annotation corpus source_types must match documents"
+            raise ValueError(msg)
+        document_parser_versions = tuple(
+            sorted({document.parser_version for document in self.documents})
+        )
+        if self.parser_versions != document_parser_versions:
+            msg = "Phase 5 annotation corpus parser_versions must match documents"
+            raise ValueError(msg)
+
+        canonical_fields = (
+            ("source_types", tuple(sorted(self.source_types, key=lambda item: item.value))),
+            ("parser_versions", tuple(sorted(self.parser_versions))),
+            ("chunker_versions", tuple(sorted(self.chunker_versions))),
+            ("api_symbols", tuple(sorted(self.api_symbols))),
+            ("limitations", tuple(sorted(self.limitations))),
+        )
+        for field_name, canonical_values in canonical_fields:
+            values = getattr(self, field_name)
+            if len(set(values)) != len(values):
+                msg = f"Phase 5 annotation corpus {field_name} must be unique"
+                raise ValueError(msg)
+            if values != canonical_values:
+                msg = f"Phase 5 annotation corpus {field_name} must be lexicographically ordered"
+                raise ValueError(msg)
         return self
 
 
@@ -1215,9 +1317,10 @@ class StructuralResponseEvaluation(EvaluationModel):
 class AggregateStructuralResponseMetrics(EvaluationModel):
     """Nested structural funnel metrics; zero denominators produce ``None``.
 
-    Persist the versioned enclosing report rather than treating this value as a standalone
-    artifact. These metrics do not assess answer correctness, citation correctness, or
-    citation completeness.
+    This is a derived value, not a standalone artifact. ``from_responses`` is its construction
+    boundary, and the versioned enclosing report recomputes it from embedded responses when
+    loaded. These metrics do not assess answer correctness, citation correctness, or citation
+    completeness.
     """
 
     response_count: int = Field(ge=0, strict=True)
@@ -1423,219 +1526,6 @@ class AggregateStructuralResponseMetrics(EvaluationModel):
                 total_citation_reference_count,
             ),
         )
-
-    @model_validator(mode="after")
-    def validate_aggregate_arithmetic(self) -> Self:
-        """Require exact funnel partitions, micro totals, and declared denominators."""
-        partitions = (
-            (
-                "JSON parse",
-                self.response_count,
-                self.json_parse_success_count,
-                self.json_parse_failure_count,
-            ),
-            (
-                "answer contract",
-                self.answer_contract_evaluated_count,
-                self.answer_contract_valid_count,
-                self.answer_contract_invalid_count,
-            ),
-            (
-                "output contract",
-                self.output_contract_evaluated_count,
-                self.output_contract_valid_count,
-                self.output_contract_invalid_count,
-            ),
-            (
-                "citation traceability",
-                self.citation_traceability_evaluated_count,
-                self.citation_traceability_valid_response_count,
-                self.citation_traceability_invalid_response_count,
-            ),
-            (
-                "structural validity",
-                self.response_count,
-                self.structurally_valid_response_count,
-                self.structurally_invalid_response_count,
-            ),
-            (
-                "answer disposition",
-                self.answer_contract_valid_count,
-                self.abstaining_response_count,
-                self.non_abstaining_response_count,
-            ),
-            (
-                "citation-bearing responses",
-                self.answer_contract_valid_count,
-                self.citation_bearing_response_count,
-                self.zero_citation_response_count,
-            ),
-            (
-                "citations",
-                self.total_citation_count,
-                self.total_valid_citation_count,
-                self.total_invalid_citation_count,
-            ),
-            (
-                "citation references",
-                self.total_citation_reference_count,
-                self.total_traceable_citation_reference_count,
-                self.total_untraceable_citation_reference_count,
-            ),
-        )
-        for label, total, first, second in partitions:
-            if first + second != total:
-                msg = f"aggregate {label} counts must form an exact partition"
-                raise ValueError(msg)
-
-        if self.answer_contract_evaluated_count != self.json_parse_success_count:
-            msg = "answer-contract evaluation count must equal JSON parse successes"
-            raise ValueError(msg)
-        if self.output_contract_evaluated_count != self.answer_contract_valid_count:
-            msg = "output-contract evaluation count must equal valid answer contracts"
-            raise ValueError(msg)
-        if self.citation_traceability_evaluated_count != self.answer_contract_valid_count:
-            msg = "citation-traceability evaluation count must equal valid answer contracts"
-            raise ValueError(msg)
-        if not (
-            self.output_contract_valid_count
-            == self.citation_traceability_valid_response_count
-            == self.structurally_valid_response_count
-        ):
-            msg = "structural-citation-v1 valid response counts must agree"
-            raise ValueError(msg)
-        if self.zero_citation_response_count != (
-            self.abstaining_response_count + self.non_abstaining_zero_citation_response_count
-        ):
-            msg = "zero-citation responses must preserve answer disposition"
-            raise ValueError(msg)
-        if self.total_claim_count < self.non_abstaining_response_count:
-            msg = "each non-abstaining response must contribute at least one claim"
-            raise ValueError(msg)
-        if self.total_citation_count < self.citation_bearing_response_count:
-            msg = "each citation-bearing response must contribute at least one citation"
-            raise ValueError(msg)
-        if self.total_citation_reference_count < self.total_citation_count:
-            msg = "every declared citation must have at least one claim reference"
-            raise ValueError(msg)
-        if self.total_invalid_citation_count < self.output_contract_invalid_count:
-            msg = "each invalid output must contribute at least one invalid citation"
-            raise ValueError(msg)
-        if self.output_contract_invalid_count > self.citation_bearing_response_count:
-            msg = "invalid outputs cannot exceed citation-bearing responses"
-            raise ValueError(msg)
-        if self.total_valid_citation_count < (
-            self.citation_bearing_response_count - self.output_contract_invalid_count
-        ):
-            msg = "each citation-bearing valid output must contribute a valid citation"
-            raise ValueError(msg)
-        if (self.total_claim_count == 0) != (self.non_abstaining_response_count == 0):
-            msg = "claims must exist exactly when non-abstaining responses exist"
-            raise ValueError(msg)
-        if (self.total_citation_count == 0) != (self.citation_bearing_response_count == 0):
-            msg = "citations must exist exactly when citation-bearing responses exist"
-            raise ValueError(msg)
-        if self.total_traceable_citation_reference_count < self.total_valid_citation_count:
-            msg = "every valid citation must have at least one traceable reference"
-            raise ValueError(msg)
-        if self.total_untraceable_citation_reference_count < self.total_invalid_citation_count:
-            msg = "every invalid citation must have at least one untraceable reference"
-            raise ValueError(msg)
-        if self.citation_bearing_response_count > 0:
-            # The maximum concentrates every claim and citation beyond the required one per
-            # contributing response into the same citation-bearing response.
-            maximum_reference_count = (
-                (self.total_claim_count - self.non_abstaining_response_count + 1)
-                * (self.total_citation_count - self.citation_bearing_response_count + 1)
-                + self.citation_bearing_response_count
-                - 1
-            )
-            if self.total_citation_reference_count > maximum_reference_count:
-                msg = "citation references exceed the aggregate response allocation bound"
-                raise ValueError(msg)
-        if self.total_traceable_citation_reference_count > (
-            self.total_valid_citation_count * self.total_claim_count
-        ):
-            msg = "traceable references cannot exceed valid-citation-to-claim pairs"
-            raise ValueError(msg)
-        if self.total_untraceable_citation_reference_count > (
-            self.total_invalid_citation_count * self.total_claim_count
-        ):
-            msg = "untraceable references cannot exceed invalid-citation-to-claim pairs"
-            raise ValueError(msg)
-        if (self.total_valid_citation_count == 0) != (
-            self.total_traceable_citation_reference_count == 0
-        ):
-            msg = "valid citations and traceable references must be jointly absent"
-            raise ValueError(msg)
-        if (self.total_invalid_citation_count == 0) != (
-            self.total_untraceable_citation_reference_count == 0
-        ):
-            msg = "invalid citations and untraceable references must be jointly absent"
-            raise ValueError(msg)
-        if (self.total_invalid_citation_count == 0) != (self.output_contract_invalid_count == 0):
-            msg = "invalid citations and invalid outputs must be jointly absent"
-            raise ValueError(msg)
-        if self.answer_contract_valid_count == 0 and any(
-            count != 0
-            for count in (
-                self.total_claim_count,
-                self.total_citation_count,
-                self.total_citation_reference_count,
-            )
-        ):
-            msg = "aggregates without valid answers cannot contain answer-derived totals"
-            raise ValueError(msg)
-
-        rates = (
-            (
-                "json_parse_success_rate",
-                self.json_parse_success_rate,
-                self.json_parse_success_count,
-                self.response_count,
-            ),
-            (
-                "answer_contract_valid_given_json_parse_success_rate",
-                self.answer_contract_valid_given_json_parse_success_rate,
-                self.answer_contract_valid_count,
-                self.answer_contract_evaluated_count,
-            ),
-            (
-                "output_contract_valid_given_valid_answer_contract_rate",
-                self.output_contract_valid_given_valid_answer_contract_rate,
-                self.output_contract_valid_count,
-                self.output_contract_evaluated_count,
-            ),
-            (
-                "citation_traceability_valid_given_valid_answer_contract_rate",
-                self.citation_traceability_valid_given_valid_answer_contract_rate,
-                self.citation_traceability_valid_response_count,
-                self.citation_traceability_evaluated_count,
-            ),
-            (
-                "end_to_end_structural_validity_rate",
-                self.end_to_end_structural_validity_rate,
-                self.structurally_valid_response_count,
-                self.response_count,
-            ),
-            (
-                "micro_citation_validity_rate",
-                self.micro_citation_validity_rate,
-                self.total_valid_citation_count,
-                self.total_citation_count,
-            ),
-            (
-                "micro_citation_reference_traceability_rate",
-                self.micro_citation_reference_traceability_rate,
-                self.total_traceable_citation_reference_count,
-                self.total_citation_reference_count,
-            ),
-        )
-        for name, actual, numerator, denominator in rates:
-            if actual != _ratio_or_none(numerator, denominator):
-                msg = f"{name} must match its declared numerator and denominator"
-                raise ValueError(msg)
-        return self
 
 
 class StructuralResponseAggregateReport(EvaluationModel):

@@ -150,18 +150,20 @@ def test_corpus_annotation_excludes_runtime_outcome_fields() -> None:
 
 
 @pytest.mark.parametrize(
-    ("chunk_ids", "match"),
-    [
-        (("chunk_a", "chunk_a"), "chunk IDs must be unique"),
-        (("chunk_b", "chunk_a"), "lexicographically ordered"),
-    ],
+    "chunk_ids",
+    [("chunk_a", "chunk_a")],
 )
 def test_support_set_requires_unique_canonical_chunk_ids(
     chunk_ids: tuple[str, ...],
-    match: str,
 ) -> None:
-    with pytest.raises(ValidationError, match=match):
+    with pytest.raises(ValidationError, match="chunk IDs must be unique"):
         GoldEvidenceSupportSet(chunk_ids=chunk_ids)
+
+
+def test_support_set_canonicalizes_chunk_id_order() -> None:
+    support_set = GoldEvidenceSupportSet(chunk_ids=("chunk_b", "chunk_a"))
+
+    assert support_set.chunk_ids == ("chunk_a", "chunk_b")
 
 
 @pytest.mark.parametrize(
@@ -173,13 +175,6 @@ def test_support_set_requires_unique_canonical_chunk_ids(
                 GoldEvidenceSupportSet(chunk_ids=("chunk_a",)),
             ),
             "support sets must be unique",
-        ),
-        (
-            (
-                GoldEvidenceSupportSet(chunk_ids=("chunk_b",)),
-                GoldEvidenceSupportSet(chunk_ids=("chunk_a",)),
-            ),
-            "lexicographically ordered",
         ),
         (
             (
@@ -200,6 +195,19 @@ def test_atomic_claim_rejects_duplicate_noncanonical_or_nonminimal_alternatives(
             text="A synthetic claim.",
             support_sets=support_sets,
         )
+
+
+def test_atomic_claim_canonicalizes_support_set_order() -> None:
+    claim = AtomicGoldClaim(
+        claim_id="claim_001",
+        text="A synthetic claim.",
+        support_sets=(
+            GoldEvidenceSupportSet(chunk_ids=("chunk_b",)),
+            GoldEvidenceSupportSet(chunk_ids=("chunk_a",)),
+        ),
+    )
+
+    assert tuple(item.chunk_ids for item in claim.support_sets) == (("chunk_a",), ("chunk_b",))
 
 
 @pytest.mark.parametrize(
@@ -237,21 +245,26 @@ def test_unanswerable_example_may_record_an_adjudicated_hard_negative_category()
 
 
 @pytest.mark.parametrize(
-    ("symbols", "match"),
-    [
-        (["pymc.Data", "pymc.Data"], "expected API symbols must be unique"),
-        (["pymc.set_data", "pymc.Data"], "lexicographically ordered"),
-    ],
+    "symbols",
+    [["pymc.Data", "pymc.Data"]],
 )
 def test_expected_api_symbols_are_unique_and_canonical(
     symbols: list[str],
-    match: str,
 ) -> None:
     payload = make_answerable_payload()
     payload["expected_api_symbols"] = symbols
 
-    with pytest.raises(ValidationError, match=match):
+    with pytest.raises(ValidationError, match="expected API symbols must be unique"):
         Phase5DevelopmentExample.model_validate(payload)
+
+
+def test_expected_api_symbols_are_stored_in_canonical_order() -> None:
+    payload = make_answerable_payload()
+    payload["expected_api_symbols"] = ["pymc.set_data", "pymc.Data"]
+
+    example = Phase5DevelopmentExample.model_validate(payload)
+
+    assert example.expected_api_symbols == ("pymc.Data", "pymc.set_data")
 
 
 def test_claim_ids_are_unique_within_an_example() -> None:
@@ -272,12 +285,6 @@ def test_claim_ids_are_unique_within_an_example() -> None:
             "annotator IDs must be unique",
         ),
         (
-            "annotation",
-            "annotator_ids",
-            ["annotator_002", "annotator_001"],
-            "lexicographically ordered",
-        ),
-        (
             "adjudication",
             "adjudicator_ids",
             ["adjudicator_001", "adjudicator_001"],
@@ -296,6 +303,15 @@ def test_provenance_reviewer_ids_are_unique_and_canonical(
 
     with pytest.raises(ValidationError, match=match):
         Phase5DevelopmentExample.model_validate(payload)
+
+
+def test_reviewer_ids_are_stored_in_canonical_order() -> None:
+    payload = make_answerable_payload()
+    payload["annotation"]["annotator_ids"] = ["annotator_002", "annotator_001"]
+
+    example = Phase5DevelopmentExample.model_validate(payload)
+
+    assert example.annotation.annotator_ids == ("annotator_001", "annotator_002")
 
 
 def test_adjudication_cannot_precede_annotation() -> None:

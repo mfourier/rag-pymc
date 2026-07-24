@@ -1,38 +1,9 @@
-from datetime import UTC, datetime
-from hashlib import sha256
-
 import pytest
-from pydantic import AnyUrl
 
-from rag_pymc.domain import Chunk, SearchQuery, SourceType
+from rag_pymc.domain import SearchQuery, SourceType
 from rag_pymc.indexing import BM25Index
 from rag_pymc.retrieval import TechnicalTokenizer
-
-
-def make_chunk(
-    chunk_id: str,
-    content: str,
-    *,
-    library: str = "pymc",
-    version: str = "6.1.0",
-    source_type: SourceType = SourceType.API_REFERENCE,
-    symbols: tuple[str, ...] = ("pymc.sample",),
-) -> Chunk:
-    content_hash = sha256(content.encode()).hexdigest()
-    return Chunk(
-        chunk_id=chunk_id,
-        document_id=f"doc_{chunk_id}",
-        library=library,
-        library_version=version,
-        source_type=source_type,
-        source_url=AnyUrl("https://example.test/source"),
-        title="Test source",
-        section="Test",
-        content=content,
-        content_hash=content_hash,
-        api_symbols=symbols,
-        created_at=datetime(2026, 7, 19, tzinfo=UTC),
-    )
+from tests.factories import make_chunk
 
 
 def test_technical_tokenizer_preserves_python_symbols() -> None:
