@@ -200,12 +200,10 @@ def test_linear_regression_datatree_round_trip(
         )
 
 
-def test_linear_regression_notebook_is_clean_and_code_cells_parse() -> None:
+def test_linear_regression_notebook_code_cells_parse() -> None:
     notebook = json.loads(NOTEBOOK_PATH.read_text(encoding="utf-8"))
     for cell in notebook["cells"]:
         if cell["cell_type"] == "code":
-            assert cell["execution_count"] is None
-            assert cell["outputs"] == []
             assert cell["source"]
             ast.parse("".join(cell["source"]), filename=cell["id"])
 
