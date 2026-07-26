@@ -24,11 +24,15 @@ datasets/raw/*
 
 # Test, type-checking, and lint caches
 .ipynb_checkpoints/
+.virtual_documents/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
+
+# Generated Bayesian workflow artifacts
+examples/bayesian_workflow/outputs/
 
 # Local learning notes and continuation prompts
 .local-learning/
