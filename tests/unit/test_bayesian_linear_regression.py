@@ -54,6 +54,18 @@ def model(constructed_data: tuple[np.ndarray, np.ndarray]) -> pm.Model:
 
 
 @pytest.fixture(scope="module")
+def smoke_prior(model: pm.Model) -> xr.DataTree:
+    with model:
+        prior = pm.sample_prior_predictive(
+            draws=25,
+            var_names=["intercept", "slope", "sigma", "mu", "y"],
+            random_seed=SEED + 1,
+        )
+    assert isinstance(prior, xr.DataTree)
+    return prior
+
+
+@pytest.fixture(scope="module")
 def smoke_posterior(model: pm.Model) -> xr.DataTree:
     with model:
         posterior = pm.sample(
@@ -123,28 +135,20 @@ def test_linear_model_encodes_requested_prior_locations_and_scales(model: pm.Mod
 
 
 def test_prior_predictive_has_expected_groups_dimensions_and_support(
-    model: pm.Model,
+    smoke_prior: xr.DataTree,
 ) -> None:
-    with model:
-        prior = pm.sample_prior_predictive(
-            draws=25,
-            var_names=["intercept", "slope", "sigma", "mu", "y"],
-            random_seed=SEED + 1,
-        )
-
-    assert isinstance(prior, xr.DataTree)
-    assert {"/prior", "/prior_predictive", "/observed_data"} <= set(prior.groups)
-    assert prior["prior"].dataset["intercept"].dims == ("chain", "draw")
-    assert prior["prior"].dataset["mu"].dims == (
+    assert {"/prior", "/prior_predictive", "/observed_data"} <= set(smoke_prior.groups)
+    assert smoke_prior["prior"].dataset["intercept"].dims == ("chain", "draw")
+    assert smoke_prior["prior"].dataset["mu"].dims == (
         "chain",
         "draw",
         OBSERVATION_DIM,
     )
-    replicated = prior["prior_predictive"].dataset["y"]
+    replicated = smoke_prior["prior_predictive"].dataset["y"]
     assert replicated.dims == ("chain", "draw", OBSERVATION_DIM)
     assert replicated.shape == (1, 25, N_OBSERVATIONS)
     assert np.all(np.isfinite(replicated.values))
-    assert np.all(prior["prior"].dataset["sigma"].values > 0.0)
+    assert np.all(smoke_prior["prior"].dataset["sigma"].values > 0.0)
 
 
 def test_sampling_smoke_path_returns_expected_finite_groups(
@@ -183,13 +187,40 @@ def test_joint_posterior_parameter_matrix_is_finite_symmetric_and_complete(
 
 
 def test_linear_regression_datatree_round_trip(
-    tmp_path: Path, smoke_posterior: xr.DataTree
+    tmp_path: Path,
+    constructed_data: tuple[np.ndarray, np.ndarray],
+    smoke_prior: xr.DataTree,
+    smoke_posterior: xr.DataTree,
 ) -> None:
+    predictor, _ = constructed_data
+    artifact_groups = {
+        group: smoke_posterior[group].dataset for group in smoke_posterior.groups if group != "/"
+    }
+    artifact_groups.update(
+        {
+            "/prior": smoke_prior["prior"].dataset,
+            "/prior_predictive": smoke_prior["prior_predictive"].dataset,
+            "/constant_data": xr.Dataset(
+                data_vars={"predictor": (OBSERVATION_DIM, predictor)},
+                coords={OBSERVATION_DIM: np.arange(N_OBSERVATIONS, dtype=np.int64)},
+            ),
+        }
+    )
+    analysis_artifact = xr.DataTree.from_dict(artifact_groups)
     posterior_path = tmp_path / "linear-regression-posterior.nc"
-    smoke_posterior.to_netcdf(posterior_path, engine="h5netcdf")
+    analysis_artifact.to_netcdf(posterior_path, engine="h5netcdf")
 
     with xr.open_datatree(posterior_path, engine="h5netcdf") as restored:
-        assert restored.groups == smoke_posterior.groups
+        assert set(restored.groups) == {
+            "/",
+            "/posterior",
+            "/sample_stats",
+            "/observed_data",
+            "/posterior_predictive",
+            "/prior",
+            "/prior_predictive",
+            "/constant_data",
+        }
         np.testing.assert_allclose(
             restored["posterior"].dataset["slope"].values,
             smoke_posterior["posterior"].dataset["slope"].values,
@@ -197,6 +228,14 @@ def test_linear_regression_datatree_round_trip(
         np.testing.assert_array_equal(
             restored["posterior_predictive"].dataset["y"].values,
             smoke_posterior["posterior_predictive"].dataset["y"].values,
+        )
+        np.testing.assert_array_equal(
+            restored["prior_predictive"].dataset["y"].values,
+            smoke_prior["prior_predictive"].dataset["y"].values,
+        )
+        np.testing.assert_array_equal(
+            restored["constant_data"].dataset["predictor"].values,
+            predictor,
         )
 
 
@@ -227,6 +266,7 @@ def test_linear_regression_notebook_exposes_workflow_operations() -> None:
         "Workflow: **Fit the model**",
         "Workflow: **Validate computation**",
         "Workflow: **Posterior predictive check**",
+        "replicated responses at the fixed observed inputs",
         "intercept = pm.Normal(",
         'pm.Normal("slope"',
         'pm.HalfNormal("sigma"',
@@ -260,6 +300,7 @@ def test_linear_regression_notebook_exposes_workflow_operations() -> None:
         r"94% prior interval for mean $\mu(x)$",
         r"Prior median of the conditional mean $\mu(x)$",
         "Prior predictive implications before observing y",
+        "provisionally_accepted_for_demonstration",
         "Joint prior distribution in parameter space",
         'prior_predictive["prior"].dataset',
         "prior_relative_joint_density",
@@ -274,6 +315,8 @@ def test_linear_regression_notebook_exposes_workflow_operations() -> None:
         "az.ess(",
         "az.mcse(",
         "az.bfmi(",
+        "trace_plot = az.plot_trace(",
+        "trace_plot.show()",
         "Bayesian updating: prior and posterior parameter distributions",
         r"Prior $p({symbol})$",
         r"Posterior $p({symbol}\mid x,y)$",
@@ -294,7 +337,9 @@ def test_linear_regression_notebook_exposes_workflow_operations() -> None:
         r"Posterior median of the conditional mean $\mu(x)$",
         r"Observed data $y$",
         r"94% posterior predictive interval for $y^{\mathrm{rep}}$",
-        "posterior.to_netcdf(",
+        "analysis_artifact = xr.DataTree.from_dict(artifact_groups)",
+        '"/constant_data": xr.Dataset(',
+        "analysis_artifact.to_netcdf(",
         "xr.open_datatree(",
     ):
         assert expected in source

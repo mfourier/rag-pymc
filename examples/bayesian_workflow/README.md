@@ -11,7 +11,7 @@ layers.
   assuming a linear mean, constant residual scale, and Gaussian errors.
 - Primary estimand: `slope`, the expected response change for a one-unit input increase.
 - Secondary estimands: `intercept` at centered `x = 0` and residual standard deviation `sigma`.
-- Predictive target: a future response at a fixed input inside the observed range.
+- Predictive target: replicated responses at the fixed observed inputs.
 - Constructed data: `n = 16`, seed `20260726`, `intercept_true = 1`, `slope_true = 2`,
   `sigma_true = 0.75`, and `x` evenly spaced from `-1.5` to `1.5`.
 - Priors: `intercept ~ Normal(0.5, 2.5)`, `slope ~ Normal(1.5, 2)`, and
@@ -67,7 +67,7 @@ uv run rag-pymc doctor
 uv run --extra notebooks jupyter lab examples/bayesian_workflow
 ```
 
-Clean-execute to a temporary directory so the versioned source remains output-free:
+Reproduce the executed notebook in a temporary directory without modifying the versioned copy:
 
 ```bash
 execution_dir="$(mktemp -d)"
@@ -78,6 +78,9 @@ uv run --extra notebooks jupyter nbconvert \
   --output bayesian_workflow_linear_regression.executed.ipynb \
   --output-dir "$execution_dir"
 ```
+
+The repository intentionally versions this notebook with its executed outputs for academic review.
+The command above produces an independent executed copy for reproducibility checks.
 
 For pedagogy, the notebook constructs the PyMC model and calls `pm.sample_prior_predictive`,
 `pm.sample`, and `pm.sample_posterior_predictive` directly. Data, priors, seeds, diagnostics, and
@@ -93,9 +96,12 @@ examples/bayesian_workflow/outputs/linear-regression-final/
 └── summary.json
 ```
 
-`posterior.nc` is the sampled `xarray.DataTree`. The notebook reopens it with
-`xarray.open_datatree` using `h5netcdf` and compares posterior and posterior-predictive arrays.
-`summary.json` records settings, diagnostics, posterior summaries, review status, and limitations.
+`posterior.nc` is a self-contained `xarray.DataTree` for the declared demonstration. It includes
+the prior, prior predictive, posterior, sample statistics, observed data, posterior predictive,
+and the fixed predictor as constant data. The notebook reopens it with `xarray.open_datatree`
+using `h5netcdf` and verifies representative arrays and the complete group contract.
+`summary.json` records settings, diagnostics, prior and posterior summaries, review status,
+artifact groups, and limitations.
 
 Focused checks:
 
@@ -116,9 +122,10 @@ the full notebook run.
 ## Observed run: 2026-07-26
 
 The exact versioned source executed all 15 code cells without cell errors under Python 3.13.5,
-PyMC 6.1.0, ArviZ 1.2.0, PyTensor 3.1.3, and xarray 2026.2.0. The source was then verified to have
-zero outputs and null execution counts. Jupyter emitted a transport warning about an unencrypted
-local TCP kernel connection; this did not arise from a notebook cell or the statistical model.
+PyMC 6.1.0, ArviZ 1.2.0, PyTensor 3.1.3, and xarray 2026.2.0. The notebook retains its outputs and
+sequential execution counts for academic review. Jupyter emitted a transport warning about an
+unencrypted local TCP kernel connection; this did not arise from a notebook cell or the
+statistical model.
 
 The fixed data had response mean `0.8648` and standard deviation `1.9101`. The Gaussian MLE was
 `(intercept, slope, sigma) = (0.8648, 1.8753, 0.6569)`. The independent OLS check gave intercept
@@ -145,8 +152,8 @@ reported numerical precision; they do not prove convergence or scientific adequa
 The posterior predictive figure is an in-sample visual check at the fixed inputs. It distinguishes
 the interval for the latent mean from the wider interval for replicated responses, but it does not
 test residual tails, heteroscedasticity, dependence, or out-of-sample prediction. The persisted
-DataTree reopened with posterior, sample-statistics, observed-data, and posterior-predictive groups,
-and the checked arrays matched the in-memory result.
+DataTree reopened with prior, prior-predictive, posterior, sample-statistics, observed-data,
+posterior-predictive, and constant-data groups, and the checked arrays matched the in-memory result.
 
 The human review status is **adequate for this demonstration**. It is conditional on the synthetic
 design and inspected evidence, and does not authorize causal language or real-world deployment.
