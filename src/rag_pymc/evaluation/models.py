@@ -213,6 +213,107 @@ class Phase5DevelopmentExample(EvaluationModel):
         return self
 
 
+class Phase5DevelopmentCandidate(EvaluationModel):
+    """One agent-authored proposal awaiting review under the selected governance."""
+
+    schema_version: Literal["phase5-development-candidate-v1"] = "phase5-development-candidate-v1"
+    candidate_status: Literal["draft"] = "draft"
+    candidate_author: Literal["agent"] = "agent"
+    preregistration_id: Literal["phase5-development-batch-preregistration-v1"]
+    batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    slot_id: NonEmptyString
+    query_id: NonEmptyString
+    query_text: NonEmptyString
+    query_family: NonEmptyString
+    template_family: NonEmptyString
+    library: NonEmptyString
+    library_version: NonEmptyString
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Sha256
+    proposed_corpus_answerable: bool = Field(strict=True)
+    intent: NonEmptyString
+    difficulty: Difficulty
+    hard_negative_category: NonEmptyString | None = None
+    expected_api_symbols: tuple[NonEmptyString, ...] = ()
+    proposed_gold_claims: tuple[AtomicGoldClaim, ...] = ()
+
+    @field_validator("expected_api_symbols")
+    @classmethod
+    def canonicalize_expected_api_symbols(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        """Store unique expected symbols in canonical order."""
+        return _canonicalize_unique_strings(values, label="Phase 5 candidate expected API symbols")
+
+    @model_validator(mode="after")
+    def validate_proposal(self) -> Self:
+        """Keep draft proposals distinct from accepted human annotation semantics."""
+        claim_ids = tuple(claim.claim_id for claim in self.proposed_gold_claims)
+        if len(set(claim_ids)) != len(claim_ids):
+            msg = "Phase 5 candidate claim IDs must be unique within an example"
+            raise ValueError(msg)
+
+        if self.proposed_corpus_answerable:
+            if not self.proposed_gold_claims:
+                msg = "answerable Phase 5 candidates require at least one proposed gold claim"
+                raise ValueError(msg)
+            if self.hard_negative_category is not None:
+                msg = "answerable Phase 5 candidates cannot be hard negatives"
+                raise ValueError(msg)
+        else:
+            if self.proposed_gold_claims:
+                msg = "unanswerable Phase 5 candidates cannot contain proposed gold claims"
+                raise ValueError(msg)
+            if self.hard_negative_category is None:
+                msg = "unanswerable Phase 5 candidates require a hard-negative category"
+                raise ValueError(msg)
+        return self
+
+
+class Phase5DevelopmentCandidateBatch(EvaluationModel):
+    """One exact agent-draft JSONL batch kept outside the accepted development dataset."""
+
+    schema_version: Literal["phase5-development-candidate-batch-v1"] = (
+        "phase5-development-candidate-batch-v1"
+    )
+    dataset_role: Literal["candidate-draft"] = "candidate-draft"
+    dataset_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    dataset_sha256: Sha256
+    preregistration_id: Literal["phase5-development-batch-preregistration-v1"]
+    batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Sha256
+    candidates: tuple[Phase5DevelopmentCandidate, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_batch_identity(self) -> Self:
+        """Require unique draft identities under one approved preregistration and corpus."""
+        slot_ids = tuple(candidate.slot_id for candidate in self.candidates)
+        query_ids = tuple(candidate.query_id for candidate in self.candidates)
+        claim_ids = tuple(
+            claim.claim_id
+            for candidate in self.candidates
+            for claim in candidate.proposed_gold_claims
+        )
+        for label, identities in (
+            ("slot IDs", slot_ids),
+            ("query IDs", query_ids),
+            ("claim IDs", claim_ids),
+        ):
+            if len(set(identities)) != len(identities):
+                msg = f"Phase 5 candidate batch requires globally unique {label}"
+                raise ValueError(msg)
+
+        if any(
+            candidate.preregistration_id != self.preregistration_id
+            or candidate.batch_id != self.batch_id
+            or candidate.corpus_hash_policy != self.corpus_hash_policy
+            or candidate.corpus_sha256 != self.corpus_sha256
+            for candidate in self.candidates
+        ):
+            msg = "Phase 5 candidates must share the batch preregistration and corpus identity"
+            raise ValueError(msg)
+        return self
+
+
 class Phase5DevelopmentDataset(EvaluationModel):
     """A loaded Phase 5 development file bound to exact bytes and one corpus."""
 

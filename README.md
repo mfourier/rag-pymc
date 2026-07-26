@@ -278,7 +278,40 @@ The first Gate A artifact freezes only the four selected PyMC 6.1.0 API pages: f
 controlled input hashes, limitations, and the exact command are recorded in the
 [Phase 5 annotation corpus freeze](docs/evaluation/phase5-annotation-corpus-freeze-v1.md).
 This artifact contains no candidate queries or human judgments; Gate B batch preregistration
-must precede annotation.
+must precede annotation. The
+[Gate B development-batch preregistration](docs/evaluation/phase5-development-batch-preregistration-v1.md)
+fixes the accepted coverage design, original review roles, artifact paths, and leakage controls.
+After candidate preparation, the solo project owner explicitly replaced the two-human review
+requirement with the
+[single-review governance](docs/evaluation/phase5-development-single-review-governance-v1.md).
+The earlier two-person availability statement is withdrawn as a misunderstanding; no independent
+adjudication occurred.
+
+## Export the Gate C candidate review packet
+
+Gate C keeps agent-authored proposals outside any human-reviewed dataset path. The candidate
+JSONL uses the strict `phase5-development-candidate-v1` schema, labels every record as an agent
+draft, and deliberately has no human review fields. Rebuild the deterministic review packet
+with:
+
+```bash
+uv run rag-pymc export-development-review \
+  --candidates datasets/evaluation/phase5/candidates/development-batch-v1.candidates.jsonl \
+  --corpus-dir datasets/processed/phase5-annotation-api-v1 \
+  --prior-dataset datasets/evaluation/phase2/pymc_sample_queries.jsonl \
+  --prior-dataset datasets/evaluation/phase4/pymc_core_queries.jsonl \
+  --prior-dataset datasets/evaluation/notebooks/pymc_conceptual_queries.jsonl \
+  --prior-dataset datasets/evaluation/repository-code/pymc_implementation_queries.jsonl \
+  --output reports/evaluation/phase5-development-batch-v1-review.md
+```
+
+The export enforces the exact 24-slot Gate B coverage matrix, resolves every proposed support
+chunk against the frozen corpus, rejects exact normalized reuse of a prior query, and includes
+all 15 corpus chunks for review. Its token-Jaccard matches are triage aids, not automated
+leakage judgments. The packet is ready for one real human reviewer; the command does not create
+human labels. Under the selected governance, that person reviews all 24 examples and the
+resulting dataset must be named `development-single-review-v1`; it cannot be described as
+independently adjudicated.
 
 ## Evaluate development evidence against atomic gold support
 
@@ -288,6 +321,11 @@ provenance are mandatory and adjudicators cannot also be annotators for the same
 `load_phase5_development_dataset` strictly reads JSONL, rejects duplicate JSON keys and
 non-finite numbers, preserves file order, hashes exact raw bytes, and requires one corpus
 SHA-256 namespace under `canonical-chunk-identity-json-v1`.
+
+That existing contract remains the stronger independent-review path and is intentionally
+incompatible with the selected single-review workflow. It must not be populated with fabricated
+adjudication. A separate strict contract is required before reviewed records are written to
+`datasets/evaluation/phase5/development-single-review-v1.jsonl`.
 
 `hash_phase5_corpus` computes that order-invariant identity from canonical chunk ID/content
 hash records. Before evaluation, `validate_phase5_development_corpus` verifies the declared
@@ -487,11 +525,11 @@ docs/
 
 ## Near-term roadmap
 
-- **Phase 5:** author and independently adjudicate the first development dataset using the
-  frozen annotation, loading, and `phase5-gold-evidence-v1` evaluation contracts; bind it to
-  an exact corpus hash and record the conservative-policy baseline before designing any
-  answer-permitting signal or threshold. Add a deterministic generator fake and orchestration
-  only after those evaluation gates.
+- **Phase 5:** complete one genuine human review of the prepared 24-example Gate C packet, then
+  add a distinct strict `development-single-review-v1` contract and freeze the reviewed
+  exploratory dataset. Record the conservative-policy baseline before provisional
+  answer-permitting experiments. Every downstream report must retain the lack of independent
+  adjudication; add a deterministic generator fake only after those evaluation gates.
 - Define cross-library compatibility before admitting evidence from multiple normalized
   libraries into one context.
 - Keep the Phase 4 final set frozen and create a separate untouched Phase 5 held-out set only

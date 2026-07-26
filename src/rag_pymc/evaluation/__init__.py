@@ -1,5 +1,13 @@
 """Versioned retrieval and structural response evaluation contracts."""
 
+from rag_pymc.evaluation.candidate_review import (
+    load_phase5_development_candidates,
+    load_prior_query_source,
+    render_phase5_candidate_review,
+    validate_phase5_candidate_batch_v1,
+    validate_phase5_candidate_corpus,
+    write_phase5_candidate_review,
+)
 from rag_pymc.evaluation.comparison import (
     QueryRankComparison,
     RetrievalComparisonReport,
@@ -40,6 +48,8 @@ from rag_pymc.evaluation.models import (
     HybridRetrievalExperimentConfig,
     Phase5AnnotationCorpusDocument,
     Phase5AnnotationCorpusFreeze,
+    Phase5DevelopmentCandidate,
+    Phase5DevelopmentCandidateBatch,
     Phase5DevelopmentCorpusValidation,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
@@ -80,6 +90,8 @@ __all__ = [
     "HybridRetrievalExperimentConfig",
     "Phase5AnnotationCorpusDocument",
     "Phase5AnnotationCorpusFreeze",
+    "Phase5DevelopmentCandidate",
+    "Phase5DevelopmentCandidateBatch",
     "Phase5DevelopmentCorpusValidation",
     "Phase5DevelopmentDataset",
     "Phase5DevelopmentExample",
@@ -105,9 +117,15 @@ __all__ = [
     "evaluate_structural_response",
     "hash_phase5_corpus",
     "load_evaluation_queries",
+    "load_phase5_development_candidates",
     "load_phase5_development_dataset",
+    "load_prior_query_source",
+    "render_phase5_candidate_review",
+    "validate_phase5_candidate_batch_v1",
+    "validate_phase5_candidate_corpus",
     "validate_phase5_development_corpus",
     "write_comparison_report",
     "write_experiment_report",
     "write_phase5_annotation_corpus_freeze",
+    "write_phase5_candidate_review",
 ]

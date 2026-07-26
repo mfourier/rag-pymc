@@ -34,11 +34,16 @@ from rag_pymc.evaluation import (
     build_phase5_annotation_corpus_freeze,
     compare_retrieval_reports,
     load_evaluation_queries,
+    load_phase5_development_candidates,
     load_phase5_development_dataset,
+    load_prior_query_source,
+    render_phase5_candidate_review,
+    validate_phase5_candidate_batch_v1,
     validate_phase5_development_corpus,
     write_comparison_report,
     write_experiment_report,
     write_phase5_annotation_corpus_freeze,
+    write_phase5_candidate_review,
 )
 from rag_pymc.indexing import BM25Index, DenseIndexError, ExactCosineIndex
 from rag_pymc.ingestion import IngestionResult, IngestionService, LocalFileSourceFetcher
@@ -439,6 +444,49 @@ def freeze_annotation_corpus(
         raise typer.Exit(code=1) from error
 
     typer.echo(report.model_dump_json(indent=2))
+
+
+@app.command("export-development-review")
+def export_development_review(
+    candidates_path: Annotated[
+        Path,
+        typer.Option("--candidates", exists=True, dir_okay=False, readable=True),
+    ],
+    corpus_dir: Annotated[
+        Path,
+        typer.Option("--corpus-dir", exists=True, file_okay=False, readable=True),
+    ],
+    prior_dataset_paths: Annotated[
+        list[Path],
+        typer.Option("--prior-dataset", exists=True, dir_okay=False, readable=True),
+    ],
+    output_path: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Export the deterministic single-review packet without creating human labels."""
+    try:
+        batch = load_phase5_development_candidates(candidates_path)
+        validate_phase5_candidate_batch_v1(batch)
+        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+        prior_sources = tuple(load_prior_query_source(path) for path in prior_dataset_paths)
+        review = render_phase5_candidate_review(batch, chunks, prior_sources)
+        write_phase5_candidate_review(review, output_path)
+    except (
+        CorpusPersistenceError,
+        EvaluationError,
+        OSError,
+        ValidationError,
+        ValueError,
+    ) as error:
+        typer.echo(f"development-review export failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
+
+    typer.echo("rag-pymc export-development-review")
+    typer.echo(f"candidates: {candidates_path}")
+    typer.echo(f"candidate_sha256: {batch.dataset_sha256}")
+    typer.echo(f"corpus_sha256: {batch.corpus_sha256}")
+    typer.echo(f"queries: {len(batch.candidates)}")
+    typer.echo(f"output: {output_path}")
+    typer.echo("status: ok")
 
 
 @app.command("search-dense")

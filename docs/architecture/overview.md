@@ -214,7 +214,17 @@ The implemented Phase 5 slices contain:
 - deterministic gold-evidence aggregation with exact development-dataset coverage,
   annotation revalidation, one evidence-policy version, canonical query ordering, and fixed
   coverage, selective-risk, false-answer, false-abstention, decision, and claim-coverage
-  denominators.
+  denominators;
+- strict Gate C candidate and batch contracts that mark every proposed label and support set
+  as an agent draft and contain no human annotation or adjudication provenance;
+- deterministic candidate loading with a raw-byte hash, exact validation against the approved
+  24-slot Gate B matrix, and support resolution against the frozen corpus;
+- `rag-pymc export-development-review`, which rejects exact normalized prior-query reuse,
+  reports lexical similarity only as human triage, and exports every candidate plus all 15
+  frozen chunks without creating a human-reviewed dataset; and
+- `phase5-development-single-review-governance-v1`, which records the solo exploratory boundary,
+  withdraws the misunderstood two-person availability statement, and forbids representing one
+  person as an independent adjudicator.
 
 The constructed context artifact has no timestamp or latency, so fixed inputs produce a
 deterministic, JSON-serializable value. `technical-v1` is not an LLM tokenizer, and a
@@ -231,14 +241,17 @@ context. All four paths abstain, and the policy never emits `sufficient`. It the
 zero answer coverage by design and makes no abstention-quality claim. ADR-0009 fixes these
 conservative semantics and the prerequisites for any future threshold selection.
 
-Citation contracts, structural traceability, development-annotation contracts, and gold
-chunk-support evaluation are implemented. A `Generator` protocol and fake, generation
-orchestration, semantic support, correctness, and completeness evaluation, authored Phase 5
-development and held-out datasets, and an answer-permitting evidence policy remain later
-slices. Gold chunk-identity coverage does not establish that a claim is semantically true or
-supported, that every generated claim is cited, or that an answer is useful. Opaque
-identifiers and linkable hashes remain potentially sensitive evaluation metadata; callers
-must not encode prose or secrets in identifiers.
+Citation contracts, structural traceability, development-annotation contracts, gold
+chunk-support evaluation, and the Gate C candidate-review export are implemented. The current
+candidate records are agent proposals, not human labels or an accepted development dataset. A
+`Generator` protocol and fake, generation orchestration, semantic support, correctness, and
+completeness evaluation, a strict single-review dataset contract, human-reviewed Phase 5
+development data, and an answer-permitting evidence policy remain later slices. The selected
+single-review boundary permits exploratory local development but not claims of independent
+validation. Gold chunk-identity coverage does not establish that a claim is semantically true or
+supported, that every generated claim is cited, or that an answer is useful. Opaque identifiers
+and linkable hashes remain potentially sensitive evaluation metadata; callers must not encode
+prose or secrets in identifiers.
 
 The structured `ContextItem` and `ConstructedContext` JSON fields are the authoritative
 artifact. `rendered_text` is derived from those fields for deterministic accounting and human
@@ -292,11 +305,13 @@ validate pure context JSON with deterministic retrieval substitutes. Grounded-re
 cover authorization, answer invariants, abstentions, exact provenance, and rejection of
 omitted evidence. Structural-evaluation tests cover staged validation, strict JSON and
 diagnostic sanitization, citation traceability, aggregation arithmetic, explicit
-denominators, canonical ordering, and nested revalidation. Integration tests run ingestion,
-sparse retrieval, dense retrieval, hybrid fusion, reranking with deterministic fakes, and an
-offline fixture-to-retrieval-to-context path. Actual model acquisition and execution remain
-explicit experiment steps whose revisions, seeds, software versions, and outputs are
-recorded.
+denominators, canonical ordering, and nested revalidation. Candidate-review tests cover strict
+draft semantics, exact Gate B slot validation, single-review framing, corpus support resolution,
+prior-query duplicate rejection, and byte-reproducible packet export. Integration tests run ingestion, sparse
+retrieval, dense retrieval, hybrid fusion, reranking with deterministic fakes, and offline
+fixture-to-retrieval-to-context and source-fixture-to-review-packet paths. Actual model
+acquisition and execution remain explicit experiment steps whose revisions, seeds, software
+versions, and outputs are recorded.
 
 No retrieval or generation quality claim is valid without a committed dataset, an executable
 configuration, and stored per-query results.
