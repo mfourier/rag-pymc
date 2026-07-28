@@ -1,3 +1,4 @@
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, cast
@@ -10,10 +11,22 @@ from rag_pymc.cli import app
 from rag_pymc.domain import Chunk, ConstructedContext, SourceType
 
 runner = CliRunner()
+ANSI_CONTROL_SEQUENCE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 class _CommandGroup(Protocol):
     commands: Mapping[str, object]
+
+
+def _plain_terminal_output(output: str) -> str:
+    """Remove terminal styling before asserting user-visible CLI text."""
+    return ANSI_CONTROL_SEQUENCE.sub("", output)
+
+
+def test_cli_output_normalization_handles_github_actions_ansi_styling() -> None:
+    styled_option = "\x1b[1m-\x1b[0m\x1b[1m-token\x1b[0m\x1b[1m-budget\x1b[0m"
+
+    assert _plain_terminal_output(styled_option) == "--token-budget"
 
 
 def test_product_cli_exposes_only_the_selected_mvp_workflows() -> None:
@@ -131,11 +144,11 @@ def test_evaluate_requires_explicit_input_and_output_artifact_paths(tmp_path: Pa
     )
 
     assert missing_dataset.exit_code == 2
-    assert "--dataset" in missing_dataset.stderr
+    assert "--dataset" in _plain_terminal_output(missing_dataset.stderr)
     assert missing_corpus.exit_code == 2
-    assert "--corpus-dir" in missing_corpus.stderr
+    assert "--corpus-dir" in _plain_terminal_output(missing_corpus.stderr)
     assert missing_output.exit_code == 2
-    assert "--output" in missing_output.stderr
+    assert "--output" in _plain_terminal_output(missing_output.stderr)
 
 
 def test_inspect_context_emits_deterministic_bm25_domain_json(cli_corpus: Path) -> None:
@@ -250,12 +263,13 @@ def test_inspect_context_validates_query_before_loading_corpus(
 
 def test_inspect_context_help_exposes_only_the_bounded_sparse_interface() -> None:
     result = runner.invoke(app, ["inspect-context", "--help"], env={"COLUMNS": "160"})
+    help_text = _plain_terminal_output(result.stdout)
 
     assert result.exit_code == 0
-    assert "--token-budget" in result.stdout
-    assert "--top-k" in result.stdout
-    assert "--allow-download" not in result.stdout
-    assert "--source-type" not in result.stdout
+    assert "--token-budget" in help_text
+    assert "--top-k" in help_text
+    assert "--allow-download" not in help_text
+    assert "--source-type" not in help_text
 
 
 @pytest.mark.parametrize(

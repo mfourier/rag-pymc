@@ -68,7 +68,7 @@ The simplified repository passed:
 
 - Ruff format and lint checks over all active Python and agent utility files;
 - strict mypy checks over `src`, `tests`, `tools`, and `.agents/skills`;
-- 298 tests on Python 3.12.13 and Python 3.13.5;
+- 299 tests on Python 3.12.13 and Python 3.13.5;
 - 89.96% branch coverage, above the enforced 84% floor;
 - `rag-pymc doctor` in the development environment and from the dependency-minimal built wheel;
 - `rag-pymc doctor --scientific` with the optional scientific toolchain; and
@@ -89,7 +89,7 @@ Relative to the repository state before this simplification:
 | Runtime Python files | 63 | 46 | 27.0% |
 | Runtime Python lines | 8,866 | 3,702 | 58.2% |
 | Test Python files | 41 | 28 | 31.7% |
-| Test Python lines | 8,535 | 5,946 | 30.3% |
+| Test Python lines | 8,535 | 5,960 | 30.2% |
 
 Three annotation-data commands remain available through the repository-local
 `python -m tools.research_cli` module. They are excluded from the installed wheel. The runtime-line
