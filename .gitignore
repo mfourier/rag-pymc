@@ -9,7 +9,6 @@ venv/
 # Environment and secrets
 .env
 .env.*
-!.env.example
 
 # Packaging
 build/

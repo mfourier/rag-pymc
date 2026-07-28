@@ -1,4 +1,4 @@
-"""Contracts for Phase 5 development data and gold-evidence evaluation."""
+"""Repository-local contracts for Phase 5 annotation and gold-evidence evaluation."""
 
 from collections.abc import Sequence
 from pathlib import PurePosixPath

@@ -1,3 +1,5 @@
+"""Tests for the repository-local annotation CLI."""
+
 import json
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -9,7 +11,9 @@ from typer.testing import CliRunner
 
 from rag_pymc.cli import app as core_app
 from rag_pymc.domain import Chunk, Difficulty, SourceType
-from rag_pymc.evaluation.development_models import (
+from rag_pymc.persistence import JsonDocumentRepository
+from tools.development_dataset import hash_phase5_corpus
+from tools.development_models import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
@@ -18,8 +22,6 @@ from rag_pymc.evaluation.development_models import (
     Phase5DevelopmentCorpusValidation,
     Phase5DevelopmentExample,
 )
-from rag_pymc.persistence import JsonDocumentRepository
-from tools.development_dataset import hash_phase5_corpus
 from tools.research_cli import app as research_app
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)

@@ -32,7 +32,7 @@ findings without being allowed to establish API compatibility. See the
 - retrieval-to-answer orchestration that bypasses the generator unless evidence is authorized;
 - immutable answer, claim, section, citation, generator-input, and generator-output contracts;
 - structural response and citation-traceability evaluation;
-- strict development-dataset, corpus-freeze, and gold-evidence evaluation contracts; and
+- repository-local contracts for development datasets, corpus freezes, and gold evidence; and
 - reproducible CLI workflows with offline tests.
 
 The default controlled corpus contains four PyMC 6.1.0 API pages and 15 chunks covering

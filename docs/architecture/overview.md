@@ -119,9 +119,10 @@ technical usefulness.
 
 ### Evaluation and research tooling
 
-The installed `evaluation` package contains retrieval metrics, strict development-data contracts,
-gold chunk-support evaluation, and structural response evaluation. The product CLI exposes only
-operational corpus, search, context, and evaluation commands.
+The installed `evaluation` package contains retrieval metrics and structural response evaluation.
+Phase 5 annotation contracts, gold chunk-support evaluation, and their CLI live under `tools/` and
+are excluded from the wheel. The product CLI exposes only operational corpus, search, context, and
+retrieval-evaluation commands.
 
 One-time annotation preparation lives in the repository-local `tools.research_cli` module. It is
 not packaged as a product command. Its artifacts remain content-addressed and reproducible without

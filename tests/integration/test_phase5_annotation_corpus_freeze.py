@@ -2,11 +2,11 @@ from pathlib import Path
 
 from rag_pymc.chunking import ApiReferenceChunker
 from rag_pymc.domain import SourceManifest
-from rag_pymc.evaluation.development_models import Phase5AnnotationCorpusFreeze
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
 from rag_pymc.persistence import JsonDocumentRepository
 from tools.development_dataset import build_phase5_annotation_corpus_freeze
+from tools.development_models import Phase5AnnotationCorpusFreeze
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_NAMES = (

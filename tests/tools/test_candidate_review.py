@@ -1,3 +1,5 @@
+"""Tests for the repository-local candidate review workflow."""
+
 import json
 from pathlib import Path
 
@@ -5,12 +7,6 @@ import pytest
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Difficulty
-from rag_pymc.evaluation.development_models import (
-    AtomicGoldClaim,
-    GoldEvidenceSupportSet,
-    Phase5DevelopmentCandidate,
-    Phase5DevelopmentCandidateBatch,
-)
 from rag_pymc.evaluation.errors import EvaluationDatasetError
 from tests.factories import make_chunk
 from tools.candidate_review import (
@@ -21,6 +17,12 @@ from tools.candidate_review import (
     validate_phase5_candidate_batch_v1,
 )
 from tools.development_dataset import hash_phase5_corpus
+from tools.development_models import (
+    AtomicGoldClaim,
+    GoldEvidenceSupportSet,
+    Phase5DevelopmentCandidate,
+    Phase5DevelopmentCandidateBatch,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CANDIDATE_PATH = (

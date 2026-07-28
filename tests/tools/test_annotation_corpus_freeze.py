@@ -1,12 +1,11 @@
+"""Tests for the repository-local annotation corpus freeze."""
+
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Document, SourceType
-from rag_pymc.evaluation.development_models import (
-    Phase5AnnotationCorpusFreeze,
-)
 from rag_pymc.evaluation.errors import EvaluationDatasetError
 from tests.factories import make_chunk as make_test_chunk
 from tests.factories import make_document
@@ -14,6 +13,9 @@ from tools.development_dataset import (
     build_phase5_annotation_corpus_freeze,
     hash_phase5_corpus,
     write_phase5_annotation_corpus_freeze,
+)
+from tools.development_models import (
+    Phase5AnnotationCorpusFreeze,
 )
 
 LIMITATIONS = ("The synthetic corpus is intentionally narrow.",)

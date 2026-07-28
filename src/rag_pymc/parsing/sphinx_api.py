@@ -31,7 +31,7 @@ class SphinxApiParser:
         if not isinstance(symbol_value, str):
             raise DocumentParseError("Sphinx API signature has no string identifier")
         expected_symbol = manifest.expected_api_symbol
-        if expected_symbol is None or symbol_value != expected_symbol:
+        if symbol_value != expected_symbol:
             msg = f"expected API symbol {expected_symbol}, found {symbol_value}"
             raise DocumentParseError(msg)
 

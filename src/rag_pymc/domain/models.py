@@ -67,18 +67,9 @@ class SourceManifest(DomainModel):
     downloaded_at: AwareDatetime
     content_hash: Sha256
     media_type: NonEmptyString
-    expected_api_symbol: NonEmptyString | None = None
-    source_path: NonEmptyString | None = None
+    expected_api_symbol: NonEmptyString
     license_name: NonEmptyString
     license_url: AnyUrl
-
-    @model_validator(mode="after")
-    def source_contract_matches_type(self) -> Self:
-        """Require the API symbol needed by the supported source type."""
-        if self.expected_api_symbol is None:
-            msg = "expected_api_symbol is required for API reference sources"
-            raise ValueError(msg)
-        return self
 
 
 class Document(DomainModel):

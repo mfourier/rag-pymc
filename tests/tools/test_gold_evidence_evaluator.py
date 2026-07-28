@@ -1,3 +1,5 @@
+"""Tests for repository-local gold-evidence evaluation."""
+
 from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Literal
@@ -16,7 +18,9 @@ from rag_pymc.domain import (
     SearchQuery,
     SourceType,
 )
-from rag_pymc.evaluation.development_models import (
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.retrieval import TechnicalTokenizer
+from tools.development_models import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
@@ -25,9 +29,7 @@ from rag_pymc.evaluation.development_models import (
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
 )
-from rag_pymc.evaluation.errors import EvaluationError
-from rag_pymc.evaluation.gold_evidence import aggregate_gold_evidence, evaluate_gold_evidence
-from rag_pymc.retrieval import TechnicalTokenizer
+from tools.gold_evidence import aggregate_gold_evidence, evaluate_gold_evidence
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 CORPUS_SHA256 = "c" * 64

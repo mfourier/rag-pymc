@@ -1,3 +1,5 @@
+"""Tests for the strict Phase 5 development dataset loader."""
+
 import copy
 import json
 from datetime import UTC, datetime
@@ -8,7 +10,9 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from rag_pymc.evaluation.development_models import (
+from rag_pymc.evaluation.errors import EvaluationDatasetError
+from tools.development_dataset import load_phase5_development_dataset
+from tools.development_models import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
@@ -16,8 +20,6 @@ from rag_pymc.evaluation.development_models import (
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
 )
-from rag_pymc.evaluation.errors import EvaluationDatasetError
-from tools.development_dataset import load_phase5_development_dataset
 
 CORPUS_SHA256 = "c" * 64
 OTHER_CORPUS_SHA256 = "d" * 64

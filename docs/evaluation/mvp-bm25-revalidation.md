@@ -69,7 +69,7 @@ The simplified repository passed:
 - Ruff format and lint checks over all active Python and agent utility files;
 - strict mypy checks over `src`, `tests`, `tools`, and `.agents/skills`;
 - 298 tests on Python 3.12.13 and Python 3.13.5;
-- 87.16% branch coverage, above the enforced 84% floor;
+- 89.96% branch coverage, above the enforced 84% floor;
 - `rag-pymc doctor` in the development environment and from the dependency-minimal built wheel;
 - `rag-pymc doctor --scientific` with the optional scientific toolchain; and
 - source-distribution and wheel builds from the locked dependency graph.
@@ -86,15 +86,15 @@ Relative to the repository state before this simplification:
 | Locked packages | 176 | 67 | 61.9% |
 | Product CLI commands | 16 | 5 | 68.8% |
 | Product CLI lines | 1,314 | 304 | 76.9% |
-| Runtime Python files | 63 | 48 | 23.8% |
-| Runtime Python lines | 8,866 | 4,693 | 47.1% |
+| Runtime Python files | 63 | 46 | 27.0% |
+| Runtime Python lines | 8,866 | 3,702 | 58.2% |
 | Test Python files | 41 | 28 | 31.7% |
-| Test Python lines | 8,535 | 5,934 | 30.5% |
+| Test Python lines | 8,535 | 5,946 | 30.3% |
 
 Three annotation-data commands remain available through the repository-local
 `python -m tools.research_cli` module. They are excluded from the installed wheel. The runtime-line
-total includes the split evaluation-contract modules, so the reduction does not come from
-compressing unrelated contracts into a larger file.
+total excludes their Phase 5 contracts and gold-evidence evaluator, which now live beside those
+commands under `tools/`; the behavior remains covered by the test suite.
 
 ## Interpretation
 

@@ -1,9 +1,11 @@
-"""Gold-backed context coverage and abstention evaluation for Phase 5 development data."""
+"""Repository-local gold-evidence evaluation for Phase 5 development data."""
 
 from collections.abc import Sequence
 
 from rag_pymc.domain import ConstructedContext, EvidenceAssessment
-from rag_pymc.evaluation.development_models import (
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.serialization import canonical_json_sha256
+from tools.development_models import (
     AggregateGoldEvidenceMetrics,
     AtomicGoldClaim,
     GoldClaimCoverage,
@@ -12,8 +14,6 @@ from rag_pymc.evaluation.development_models import (
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
 )
-from rag_pymc.evaluation.errors import EvaluationError
-from rag_pymc.serialization import canonical_json_sha256
 
 
 def evaluate_gold_evidence(
