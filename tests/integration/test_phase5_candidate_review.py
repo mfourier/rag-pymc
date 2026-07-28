@@ -4,11 +4,11 @@ import pytest
 from typer.testing import CliRunner
 
 from rag_pymc.chunking import ApiReferenceChunker
-from rag_pymc.cli import app
 from rag_pymc.domain import SourceManifest
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
 from rag_pymc.persistence import JsonlDocumentRepository
+from rag_pymc.research_cli import app
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_NAMES = (

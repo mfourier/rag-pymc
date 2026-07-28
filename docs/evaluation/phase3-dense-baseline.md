@@ -1,5 +1,8 @@
 # Phase 3 dense retrieval baseline
 
+> Historical experiment. The dense implementation and commands were retired from the current
+> MVP by ADR-0014; the frozen inputs, results, and configuration remain as decision evidence.
+
 ## Scope
 
 This experiment evaluates exact dense retrieval over the same controlled PyMC 6.1.0 corpus

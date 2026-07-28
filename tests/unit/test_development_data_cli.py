@@ -1,9 +1,12 @@
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Protocol, cast
 
+from typer.main import get_command
 from typer.testing import CliRunner
 
-from rag_pymc.cli import app
+from rag_pymc.cli import app as core_app
 from rag_pymc.domain import Chunk, Difficulty, SourceType
 from rag_pymc.evaluation import (
     AdjudicationProvenance,
@@ -16,9 +19,24 @@ from rag_pymc.evaluation import (
     hash_phase5_corpus,
 )
 from rag_pymc.persistence import JsonlDocumentRepository
+from rag_pymc.research_cli import app as research_app
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 runner = CliRunner()
+
+
+class _CommandGroup(Protocol):
+    commands: Mapping[str, object]
+
+
+def test_research_cli_contains_only_internal_data_workflows() -> None:
+    command = cast(_CommandGroup, get_command(research_app))
+
+    assert set(command.commands) == {
+        "validate-development-data",
+        "freeze-annotation-corpus",
+        "export-development-review",
+    }
 
 
 def write_development_example(
@@ -70,7 +88,7 @@ def build_corpus(
     output_dir: Path,
 ) -> tuple[Chunk, ...]:
     result = runner.invoke(
-        app,
+        core_app,
         [
             "ingest",
             "--manifest",
@@ -96,7 +114,7 @@ def test_validate_development_data_emits_only_the_canonical_audit_json(
     write_development_example(dataset_path, chunks)
 
     first = runner.invoke(
-        app,
+        research_app,
         [
             "validate-development-data",
             "--dataset",
@@ -106,7 +124,7 @@ def test_validate_development_data_emits_only_the_canonical_audit_json(
         ],
     )
     second = runner.invoke(
-        app,
+        research_app,
         [
             "validate-development-data",
             "--dataset",
@@ -139,7 +157,7 @@ def test_validate_development_data_fails_without_partial_json_on_hash_mismatch(
     write_development_example(dataset_path, chunks, corpus_sha256="d" * 64)
 
     result = runner.invoke(
-        app,
+        research_app,
         [
             "validate-development-data",
             "--dataset",
@@ -183,8 +201,8 @@ def test_freeze_annotation_corpus_writes_one_deterministic_gate_a_artifact(
         str(output_path),
     ]
 
-    first = runner.invoke(app, arguments)
-    second = runner.invoke(app, arguments)
+    first = runner.invoke(research_app, arguments)
+    second = runner.invoke(research_app, arguments)
 
     assert first.exit_code == 0
     assert first.stderr == ""
@@ -207,7 +225,7 @@ def test_freeze_annotation_corpus_rejects_an_unexpected_source_layer(
     build_corpus(manifest_path, source_path, corpus_dir)
 
     result = runner.invoke(
-        app,
+        research_app,
         [
             "freeze-annotation-corpus",
             "--corpus-dir",
@@ -252,7 +270,7 @@ def test_freeze_annotation_corpus_rejects_duplicate_jsonl_chunk_records(
     )
 
     result = runner.invoke(
-        app,
+        research_app,
         [
             "freeze-annotation-corpus",
             "--corpus-dir",

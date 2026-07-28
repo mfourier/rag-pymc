@@ -10,9 +10,9 @@ import argparse
 import json
 import math
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-import arviz as az
+import arviz as az  # type: ignore[import-untyped]
 from xarray import DataTree
 
 
@@ -45,7 +45,7 @@ def parse_args() -> argparse.Namespace:
 def finite_float(value: object) -> float | None:
     """Return a finite float or None for an invalid metric value."""
     try:
-        result = float(value)
+        result = float(cast(Any, value))
     except (TypeError, ValueError):
         return None
     return result if math.isfinite(result) else None

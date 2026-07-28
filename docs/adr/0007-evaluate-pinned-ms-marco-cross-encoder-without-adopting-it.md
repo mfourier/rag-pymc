@@ -1,6 +1,6 @@
 # ADR-0007: Evaluate a pinned MS MARCO cross-encoder without adopting it
 
-- Status: Accepted
+- Status: Superseded by ADR-0014
 - Date: 2026-07-20
 
 ## Context

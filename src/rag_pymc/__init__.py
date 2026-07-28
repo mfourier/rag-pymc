@@ -1,4 +1,4 @@
-"""Core package for the rag-pymc adaptive tutor."""
+"""Core package for the rag-pymc expert assistant."""
 
 from importlib.metadata import PackageNotFoundError, version
 

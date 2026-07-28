@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from rag_pymc.chunking import ApiReferenceChunker
-from rag_pymc.domain import SourceManifest
+from rag_pymc.domain import SourceManifest, SourceType
 from rag_pymc.ingestion.errors import DocumentParseError, SourceIntegrityError
 from rag_pymc.ingestion.fetchers import LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
@@ -67,6 +67,17 @@ def test_sphinx_parser_rejects_unexpected_symbol(
 
     with pytest.raises(DocumentParseError, match="expected API symbol"):
         SphinxApiParser().parse(source, wrong_manifest)
+
+
+def test_sphinx_parser_rejects_archived_source_types(
+    source_manifest: SourceManifest,
+    source_path: Path,
+) -> None:
+    source = LocalFileSourceFetcher(source_path).fetch(source_manifest)
+    archived_manifest = source_manifest.model_copy(update={"source_type": SourceType.NOTEBOOK})
+
+    with pytest.raises(DocumentParseError, match="does not support notebook"):
+        SphinxApiParser().parse(source, archived_manifest)
 
 
 def test_api_chunker_is_deterministic_and_preserves_sections(

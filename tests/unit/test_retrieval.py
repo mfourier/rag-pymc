@@ -38,7 +38,7 @@ def test_bm25_applies_all_metadata_filters_before_ranking() -> None:
         make_chunk(
             "wrong-type",
             "posterior draws",
-            source_type=SourceType.TUTORIAL,
+            source_type=SourceType.NOTEBOOK,
         ),
         make_chunk("wrong-symbol", "posterior draws", symbols=("pymc.fit",)),
     ]

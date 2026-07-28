@@ -1,6 +1,6 @@
 # ADR-0006: Use weighted RRF before cross-encoder reranking
 
-- Status: Accepted
+- Status: Superseded by ADR-0014
 - Date: 2026-07-20
 
 ## Context

@@ -62,7 +62,7 @@ def score_rows(rows: list[dict[str, str]], task: str, clip: float) -> dict[str, 
                     outcome * math.log(clipped) + (1 - outcome) * math.log(1 - clipped)
                 )
 
-            error = prediction - outcome
+            residual = prediction - outcome
             raw_lower = row.get("lower", "").strip()
             raw_upper = row.get("upper", "").strip()
             if bool(raw_lower) != bool(raw_upper):
@@ -78,8 +78,8 @@ def score_rows(rows: list[dict[str, str]], task: str, clip: float) -> dict[str, 
             invalid_reasons[str(error)] += 1
             continue
 
-        squared_errors.append(error**2)
-        absolute_errors.append(abs(error))
+        squared_errors.append(residual**2)
+        absolute_errors.append(abs(residual))
         if row_log_loss is not None:
             log_losses.append(row_log_loss)
         if interval is not None:

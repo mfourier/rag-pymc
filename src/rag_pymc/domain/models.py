@@ -21,20 +21,15 @@ Sha256 = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 
 
 class SourceType(StrEnum):
-    """Supported source structures for parsing and chunking policies."""
+    """Current and archived evidence-layer identities."""
 
     API_REFERENCE = "api_reference"
-    CONCEPTUAL_GUIDE = "conceptual_guide"
-    TUTORIAL = "tutorial"
-    EXAMPLE = "example"
     NOTEBOOK = "notebook"
     REPOSITORY_CODE = "repository_code"
-    PROJECT_NOTE = "project_note"
-    TRACEBACK = "traceback"
 
 
 class Difficulty(StrEnum):
-    """Pedagogical difficulty assigned to a chunk when known."""
+    """Technical complexity assigned to a chunk or evaluation query when known."""
 
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
@@ -147,9 +142,6 @@ class Chunk(DomainModel):
     content: NonEmptyString
     content_hash: Sha256
     api_symbols: tuple[NonEmptyString, ...] = ()
-    concepts: tuple[NonEmptyString, ...] = ()
-    difficulty: Difficulty | None = None
-    prerequisites: tuple[NonEmptyString, ...] = ()
     contains_code: bool = False
     language: NonEmptyString = "en"
     created_at: AwareDatetime

@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from hashlib import sha256
 
-from rag_pymc.domain import Chunk, Difficulty, Document, SourceType
+from rag_pymc.domain import Chunk, Document, SourceType
 
 DEFAULT_CREATED_AT = datetime(2026, 7, 19, 12, 0, tzinfo=UTC)
 DEFAULT_FETCHED_AT = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
@@ -57,9 +57,6 @@ def make_chunk(
         "content": resolved_content,
         "content_hash": sha256(resolved_content.encode()).hexdigest(),
         "api_symbols": symbols,
-        "concepts": ("posterior_sampling",),
-        "difficulty": Difficulty.INTERMEDIATE,
-        "prerequisites": ("pymc.Model",),
         "contains_code": True,
         "created_at": document.fetched_at if document else DEFAULT_CREATED_AT,
     }

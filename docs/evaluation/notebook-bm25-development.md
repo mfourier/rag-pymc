@@ -1,5 +1,8 @@
 # Notebook BM25 development baseline
 
+> Historical experiment. Notebook parsing and ingestion were retired from the current MVP by
+> ADR-0015; the controlled snapshots, dataset, and report remain as decision evidence.
+
 ## Scope
 
 This experiment evaluates the first controlled PyMC 6.1.0 conceptual-notebook corpus. The

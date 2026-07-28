@@ -24,8 +24,8 @@ from rag_pymc.evaluation.metrics import (
 from rag_pymc.evaluation.models import (
     AggregateRetrievalMetrics,
     EvaluationQuery,
-    ExperimentConfig,
     QueryEvaluationResult,
+    RetrievalExperimentConfig,
     RetrievalExperimentReport,
     RetrievalMetricsSlice,
 )
@@ -41,7 +41,7 @@ class RetrievalEvaluator:
         retriever: Retriever,
         chunks: Sequence[Chunk],
         tokenizer: TechnicalTokenizer,
-        config: ExperimentConfig,
+        config: RetrievalExperimentConfig,
         experiment_id: str = "phase2-bm25-baseline",
         limitations: Sequence[str] | None = None,
         setup_latency_ms: float | None = None,
@@ -56,10 +56,10 @@ class RetrievalEvaluator:
             tuple(limitations)
             if limitations is not None
             else (
-                "The corpus contains one PyMC API page and five semantic chunks.",
-                "Binary qrels were curated for pipeline validation, not broad retrieval claims.",
+                "The corpus and binary qrels are controlled development artifacts.",
+                "The results validate this corpus and dataset, not broad retrieval quality.",
                 "No score threshold or learned abstention policy is applied.",
-                "Latency measures an in-process index over a five-chunk corpus.",
+                "Latency measures an in-process BM25 index and is machine-specific.",
             )
         )
         self._setup_latency_ms = setup_latency_ms
@@ -216,9 +216,6 @@ class RetrievalEvaluator:
             "arviz",
             "pytensor",
             "pydantic",
-            "sentence-transformers",
-            "torch",
-            "transformers",
         )
         versions: dict[str, str] = {"python": platform.python_version(), "rag-pymc": __version__}
         for distribution in distributions[1:]:

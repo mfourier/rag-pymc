@@ -11,11 +11,3 @@ class SparseIndex(Protocol):
     def search(self, query: SearchQuery) -> list[RetrievedChunk]:
         """Return ranked chunks satisfying the query filters."""
         ...
-
-
-class DenseIndex(Protocol):
-    """Search dense vectors through a provider-neutral boundary."""
-
-    def search(self, query: SearchQuery) -> list[RetrievedChunk]:
-        """Return ranked chunks satisfying the query filters."""
-        ...

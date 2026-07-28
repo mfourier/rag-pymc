@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+
+      - name: Synchronize the locked environment
+        run: uv sync --locked --all-groups
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Type-check
+        run: uv run mypy
+
+      - name: Test with branch coverage
+        run: uv run pytest
+
+      - name: Smoke-test the CLI
+        run: uv run rag-pymc doctor
+
+      - name: Smoke-test agent utilities
+        run: |
+          for script in .agents/skills/*/scripts/*.py; do
+            uv run python "$script" --help >/dev/null
+          done
+
+      - name: Build package artifacts
+        run: uv build

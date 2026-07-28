@@ -52,7 +52,7 @@ Build the corpus into a new or already matching output directory by running the 
 ingestion commands documented in `README.md`. Then create or verify the freeze artifact:
 
 ```bash
-uv run rag-pymc freeze-annotation-corpus \
+uv run rag-pymc-research freeze-annotation-corpus \
   --corpus-dir datasets/processed/phase5-annotation-api-v1 \
   --corpus-path datasets/processed/phase5-annotation-api-v1 \
   --annotation-namespace pymc-6.1.0-api-phase5-development-v1 \

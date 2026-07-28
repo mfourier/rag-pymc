@@ -25,7 +25,7 @@ This map describes the current contents of `datasets/raw/source`. Treat the dire
 - `learn/usage_overview.rst`: short usage overview.
 - `glossary.md`: terminology, not an exhaustive behavioral specification.
 
-`installation.md`, `learn/books.md`, `learn/videos_and_podcasts.md`, and `learn/consulting.md` are usually weak retrieval sources for a technical tutor.
+`installation.md`, `learn/books.md`, `learn/videos_and_podcasts.md`, and `learn/consulting.md` are usually weak retrieval sources for a technical assistant.
 
 ## API indexes
 

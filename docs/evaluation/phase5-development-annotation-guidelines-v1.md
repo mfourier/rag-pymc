@@ -82,7 +82,7 @@ For an unanswerable example:
 
 A gold claim should express one independently assessable proposition needed by a minimally
 complete answer. Split a sentence when one part could be supported while another is false or
-unsupported. Do not turn headings, style requirements, optional examples, or pedagogical
+unsupported. Do not turn headings, style requirements, optional examples, or explanatory
 elaboration into factual gold claims unless they are required by the question.
 
 Claim IDs must be globally unique across the dataset. A recommended form is
@@ -124,7 +124,7 @@ Before a batch is frozen:
 
 1. Load the JSONL with `load_phase5_development_dataset`.
 2. Load the exact processed corpus and call `validate_phase5_development_corpus`.
-   `rag-pymc validate-development-data --dataset <path> --corpus-dir <path>` performs both
+   `rag-pymc-research validate-development-data --dataset <path> --corpus-dir <path>` performs both
    operations and emits the canonical audit record.
 3. Confirm the returned dataset hash, corpus hash, chunk count, gold claim count, support-set
    count, and referenced chunk IDs against the batch record.

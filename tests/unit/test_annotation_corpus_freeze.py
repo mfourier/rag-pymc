@@ -83,7 +83,7 @@ def test_annotation_corpus_freeze_is_deterministic_and_complete(tmp_path: Path) 
 
 
 def test_annotation_corpus_freeze_rejects_an_undeclared_source_layer() -> None:
-    document = make_document("guide", source_type=SourceType.CONCEPTUAL_GUIDE)
+    document = make_document("guide", source_type=SourceType.NOTEBOOK)
     chunk = make_chunk("chunk_a", document)
 
     with pytest.raises(EvaluationDatasetError, match="source types do not match"):

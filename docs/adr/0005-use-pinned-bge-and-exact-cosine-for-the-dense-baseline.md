@@ -1,6 +1,6 @@
 # ADR-0005: Use pinned BGE and exact cosine for the dense baseline
 
-- Status: Accepted
+- Status: Superseded by ADR-0014
 - Date: 2026-07-19
 
 ## Context

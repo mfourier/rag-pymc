@@ -1,5 +1,9 @@
 # Phase 4 hybrid retrieval and reranking
 
+> Historical experiment. Dense retrieval, RRF, and reranking were retired from the current MVP by
+> ADR-0014. The commands below describe the implementation at the time of measurement and are no
+> longer part of the installed CLI.
+
 ## Scope
 
 This experiment expands the controlled PyMC 6.1.0 corpus to four official API pages and 15

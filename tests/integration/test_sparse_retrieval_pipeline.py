@@ -74,3 +74,6 @@ def test_sparse_retrieval_evaluation_uses_real_ingested_chunks(
     assert len(report.queries) == len(queries)
     assert stored["experiment_id"] == "phase2-bm25-baseline"
     assert stored["config"]["corpus_chunk_count"] == 5
+    assert "sentence-transformers" not in report.software_versions
+    assert "torch" not in report.software_versions
+    assert "transformers" not in report.software_versions

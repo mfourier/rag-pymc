@@ -1,332 +1,164 @@
 # Architecture overview
 
-## Purpose
+## Purpose and boundary
 
-`rag-pymc` is an adaptive technical tutor grounded in versioned official PyMC, ArviZ, and
-PyTensor sources. It must support reproducible retrieval experiments and eventually combine
-cited evidence, pedagogical policies, and controlled code execution. The initial architecture
-prioritizes explicit contracts and traceability over feature breadth.
+`rag-pymc` is an expert assistant foundation for Bayesian statistics and PyMC grounded in
+versioned evidence. The active MVP supports official API ingestion, BM25 retrieval, deterministic
+context construction, conservative evidence assessment, and grounded-response evaluation.
+
+The runtime does not contain learner models, multiple retrieval strategies, code execution,
+provider-specific generation, a database server, or a presentation layer. Internal annotation
+tools are exposed through a separate research CLI.
+
+Official library evidence and scientific literature have different authority. Official PyMC,
+ArviZ, and PyTensor sources support API and compatibility claims. Papers may support statistical
+methods, assumptions, diagnostics, and empirical findings but cannot establish pinned runtime
+behavior.
 
 ## Dependency direction
 
 ```text
-CLI / future API
-        |
-        v
-Application use cases (introduced with working features)
-        |
-        v
-Domain models and protocols
-        ^
-        |
-Infrastructure adapters
+Product CLI                 Internal research CLI
+    |                               |
+    v                               v
+Application use cases       Evaluation-data workflows
+    |                               |
+    +---------------+---------------+
+                    v
+          Domain models and protocols
+                    ^
+                    |
+        Infrastructure implementations
 ```
 
-The domain does not import CLI, persistence, model providers, vector stores, or orchestration
-frameworks. Infrastructure satisfies project-owned protocols and converts external values at
-the boundary. Presentation layers call application use cases rather than storage or indexes
-directly.
+The domain does not import Typer, persistence, retrieval implementations, model providers, or
+orchestration frameworks. Presentation boundaries call project-owned services. Infrastructure
+implements project-owned protocols and converts external values at the edge.
 
-Phases 1 through 4 and the implemented Phase 5 foundations add only packages with exercised
-behavior. The CLI calls project-owned services and protocols, while the domain remains
-independent of Beautiful Soup, filesystems, JSONL, ranking implementations, embedding
-providers, generator providers, and presentation concerns.
+## Active evidence pipeline
 
-## Architecture through deterministic Phase 5 structural response evaluation
+```text
+hash-verified API fixture + manifest
+                |
+                v
+        SphinxApiParser
+                |
+                v
+       ApiReferenceChunker
+                |
+                v
+    JsonlDocumentRepository
+                |
+                v
+       BM25Index / SparseRetriever
+                |
+                v
+       RankedContextBuilder
+                |
+                v
+ ConservativeAbstentionPolicy
+                |
+                v
+ grounded-answer contracts and evaluators
+```
 
-### Phase 0: Foundation
+### Acquisition and ingestion
 
-- Immutable Pydantic models define `Document`, `Chunk`, `SearchQuery`, and
-  `RetrievedChunk`.
-- The `rag-pymc doctor` command verifies the runtime and pinned scientific stack.
-- Ruff, mypy, pytest, pre-commit, and `uv.lock` provide a reproducible quality baseline.
-- Architecture decisions live in versioned ADRs.
+`SourceManifest` records source identity, library and version, URL, release metadata, acquisition
+time, license, media type, and raw SHA-256. `LocalFileSourceFetcher` verifies bytes before parsing.
 
-### Phase 1: One-source ingestion slice
+The active parser accepts only controlled generated API HTML. `SphinxApiParser` normalizes the
+signature, overview, parameters, returns, notes, and examples. `ApiReferenceChunker` preserves
+complete semantic sections and code blocks. The current corpus contains four documents and 15
+chunks.
 
-The implemented vertical slice ingests the official PyMC 6.1.0 `pymc.sample` API page. It
-does not crawl the documentation site. It contains:
+Repository-code and notebook parsers were retired from the installed package. Their exact source
+snapshots, manifests, datasets, reports, and ADRs remain historical evidence. Reintroducing a
+source type requires a working vertical slice and an adoption gate.
 
-- a `SourceManifest` with URL, release, commit, server timestamp, acquisition timestamp,
-  license, expected symbol, media type, and raw SHA-256;
-- a `SourceFetcher` boundary whose local implementation verifies bytes before parsing;
-- a `SphinxApiParser` that emits Overview, Parameters, Returns, Notes, and Examples while
-  preserving complete code blocks;
-- an `ApiReferenceChunker` that creates one retrieval unit per semantic section;
-- deterministic document and chunk IDs plus parser and chunker versions;
-- an `IngestionService` that composes the four project-owned protocols;
-- a `JsonlDocumentRepository` with deterministic upsert behavior;
-- the offline `rag-pymc ingest` command and checked-in fixtures.
+### Persistence
 
-The Parameters section remains one chunk. Phase 2 now measures its retrieval-token cost, so
-per-parameter child chunks can be evaluated as a controlled experiment instead of assumed.
+`JsonlDocumentRepository` provides deterministic local upserts behind the repository boundary.
+JSONL remains the selected MVP persistence format. PostgreSQL, pgvector, migrations, and vector
+stores have no active contract.
 
-### Phase 2: Sparse retrieval baseline
+### Retrieval
 
-The implemented sparse baseline contains:
+`TechnicalTokenizer`, `BM25Index`, and `SparseRetriever` implement the only active ranking policy.
+BM25 uses fixed defaults `k1=1.5` and `b=0.75`; evaluation records the exact values, seed, corpus
+hash, dataset hash, per-query rankings, and limitations.
 
-- a technical tokenizer and explicit Okapi BM25 index behind `SparseIndex`;
-- a common `Retriever` boundary returning ranked `RetrievedChunk` values;
-- exact pre-ranking filters for library version and source type plus library and API-symbol
-  filters;
-- a versioned 20-query dataset with binary qrels and unanswerable questions;
-- Recall@k, Precision@k, Hit Rate, MRR, nDCG, version correctness, correct abstention,
-  latency, and retrieved-token measurements;
-- `rag-pymc search` and `rag-pymc evaluate` commands;
-- a JSON experiment artifact containing config, hashes, versions, per-query results, and
-  declared limitations.
+Dense retrieval, RRF, and cross-encoder reranking were measured and retired from the runtime by
+ADR-0014. Their stored reports are immutable research artifacts, not supported command surfaces.
 
-The implementation and metric conventions are fixed in ADR-0004. The stored baseline report
-is documented in `docs/evaluation/phase2-sparse-baseline.md`.
+### Context and evidence assessment
 
-### Phase 3: Dense retrieval baseline
+`RankedContextBuilder` sorts by retrieval rank and chunk ID, rejects conflicting duplicates,
+preserves complete chunks, and admits only a rank prefix under the deterministic `technical-v1`
+budget. Context v1 rejects mixed normalized libraries before budgeting.
 
-The implemented dense baseline contains:
+`ConservativeAbstentionPolicy` is fail-closed. Empty evidence is insufficient; nonempty evidence is
+not assessed because no calibrated criterion exists. Every current outcome abstains. This avoids
+authorizing an answer before the human development dataset and loss rule exist.
 
-- an `Embedder` protocol that separates query and document encoding;
-- a manifest-validated Sentence Transformers adapter for
-  `BAAI/bge-small-en-v1.5` at one immutable model revision;
-- normalized 384-dimensional embeddings, an explicit retrieval query prefix, CPU execution,
-  and external model caching;
-- an immutable exact-cosine index behind the project-owned `DenseIndex` protocol;
-- shared metadata filtering across sparse and dense retrieval;
-- `rag-pymc search-dense` and `rag-pymc evaluate-dense` commands;
-- a comparison artifact that verifies common corpus, dataset, queries, and `top_k` before
-  computing metric deltas and per-query outcomes;
-- recorded setup latency, query latency, model versions, and count of documents exceeding the
-  model's input window.
+### Grounded responses
 
-The dense baseline uses the unchanged Phase 2 corpus and qrels. It is not an approximate
-vector index and does not persist embeddings. ADR-0005 fixes the model, input policy, CPU
-dependency source, and exact-search decision. Measured results and error analysis are in
-`docs/evaluation/phase3-dense-baseline.md`.
+Provider-neutral domain models represent citations, atomic claims, answer sections, answers,
+generator inputs, and generator outputs. Positive generation requires an explicitly sufficient,
+non-abstaining assessment bound to the exact query and context. Citations must resolve to included
+context items with exact provenance.
 
-### Phase 4: Hybrid retrieval and reranking
+`structural-citation-v1` validates JSON shape, domain contracts, citation resolution, and provenance
+traceability. It does not establish semantic support, answer correctness, citation completeness, or
+technical usefulness.
 
-The implemented retrieval phase contains:
+### Evaluation and research tooling
 
-- an expanded controlled corpus with four PyMC 6.1.0 API pages and 15 chunks while retaining
-  source-level hashes, release, commit, license, and acquisition metadata;
-- a versioned 30-query dataset with 27 answerable and three unanswerable questions;
-- weighted Reciprocal Rank Fusion over project-owned retriever interfaces;
-- validation of unique components, positive weights, duplicate ranks, and payload conflicts;
-- `rag-pymc search-hybrid` and `rag-pymc evaluate-hybrid` commands;
-- category-level metrics by intent and difficulty, including zero-answerable slices without
-  fabricating retrieval quality;
-- pairwise artifacts comparing the hybrid candidate with fresh BM25 and dense controls using
-  shared corpus and dataset hashes;
-- a project-owned `Reranker` protocol and `RerankedRetriever` candidate adapter;
-- a manifest-validated Sentence Transformers cross-encoder at an immutable revision;
-- `rag-pymc search-reranked` and `rag-pymc evaluate-reranked` commands;
-- a separate comparison between frozen RRF candidates and cross-encoder reranking.
+The installed `evaluation` package contains retrieval metrics, strict development-data contracts,
+gold chunk-support evaluation, and structural response evaluation. The product CLI exposes only
+operational corpus, search, context, and evaluation commands.
 
-The equal-weight RRF baseline uses candidate depth 10, `rrf_k=60`, and `top_k=3`. It does
-not apply score calibration or a threshold. ADR-0006 fixes the fusion policy and experimental
-sequence. ADR-0007 fixes and evaluates the cross-encoder, which remains available but is not
-adopted as the default because measured quality decreases. Results and error analysis are in
-`docs/evaluation/phase4-hybrid-baseline.md`.
+One-time annotation preparation is separated under `rag-pymc-research`. Its artifacts remain
+content-addressed and reproducible without enlarging the assistant's public command surface.
 
-### Experimental repository-code evidence layer
+### Agent expertise assets
 
-An orthogonal ingestion slice snapshots complete Python files from the exact PyMC `v6.1.0`
-Git object and selects four public implementations with the standard-library AST. Manifests add
-the repository-relative path and require the expected symbol and source commit. Definition
-chunks retain signatures and one docstring summary; implementation chunks group complete
-top-level statements under a bounded character policy. The current slice produces four
-documents and 19 chunks under `source_type=repository_code`.
+The `.agents/skills/` tree contains specialist operating procedures and narrowly scoped analysis
+utilities for Bayesian and PyMC work. These assets enrich an agent that is able to load them, but
+they do not import into `rag_pymc`, alter retrieval ranking, or enlarge the installed dependency
+graph. Keeping this boundary explicit prevents expert workflow knowledge from becoming hidden
+runtime coupling.
 
-This corpus is not part of the Phase 4 baseline or default context inspection. It supports a
-separate implementation-query evaluation and must pass a mixed-corpus regression experiment
-before adoption. ADR-0010 records the source/version boundary, AST policy, and decision to defer
-upstream tests until evidence roles can distinguish implementation from asserted test behavior.
+## Historical experiments
 
-### Experimental conceptual-notebook evidence layer
+The repository retains these decisions and reports:
 
-A second ingestion slice snapshots three complete notebooks from the exact PyMC `v6.1.0` Git
-object. The notebook parser normalizes only nonempty Markdown and code inputs while preserving
-one-based cell identity and heading hierarchy. Outputs, execution counters, kernel information,
-other metadata, and raw cells do not enter retrieval content. The cell-aware chunker groups only
-adjacent cells in the same section and never splits one cell. It extracts conservative PyMC
-symbol metadata from code inputs.
+- Phase 2 BM25 on one API page;
+- Phase 3 dense BGE comparison;
+- Phase 4 expanded BM25, dense, RRF, and cross-encoder comparison;
+- experimental repository-code ingestion and BM25 evaluation; and
+- experimental conceptual-notebook ingestion and BM25 evaluation.
 
-The current notebook corpus contains three documents and 34 chunks under
-`source_type=notebook`. It is evaluated independently and is not part of default context
-inspection. ADR-0012 fixes the raw-acquisition, normalization, chunking, and large-artifact
-boundaries.
+Historical documents describe code that existed when the experiment ran. The current runtime need
+not retain that code once the result has answered its decision question. Git history, exact input
+snapshots, manifests, datasets, and stored reports preserve the audit trail.
 
-### Phase 5: Grounded response foundations
+## Current non-goals
 
-The implemented Phase 5 slices contain:
-
-- immutable `ContextItem` and `ConstructedContext` domain models;
-- project-owned `ContextBuilder` and `TokenCounter` protocols;
-- canonical ordering by retrieval rank and chunk ID;
-- duplicate suppression by chunk ID with explicit conflicting-payload rejection;
-- a versioned rendering that preserves source URL, library version, section, API symbols,
-  retrieval provenance, and complete chunk content;
-- additive per-item budgeting with the deterministic `technical-v1` accounting policy;
-- complete-item rank-prefix admission with explicit tail omission and no content truncation;
-- fail-closed validation that admits only one normalized library and one version of each
-  library before budgeting;
-- a `ContextInspectionService` application use case that composes any project-owned
-  `Retriever` and `ContextBuilder` without depending on Typer or model providers;
-- `rag-pymc inspect-context`, which combines fixed BM25 (`k1=1.5`, `b=0.75`) and pinned BGE
-  exact cosine retrieval through equal-weight RRF with component candidate depth 10,
-  `rrf_k=60`, and default `top_k=3` over the Phase 4 corpus;
-- a required `technical-v1` budget and pure indented `ConstructedContext` JSON on stdout,
-  without timestamps, latency, status text, or an implicit output file;
-- `EvidenceSufficiency` and immutable `EvidenceAssessment` domain contracts that preserve the
-  policy version, abstention decision, deterministic reason codes, and exact included and
-  omitted chunk IDs;
-- a project-owned `AbstentionPolicy` protocol and `ConservativeAbstentionPolicy` identified
-  as `conservative-no-threshold-v1`;
-- immutable provider-neutral `Citation`, `AtomicClaim`, `GroundedAnswerSection`,
-  `GroundedAnswer`, `GeneratorInput`, and `GeneratorOutput` contracts;
-- exact binding among the generation query, constructed context, and sufficient evidence
-  assessment, followed by exact citation resolution and provenance validation against
-  included context items;
-- organizational headings treated as untrusted metadata rather than factual answer content;
-- the pure `structural-citation-v1` evaluator, which strictly parses raw answer JSON and
-  records staged contract failures plus per-citation traceability diagnostics;
-- content hashes and sanitized structural records that omit claim text, headings, query text,
-  context content, and arbitrary unknown field values, while retaining opaque identifiers;
-- deterministic aggregate metrics and `StructuralResponseAggregateReport`, with canonical
-  response ordering, duplicate-ID rejection, embedded revalidated records, explicit
-  conditional denominators, and `None` for undefined rates.
-- immutable corpus-relative Phase 5 development annotations with atomic gold claims,
-  alternative minimal chunk-support sets, query/template families, hard-negative categories,
-  and mandatory human annotation and adjudication provenance;
-- strict deterministic JSONL loading that hashes exact bytes, rejects duplicate keys and
-  non-finite values, preserves record order, and requires globally unique identities in one
-  corpus namespace;
-- canonical Phase 5 corpus hashing over sorted chunk ID/content-hash records plus validation
-  that resolves every gold support reference against the exact library/version corpus before
-  a dataset is evaluated;
-- a deterministic `phase5-annotation-corpus-freeze-v1` Gate A record and CLI that bind the
-  intended annotation namespace to its logical corpus path, exact corpus identity, admitted
-  library/version and source layers, normalized document identities, parser/chunker versions,
-  API-symbol coverage, and declared limitations before any examples are authored;
-- `rag-pymc validate-development-data`, which requires explicit dataset and corpus paths and
-  emits the deterministic corpus-validation JSON without partial standard output on failure;
-- the pure `phase5-gold-evidence-v1` evaluator, which binds corpus, query, context, and
-  assessment identities, then measures gold claim support in admitted context and in the
-  admitted-plus-budget-omitted candidate set;
-- deterministic gold-evidence aggregation with exact development-dataset coverage,
-  annotation revalidation, one evidence-policy version, canonical query ordering, and fixed
-  coverage, selective-risk, false-answer, false-abstention, decision, and claim-coverage
-  denominators;
-- strict Gate C candidate and batch contracts that mark every proposed label and support set
-  as an agent draft and contain no human annotation or adjudication provenance;
-- deterministic candidate loading with a raw-byte hash, exact validation against the approved
-  24-slot Gate B matrix, and support resolution against the frozen corpus;
-- `rag-pymc export-development-review`, which rejects exact normalized prior-query reuse,
-  reports lexical similarity only as human triage, and exports every candidate plus all 15
-  frozen chunks without creating a human-reviewed dataset; and
-- `phase5-development-single-review-governance-v1`, which records the solo exploratory boundary,
-  withdraws the misunderstood two-person availability statement, and forbids representing one
-  person as an independent adjudicator.
-
-The constructed context artifact has no timestamp or latency, so fixed inputs produce a
-deterministic, JSON-serializable value. `technical-v1` is not an LLM tokenizer, and a
-nonempty context does not establish evidence sufficiency. ADR-0008 fixes this initial policy.
-The inspection command requires an explicit token budget, defaults to PyMC 6.1.0 and three
-final results, and permits at most ten. Its embedding adapter remains local-files-only unless
-the user explicitly selects `--allow-download`.
-
-The conservative policy classifies an empty context without omissions as
-`no_retrieved_evidence` and an empty context with omitted candidates as
-`budget_excluded_all_evidence`; both are `insufficient`. Every nonempty context is
-`not_assessed` with `no_calibrated_criterion`, adding `budget_omitted_evidence` for a partial
-context. All four paths abstain, and the policy never emits `sufficient`. It therefore has
-zero answer coverage by design and makes no abstention-quality claim. ADR-0009 fixes these
-conservative semantics and the prerequisites for any future threshold selection.
-
-Citation contracts, structural traceability, development-annotation contracts, gold
-chunk-support evaluation, and the Gate C candidate-review export are implemented. The current
-candidate records are agent proposals, not human labels or an accepted development dataset. A
-`Generator` protocol and fake, generation orchestration, semantic support, correctness, and
-completeness evaluation, a strict single-review dataset contract, human-reviewed Phase 5
-development data, and an answer-permitting evidence policy remain later slices. The selected
-single-review boundary permits exploratory local development but not claims of independent
-validation. Gold chunk-identity coverage does not establish that a claim is semantically true or
-supported, that every generated claim is cited, or that an answer is useful. Opaque identifiers
-and linkable hashes remain potentially sensitive evaluation metadata; callers must not encode
-prose or secrets in identifiers.
-
-The structured `ContextItem` and `ConstructedContext` JSON fields are the authoritative
-artifact. `rendered_text` is derived from those fields for deterministic accounting and human
-inspection; it is neither a prompt nor trusted framing for a generator. A future provider and
-prompt-versioning ADR must define prompt-safe framing and escaping before generation is
-implemented.
-
-## Provenance and version boundaries
-
-Every ingested document records its library version and source URL. Chunks repeat the fields
-needed for retrieval-time filtering and citation, while `document_id` preserves the parent
-relationship. A corpus build must never silently combine incompatible library versions.
-Context v1 additionally rejects candidate sets spanning more than one normalized library.
-Cross-library compatibility among PyMC, ArviZ, and PyTensor remains a separate decision.
-
-Source manifests, processed artifacts, datasets, and experiment inputs are content-addressed.
-Download time, release, commit, license, raw hash, parser version, chunker version, index
-configuration, corpus hash, dataset hash, and software versions are recorded. See ADR-0002
-for source identity and ADR-0004 for experiment provenance.
-
-## Deferred after the implemented Phase 5 slices
-
-The following are explicitly outside the implemented Phase 5 slices:
-
-- a `Generator` protocol, deterministic fake, end-to-end response orchestration, and
-  provider-specific generation APIs;
-- prompt-safe framed and escaped serialization for a selected generator;
-- an answer-permitting evidence policy, richer inference signals, and score-threshold
-  calibration;
-- semantic claim support, citation correctness, citation completeness, answer correctness,
-  and pedagogical-usefulness evaluation;
-- human-authored Phase 5 development and held-out response datasets;
-- persistence or automatic report writing for constructed context artifacts;
-- approximate vector indexes and vector stores;
-- PostgreSQL, pgvector, and Alembic;
+- learner profiles, curricula, progress tracking, exercises, and pedagogical adaptation;
+- dense retrieval, rank fusion, and learned reranking without a new adoption experiment;
+- generic PDF ingestion, OCR, or indiscriminate paper crawling;
+- PostgreSQL, vector databases, and distributed retrieval;
 - FastAPI, authentication, React, and other presentation work;
-- arbitrary code execution and sandbox infrastructure;
-- learning-progress personalization beyond future-compatible domain planning;
-- graph retrieval, multi-query retrieval, and query rewriting;
+- arbitrary execution of generated code;
+- graph retrieval, multi-query retrieval, and query rewriting; and
 - LangChain or LlamaIndex as core dependencies.
 
-## Testing and evaluation boundaries
+## Decisions still required
 
-Unit tests exercise domain validation, source integrity, parsing, chunking, BM25 behavior,
-exact cosine behavior, weighted RRF behavior, metadata filters, provider-boundary validation,
-cross-encoder adapter validation, candidate reranking, metric calculations, category slices,
-comparison invariants, deterministic context construction and budgeting, CLI behavior, and
-persistence without network access. Evidence-assessment tests cover every conservative reason
-path and verify that the policy always abstains without scores or thresholds. CLI tests
-validate pure context JSON with deterministic retrieval substitutes. Grounded-response tests
-cover authorization, answer invariants, abstentions, exact provenance, and rejection of
-omitted evidence. Structural-evaluation tests cover staged validation, strict JSON and
-diagnostic sanitization, citation traceability, aggregation arithmetic, explicit
-denominators, canonical ordering, and nested revalidation. Candidate-review tests cover strict
-draft semantics, exact Gate B slot validation, single-review framing, corpus support resolution,
-prior-query duplicate rejection, and byte-reproducible packet export. Integration tests run ingestion, sparse
-retrieval, dense retrieval, hybrid fusion, reranking with deterministic fakes, and offline
-fixture-to-retrieval-to-context and source-fixture-to-review-packet paths. Actual model
-acquisition and execution remain explicit experiment steps whose revisions, seeds, software
-versions, and outputs are recorded.
-
-No retrieval or generation quality claim is valid without a committed dataset, an executable
-configuration, and stored per-query results.
-
-`structural-citation-v1` establishes only syntax, contract validity, and provenance
-traceability. A structurally valid response is not evidence of semantic correctness,
-citation support or completeness, or answer usefulness.
-
-## Decisions still requiring ADRs
-
-The following decisions are intentionally deferred until their first implementation phase:
-
-- an answer-permitting evidence signal, threshold-selection experiment, and calibration
-  metric;
-- cross-library compatibility for mixed PyMC, ArviZ, and PyTensor context;
-- LLM provider contracts, prompt versioning, and prompt-safe serialization;
-- approximate-index and vector-store adapter contracts;
-- criteria and migration path from JSONL to a transactional database.
+- the accepted single-review development-dataset contract;
+- an answer-permitting evidence signal, loss, threshold rule, and calibration experiment;
+- prompt-safe serialization and one LLM provider boundary;
+- semantic answer and citation-support evaluation;
+- cross-library compatibility for PyMC, ArviZ, and PyTensor context; and
+- paper acquisition, licensing, normalization, freshness, and mixed-authority routing.

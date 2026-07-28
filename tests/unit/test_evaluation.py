@@ -7,12 +7,8 @@ from pydantic import ValidationError
 
 from rag_pymc.domain import Difficulty
 from rag_pymc.evaluation import (
-    DenseRetrievalExperimentConfig,
     EvaluationDatasetError,
     EvaluationQuery,
-    HybridRetrievalExperimentConfig,
-    RerankedRetrievalExperimentConfig,
-    RetrievalExperimentConfig,
     load_evaluation_queries,
 )
 from rag_pymc.evaluation.metrics import (
@@ -79,106 +75,3 @@ def test_dataset_loader_rejects_duplicate_question_ids(tmp_path: Path) -> None:
 
     with pytest.raises(EvaluationDatasetError, match="duplicate question_id"):
         load_evaluation_queries(dataset)
-
-
-def test_hybrid_config_requires_shared_cutoff_seed_and_corpus() -> None:
-    sparse = RetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="bm25",
-        tokenizer="technical",
-        k1=1.5,
-        b=0.75,
-        corpus_chunk_count=15,
-    )
-    dense = DenseRetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="dense",
-        corpus_chunk_count=15,
-        embedder="fake",
-        model_id="fake/model",
-        model_revision="a" * 40,
-        dimension=2,
-        max_sequence_length=512,
-        truncated_document_count=0,
-        normalize_embeddings=True,
-        device="cpu",
-        batch_size=4,
-    )
-    config = HybridRetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="weighted-rrf-v1",
-        corpus_chunk_count=15,
-        candidate_k=10,
-        rrf_k=60,
-        sparse_weight=1.0,
-        dense_weight=1.0,
-        sparse=sparse,
-        dense=dense,
-    )
-
-    assert config.candidate_k == 10
-    invalid = config.model_dump()
-    invalid["candidate_k"] = 2
-    with pytest.raises(ValidationError, match="candidate_k"):
-        HybridRetrievalExperimentConfig.model_validate(invalid)
-
-
-def test_reranked_config_requires_shared_candidate_invariants() -> None:
-    sparse = RetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="bm25",
-        tokenizer="technical",
-        k1=1.5,
-        b=0.75,
-        corpus_chunk_count=15,
-    )
-    dense = DenseRetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="dense",
-        corpus_chunk_count=15,
-        embedder="fake",
-        model_id="fake/model",
-        model_revision="a" * 40,
-        dimension=2,
-        max_sequence_length=512,
-        truncated_document_count=0,
-        normalize_embeddings=True,
-        device="cpu",
-        batch_size=4,
-    )
-    hybrid = HybridRetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="rrf",
-        corpus_chunk_count=15,
-        candidate_k=10,
-        rrf_k=60,
-        sparse_weight=1.0,
-        dense_weight=1.0,
-        sparse=sparse,
-        dense=dense,
-    )
-    config = RerankedRetrievalExperimentConfig(
-        seed=7,
-        top_k=3,
-        retriever="reranked",
-        corpus_chunk_count=15,
-        candidate_k=10,
-        candidate=hybrid,
-        reranker="fake",
-        model_id="fake/reranker",
-        model_revision="b" * 40,
-        max_sequence_length=512,
-        device="cpu",
-        batch_size=4,
-    )
-
-    invalid = config.model_dump()
-    invalid["candidate_k"] = 2
-    with pytest.raises(ValidationError, match="candidate_k"):
-        RerankedRetrievalExperimentConfig.model_validate(invalid)

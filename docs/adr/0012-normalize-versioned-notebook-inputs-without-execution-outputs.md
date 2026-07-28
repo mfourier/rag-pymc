@@ -1,6 +1,6 @@
 # ADR-0012: Normalize versioned notebook inputs without execution outputs
 
-- Status: Accepted
+- Status: Superseded by ADR-0015
 - Date: 2026-07-24
 
 ## Context

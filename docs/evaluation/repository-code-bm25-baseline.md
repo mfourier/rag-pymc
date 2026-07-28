@@ -1,5 +1,8 @@
 # Repository-code BM25 development baseline
 
+> Historical experiment. Repository-code parsing and ingestion were retired from the current MVP
+> by ADR-0015; the controlled snapshots, dataset, and report remain as decision evidence.
+
 ## Scope
 
 This experiment measures the first PyMC 6.1.0 implementation corpus independently from the
