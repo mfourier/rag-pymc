@@ -217,218 +217,229 @@ class StructuralResponseEvaluation(EvaluationModel):
     @model_validator(mode="after")
     def validate_stage_and_metric_consistency(self) -> Self:
         """Keep failed stages, counts, rates, and diagnostics internally consistent."""
-        if len(set(self.context_chunk_ids)) != len(self.context_chunk_ids):
-            msg = "structural evaluation context chunk IDs must be unique"
-            raise ValueError(msg)
-        if len(set(self.omitted_chunk_ids)) != len(self.omitted_chunk_ids):
-            msg = "structural evaluation omitted chunk IDs must be unique"
-            raise ValueError(msg)
-        if set(self.context_chunk_ids) & set(self.omitted_chunk_ids):
-            msg = "structural evaluation context and omitted chunk IDs must not overlap"
-            raise ValueError(msg)
-
-        failure_keys = tuple(
-            (
-                failure.stage.value,
-                failure.reason_code.value,
-                failure.location,
-                failure.error_type,
-            )
-            for failure in self.validation_failures
-        )
-        if len(set(failure_keys)) != len(failure_keys):
-            msg = "structural validation failures must be unique"
-            raise ValueError(msg)
-        if failure_keys != tuple(sorted(failure_keys)):
-            msg = "structural validation failures must be canonically ordered"
-            raise ValueError(msg)
-
-        required_answer_values = (
-            self.is_abstaining,
-            self.claim_ids,
-            self.claim_count,
-            self.citation_count,
-            self.valid_citation_count,
-            self.invalid_citation_count,
-            self.citation_reference_count,
-            self.traceable_citation_reference_count,
-            self.untraceable_citation_reference_count,
-        )
-        answer_derived_values = (
-            *required_answer_values,
-            self.citation_validity_rate,
-            self.citation_reference_traceability_rate,
-        )
-        failure_stages = {failure.stage for failure in self.validation_failures}
-
+        _validate_structural_chunk_ids(self)
+        failure_stages = _validate_structural_failures(self)
         if not self.json_parse_succeeded:
-            if (
-                self.answer_contract_valid is not None
-                or self.output_contract_valid is not None
-                or self.citation_traceability_valid is not None
-                or any(value is not None for value in answer_derived_values)
-                or self.citation_results
-                or self.structurally_valid
-            ):
-                msg = "JSON parse failures cannot contain downstream evaluation values"
-                raise ValueError(msg)
-            if failure_stages != {StructuralValidationStage.JSON_PARSE}:
-                msg = "JSON parse failures require only JSON-parse diagnostics"
-                raise ValueError(msg)
+            _validate_json_parse_failure(self, failure_stages)
             return self
-
         if self.answer_contract_valid is False:
-            if (
-                self.output_contract_valid is not None
-                or self.citation_traceability_valid is not None
-                or any(value is not None for value in answer_derived_values)
-                or self.citation_results
-                or self.structurally_valid
-            ):
-                msg = "answer contract failures cannot contain downstream evaluation values"
-                raise ValueError(msg)
-            if failure_stages != {StructuralValidationStage.ANSWER_CONTRACT}:
-                msg = "answer contract failures require only answer-contract diagnostics"
-                raise ValueError(msg)
+            _validate_answer_contract_failure(self, failure_stages)
             return self
-
-        if self.answer_contract_valid is not True:
-            msg = "successful JSON parsing requires an explicit answer-contract result"
-            raise ValueError(msg)
-        if self.output_contract_valid is None or self.citation_traceability_valid is None:
-            msg = "valid answers require output-contract and citation-traceability results"
-            raise ValueError(msg)
-        if any(value is None for value in required_answer_values):
-            msg = "valid answers require all structural counts and abstention state"
-            raise ValueError(msg)
-        if self.output_contract_valid:
-            if self.validation_failures:
-                msg = "valid generator outputs cannot contain validation failures"
-                raise ValueError(msg)
-        elif failure_stages != {StructuralValidationStage.GENERATOR_OUTPUT}:
-            msg = "invalid generator outputs require generator-output diagnostics"
-            raise ValueError(msg)
-
-        citation_ids = tuple(result.citation_id for result in self.citation_results)
-        chunk_ids = tuple(result.chunk_id for result in self.citation_results)
-        if len(set(citation_ids)) != len(citation_ids):
-            msg = "structural evaluation citation IDs must be unique"
-            raise ValueError(msg)
-        if len(set(chunk_ids)) != len(chunk_ids):
-            msg = "structural evaluation cited chunk IDs must be unique"
-            raise ValueError(msg)
-
-        context_positions = {
-            chunk_id: position for position, chunk_id in enumerate(self.context_chunk_ids, start=1)
-        }
-        omitted_chunk_ids = set(self.omitted_chunk_ids)
-        for result in self.citation_results:
-            if result.resolves_to_included_context:
-                expected_position = context_positions.get(result.chunk_id)
-                if expected_position is None:
-                    msg = "resolved citation results must identify a recorded context chunk"
-                    raise ValueError(msg)
-                if result.context_position != expected_position:
-                    msg = "resolved citation positions must match recorded context order"
-                    raise ValueError(msg)
-            elif result.reason_codes == (CitationTraceabilityReason.CHUNK_OMITTED,):
-                if result.chunk_id not in omitted_chunk_ids:
-                    msg = "omitted citation results must identify a recorded omitted chunk"
-                    raise ValueError(msg)
-            elif result.chunk_id in context_positions or result.chunk_id in omitted_chunk_ids:
-                msg = "unknown citation results must identify an unrecorded chunk"
-                raise ValueError(msg)
-
-        assert self.claim_ids is not None
-        assert self.claim_count is not None
-        assert self.citation_count is not None
-        assert self.valid_citation_count is not None
-        assert self.invalid_citation_count is not None
-        assert self.citation_reference_count is not None
-        assert self.traceable_citation_reference_count is not None
-        assert self.untraceable_citation_reference_count is not None
-
-        if len(set(self.claim_ids)) != len(self.claim_ids):
-            msg = "structural evaluation claim IDs must be unique"
-            raise ValueError(msg)
-        if self.claim_count != len(self.claim_ids):
-            msg = "claim_count must match claim_ids"
-            raise ValueError(msg)
-
-        if self.is_abstaining and (
-            self.claim_ids or self.claim_count != 0 or self.citation_count != 0
-        ):
-            msg = "abstaining evaluations cannot contain claims or citations"
-            raise ValueError(msg)
-        if self.is_abstaining is False and self.claim_count < 1:
-            msg = "non-abstaining evaluations require at least one claim"
-            raise ValueError(msg)
-        if self.citation_count != len(self.citation_results):
-            msg = "citation_count must match citation_results"
-            raise ValueError(msg)
-
-        expected_valid_citations = sum(result.is_valid for result in self.citation_results)
-        expected_invalid_citations = self.citation_count - expected_valid_citations
-        if self.valid_citation_count != expected_valid_citations:
-            msg = "valid_citation_count must match citation_results"
-            raise ValueError(msg)
-        if self.invalid_citation_count != expected_invalid_citations:
-            msg = "invalid_citation_count must match citation_results"
-            raise ValueError(msg)
-
-        expected_references = sum(
-            len(result.referenced_claim_ids) for result in self.citation_results
-        )
-        expected_traceable_references = sum(
-            len(result.referenced_claim_ids) for result in self.citation_results if result.is_valid
-        )
-        expected_untraceable_references = expected_references - expected_traceable_references
-        if self.citation_reference_count != expected_references:
-            msg = "citation_reference_count must match citation_results"
-            raise ValueError(msg)
-        if self.traceable_citation_reference_count != expected_traceable_references:
-            msg = "traceable citation references must match citation_results"
-            raise ValueError(msg)
-        if self.untraceable_citation_reference_count != expected_untraceable_references:
-            msg = "untraceable citation references must match citation_results"
-            raise ValueError(msg)
-
-        referenced_claim_ids = {
-            claim_id for result in self.citation_results for claim_id in result.referenced_claim_ids
-        }
-        if not referenced_claim_ids.issubset(self.claim_ids):
-            msg = "citation references must identify recorded claim IDs"
-            raise ValueError(msg)
-
-        expected_citation_rate = (
-            None if self.citation_count == 0 else self.valid_citation_count / self.citation_count
-        )
-        expected_reference_rate = (
-            None
-            if self.citation_reference_count == 0
-            else self.traceable_citation_reference_count / self.citation_reference_count
-        )
-        if self.citation_validity_rate != expected_citation_rate:
-            msg = "citation_validity_rate must use declared citations as its denominator"
-            raise ValueError(msg)
-        if self.citation_reference_traceability_rate != expected_reference_rate:
-            msg = "citation reference traceability rate must use claim references as denominator"
-            raise ValueError(msg)
-
-        expected_traceability = self.invalid_citation_count == 0
-        if self.citation_traceability_valid is not expected_traceability:
-            msg = "citation traceability must match invalid citation count"
-            raise ValueError(msg)
-        if self.output_contract_valid is not self.citation_traceability_valid:
-            msg = "structural-citation-v1 output validity must match citation traceability"
-            raise ValueError(msg)
-        expected_structural_validity = (
-            self.output_contract_valid and self.citation_traceability_valid
-        )
-        if self.structurally_valid is not expected_structural_validity:
-            msg = "structural validity must require output and citation validity"
-            raise ValueError(msg)
+        _validate_successful_answer_stage(self, failure_stages)
+        _validate_structural_citations(self)
+        _validate_structural_counts(self)
+        _validate_structural_references(self)
+        _validate_structural_rates(self)
+        _validate_structural_outcome(self)
         return self
+
+
+def _validate_structural_chunk_ids(evaluation: StructuralResponseEvaluation) -> None:
+    if len(set(evaluation.context_chunk_ids)) != len(evaluation.context_chunk_ids):
+        raise ValueError("structural evaluation context chunk IDs must be unique")
+    if len(set(evaluation.omitted_chunk_ids)) != len(evaluation.omitted_chunk_ids):
+        raise ValueError("structural evaluation omitted chunk IDs must be unique")
+    if set(evaluation.context_chunk_ids) & set(evaluation.omitted_chunk_ids):
+        raise ValueError("structural evaluation context and omitted chunk IDs must not overlap")
+
+
+def _validate_structural_failures(
+    evaluation: StructuralResponseEvaluation,
+) -> set[StructuralValidationStage]:
+    keys = tuple(
+        (failure.stage.value, failure.reason_code.value, failure.location, failure.error_type)
+        for failure in evaluation.validation_failures
+    )
+    if len(set(keys)) != len(keys):
+        raise ValueError("structural validation failures must be unique")
+    if keys != tuple(sorted(keys)):
+        raise ValueError("structural validation failures must be canonically ordered")
+    return {failure.stage for failure in evaluation.validation_failures}
+
+
+def _answer_derived_values(evaluation: StructuralResponseEvaluation) -> tuple[object, ...]:
+    return (
+        evaluation.is_abstaining,
+        evaluation.claim_ids,
+        evaluation.claim_count,
+        evaluation.citation_count,
+        evaluation.valid_citation_count,
+        evaluation.invalid_citation_count,
+        evaluation.citation_reference_count,
+        evaluation.traceable_citation_reference_count,
+        evaluation.untraceable_citation_reference_count,
+        evaluation.citation_validity_rate,
+        evaluation.citation_reference_traceability_rate,
+    )
+
+
+def _validate_json_parse_failure(
+    evaluation: StructuralResponseEvaluation,
+    failure_stages: set[StructuralValidationStage],
+) -> None:
+    if (
+        evaluation.answer_contract_valid is not None
+        or evaluation.output_contract_valid is not None
+        or evaluation.citation_traceability_valid is not None
+        or any(value is not None for value in _answer_derived_values(evaluation))
+        or evaluation.citation_results
+        or evaluation.structurally_valid
+    ):
+        raise ValueError("JSON parse failures cannot contain downstream evaluation values")
+    if failure_stages != {StructuralValidationStage.JSON_PARSE}:
+        raise ValueError("JSON parse failures require only JSON-parse diagnostics")
+
+
+def _validate_answer_contract_failure(
+    evaluation: StructuralResponseEvaluation,
+    failure_stages: set[StructuralValidationStage],
+) -> None:
+    if (
+        evaluation.output_contract_valid is not None
+        or evaluation.citation_traceability_valid is not None
+        or any(value is not None for value in _answer_derived_values(evaluation))
+        or evaluation.citation_results
+        or evaluation.structurally_valid
+    ):
+        raise ValueError("answer contract failures cannot contain downstream evaluation values")
+    if failure_stages != {StructuralValidationStage.ANSWER_CONTRACT}:
+        raise ValueError("answer contract failures require only answer-contract diagnostics")
+
+
+def _validate_successful_answer_stage(
+    evaluation: StructuralResponseEvaluation,
+    failure_stages: set[StructuralValidationStage],
+) -> None:
+    if evaluation.answer_contract_valid is not True:
+        raise ValueError("successful JSON parsing requires an explicit answer-contract result")
+    if evaluation.output_contract_valid is None or evaluation.citation_traceability_valid is None:
+        raise ValueError("valid answers require output-contract and citation-traceability results")
+    if any(value is None for value in _answer_derived_values(evaluation)[:-2]):
+        raise ValueError("valid answers require all structural counts and abstention state")
+    if evaluation.output_contract_valid and evaluation.validation_failures:
+        raise ValueError("valid generator outputs cannot contain validation failures")
+    if not evaluation.output_contract_valid and failure_stages != {
+        StructuralValidationStage.GENERATOR_OUTPUT
+    }:
+        raise ValueError("invalid generator outputs require generator-output diagnostics")
+
+
+def _validate_structural_citations(evaluation: StructuralResponseEvaluation) -> None:
+    citation_ids = tuple(result.citation_id for result in evaluation.citation_results)
+    chunk_ids = tuple(result.chunk_id for result in evaluation.citation_results)
+    if len(set(citation_ids)) != len(citation_ids):
+        raise ValueError("structural evaluation citation IDs must be unique")
+    if len(set(chunk_ids)) != len(chunk_ids):
+        raise ValueError("structural evaluation cited chunk IDs must be unique")
+
+    context_positions = {
+        chunk_id: position
+        for position, chunk_id in enumerate(evaluation.context_chunk_ids, start=1)
+    }
+    omitted_ids = set(evaluation.omitted_chunk_ids)
+    for result in evaluation.citation_results:
+        if result.resolves_to_included_context:
+            position = context_positions.get(result.chunk_id)
+            if position is None:
+                raise ValueError("resolved citation results must identify a recorded context chunk")
+            if result.context_position != position:
+                raise ValueError("resolved citation positions must match recorded context order")
+        elif result.reason_codes == (CitationTraceabilityReason.CHUNK_OMITTED,):
+            if result.chunk_id not in omitted_ids:
+                raise ValueError("omitted citation results must identify a recorded omitted chunk")
+        elif result.chunk_id in context_positions or result.chunk_id in omitted_ids:
+            raise ValueError("unknown citation results must identify an unrecorded chunk")
+
+
+def _validate_structural_counts(evaluation: StructuralResponseEvaluation) -> None:
+    assert evaluation.claim_ids is not None
+    assert evaluation.claim_count is not None
+    assert evaluation.citation_count is not None
+    assert evaluation.valid_citation_count is not None
+    assert evaluation.invalid_citation_count is not None
+    if len(set(evaluation.claim_ids)) != len(evaluation.claim_ids):
+        raise ValueError("structural evaluation claim IDs must be unique")
+    if evaluation.claim_count != len(evaluation.claim_ids):
+        raise ValueError("claim_count must match claim_ids")
+    if evaluation.is_abstaining and (
+        evaluation.claim_ids or evaluation.claim_count != 0 or evaluation.citation_count != 0
+    ):
+        raise ValueError("abstaining evaluations cannot contain claims or citations")
+    if evaluation.is_abstaining is False and evaluation.claim_count < 1:
+        raise ValueError("non-abstaining evaluations require at least one claim")
+    if evaluation.citation_count != len(evaluation.citation_results):
+        raise ValueError("citation_count must match citation_results")
+
+    valid_count = sum(result.is_valid for result in evaluation.citation_results)
+    if evaluation.valid_citation_count != valid_count:
+        raise ValueError("valid_citation_count must match citation_results")
+    if evaluation.invalid_citation_count != evaluation.citation_count - valid_count:
+        raise ValueError("invalid_citation_count must match citation_results")
+
+
+def _validate_structural_references(evaluation: StructuralResponseEvaluation) -> None:
+    assert evaluation.claim_ids is not None
+    assert evaluation.citation_reference_count is not None
+    assert evaluation.traceable_citation_reference_count is not None
+    assert evaluation.untraceable_citation_reference_count is not None
+    reference_count = sum(
+        len(result.referenced_claim_ids) for result in evaluation.citation_results
+    )
+    traceable_count = sum(
+        len(result.referenced_claim_ids)
+        for result in evaluation.citation_results
+        if result.is_valid
+    )
+    if evaluation.citation_reference_count != reference_count:
+        raise ValueError("citation_reference_count must match citation_results")
+    if evaluation.traceable_citation_reference_count != traceable_count:
+        raise ValueError("traceable citation references must match citation_results")
+    if evaluation.untraceable_citation_reference_count != reference_count - traceable_count:
+        raise ValueError("untraceable citation references must match citation_results")
+    referenced_claim_ids = {
+        claim_id
+        for result in evaluation.citation_results
+        for claim_id in result.referenced_claim_ids
+    }
+    if not referenced_claim_ids.issubset(evaluation.claim_ids):
+        raise ValueError("citation references must identify recorded claim IDs")
+
+
+def _validate_structural_rates(evaluation: StructuralResponseEvaluation) -> None:
+    assert evaluation.citation_count is not None
+    assert evaluation.valid_citation_count is not None
+    assert evaluation.citation_reference_count is not None
+    assert evaluation.traceable_citation_reference_count is not None
+    citation_rate = (
+        None
+        if evaluation.citation_count == 0
+        else evaluation.valid_citation_count / evaluation.citation_count
+    )
+    reference_rate = (
+        None
+        if evaluation.citation_reference_count == 0
+        else evaluation.traceable_citation_reference_count / evaluation.citation_reference_count
+    )
+    if evaluation.citation_validity_rate != citation_rate:
+        raise ValueError("citation_validity_rate must use declared citations as its denominator")
+    if evaluation.citation_reference_traceability_rate != reference_rate:
+        raise ValueError(
+            "citation reference traceability rate must use claim references as denominator"
+        )
+
+
+def _validate_structural_outcome(evaluation: StructuralResponseEvaluation) -> None:
+    assert evaluation.invalid_citation_count is not None
+    traceability = evaluation.invalid_citation_count == 0
+    if evaluation.citation_traceability_valid is not traceability:
+        raise ValueError("citation traceability must match invalid citation count")
+    if evaluation.output_contract_valid is not evaluation.citation_traceability_valid:
+        raise ValueError("structural-citation-v1 output validity must match citation traceability")
+    structural_validity = (
+        evaluation.output_contract_valid and evaluation.citation_traceability_valid
+    )
+    if evaluation.structurally_valid is not structural_validity:
+        raise ValueError("structural validity must require output and citation validity")
 
 
 class AggregateStructuralResponseMetrics(EvaluationModel):

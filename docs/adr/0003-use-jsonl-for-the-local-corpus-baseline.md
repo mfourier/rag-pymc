@@ -1,6 +1,6 @@
 # ADR-0003: Use JSONL for the local corpus baseline
 
-- Status: Accepted
+- Status: Superseded by ADR-0016
 - Date: 2026-07-19
 
 ## Context

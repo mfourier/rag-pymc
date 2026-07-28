@@ -22,13 +22,15 @@ from rag_pymc.domain import (
     SourceType,
     render_context_item_v1,
 )
-from rag_pymc.evaluation import (
+from rag_pymc.evaluation.structural_models import (
     CitationTraceabilityReason,
     CitationTraceabilityResult,
     StructuralFailureReason,
     StructuralResponseEvaluation,
     StructuralValidationFailure,
     StructuralValidationStage,
+)
+from rag_pymc.evaluation.structural_response import (
     aggregate_structural_responses,
     evaluate_structural_response,
 )

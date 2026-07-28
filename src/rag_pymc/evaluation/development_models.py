@@ -512,116 +512,117 @@ class GoldEvidenceCaseEvaluation(EvaluationModel):
     @model_validator(mode="after")
     def validate_gold_evaluation(self) -> Self:
         """Keep coverage counts, decisions, and error categories internally consistent."""
-        if len(set(self.assessment_reason_codes)) != len(self.assessment_reason_codes):
-            msg = "gold evaluation assessment reason codes must be unique"
-            raise ValueError(msg)
-        if self.assessment_reason_codes != tuple(sorted(self.assessment_reason_codes)):
-            msg = "gold evaluation assessment reason codes must be ordered"
-            raise ValueError(msg)
-        if len(set(self.context_chunk_ids)) != len(self.context_chunk_ids):
-            msg = "gold evaluation context chunk IDs must be unique"
-            raise ValueError(msg)
-        if len(set(self.omitted_chunk_ids)) != len(self.omitted_chunk_ids):
-            msg = "gold evaluation omitted chunk IDs must be unique"
-            raise ValueError(msg)
-        if set(self.context_chunk_ids) & set(self.omitted_chunk_ids):
-            msg = "gold evaluation context and omitted chunk IDs must not overlap"
-            raise ValueError(msg)
-
-        claim_ids = tuple(result.claim_id for result in self.claim_coverage)
-        if len(set(claim_ids)) != len(claim_ids):
-            msg = "gold evaluation claim IDs must be unique"
-            raise ValueError(msg)
-        if claim_ids != tuple(sorted(claim_ids)):
-            msg = "gold evaluation claim results must be ordered by claim ID"
-            raise ValueError(msg)
-        if self.gold_claim_count != len(self.claim_coverage):
-            msg = "gold_claim_count must match claim_coverage"
-            raise ValueError(msg)
-        if self.corpus_answerable is not bool(self.claim_coverage):
-            msg = "corpus answerability must match the presence of gold claims"
-            raise ValueError(msg)
-
-        context_chunk_ids = set(self.context_chunk_ids)
-        candidate_chunk_ids = context_chunk_ids | set(self.omitted_chunk_ids)
-        for result in self.claim_coverage:
-            if any(
-                not set(support_set.chunk_ids).issubset(context_chunk_ids)
-                for support_set in result.matched_context_support_sets
-            ):
-                msg = "matched context support sets must be present in recorded context IDs"
-                raise ValueError(msg)
-            if any(
-                not set(support_set.chunk_ids).issubset(candidate_chunk_ids)
-                for support_set in result.matched_candidate_support_sets
-            ):
-                msg = "matched candidate support sets must be present in recorded candidate IDs"
-                raise ValueError(msg)
-
+        _validate_gold_identifiers(self)
+        _validate_gold_support_references(self)
         expected_context_count = sum(result.covered_by_context for result in self.claim_coverage)
         expected_candidate_count = sum(
             result.covered_by_candidates for result in self.claim_coverage
         )
-        if self.context_covered_claim_count != expected_context_count:
-            msg = "context_covered_claim_count must match claim_coverage"
-            raise ValueError(msg)
-        if self.candidate_covered_claim_count != expected_candidate_count:
-            msg = "candidate_covered_claim_count must match claim_coverage"
-            raise ValueError(msg)
-        if self.context_covered_claim_count > self.candidate_covered_claim_count:
-            msg = "context claim coverage cannot exceed candidate claim coverage"
-            raise ValueError(msg)
-
-        expected_context_rate = (
-            None if self.gold_claim_count == 0 else expected_context_count / self.gold_claim_count
-        )
-        expected_candidate_rate = (
-            None if self.gold_claim_count == 0 else expected_candidate_count / self.gold_claim_count
-        )
-        if self.context_claim_coverage_rate != expected_context_rate:
-            msg = "context claim coverage rate must use gold claims as its denominator"
-            raise ValueError(msg)
-        if self.candidate_claim_coverage_rate != expected_candidate_rate:
-            msg = "candidate claim coverage rate must use gold claims as its denominator"
-            raise ValueError(msg)
-
-        expected_context_answerable = (
-            self.corpus_answerable and expected_context_count == self.gold_claim_count
-        )
-        expected_candidate_answerable = (
-            self.corpus_answerable and expected_candidate_count == self.gold_claim_count
-        )
-        if self.gold_context_answerable is not expected_context_answerable:
-            msg = "gold context answerability must match complete claim coverage"
-            raise ValueError(msg)
-        if self.gold_candidate_answerable is not expected_candidate_answerable:
-            msg = "gold candidate answerability must match complete claim coverage"
-            raise ValueError(msg)
-        if self.gold_context_answerable and not self.gold_candidate_answerable:
-            msg = "gold context answerability requires gold candidate answerability"
-            raise ValueError(msg)
-
-        expected_should_abstain = self.sufficiency is not EvidenceSufficiency.SUFFICIENT
-        if self.should_abstain is not expected_should_abstain:
-            msg = "gold evaluation abstention must match evidence sufficiency"
-            raise ValueError(msg)
-        expected_correct = self.should_abstain is (not self.gold_context_answerable)
-        expected_unsupported = not self.should_abstain and not self.gold_context_answerable
-        expected_unnecessary = self.should_abstain and self.gold_context_answerable
-        expected_budget_loss = self.gold_candidate_answerable and not self.gold_context_answerable
-        if self.decision_correct is not expected_correct:
-            msg = "decision correctness must match gold context answerability"
-            raise ValueError(msg)
-        if self.unsupported_answer_authorized is not expected_unsupported:
-            msg = "unsupported-answer classification must match the gold decision"
-            raise ValueError(msg)
-        if self.unnecessary_abstention is not expected_unnecessary:
-            msg = "unnecessary-abstention classification must match the gold decision"
-            raise ValueError(msg)
-        if self.budget_prevented_answerability is not expected_budget_loss:
-            msg = "budget-loss classification must match candidate and context answerability"
-            raise ValueError(msg)
+        _validate_gold_coverage_metrics(self, expected_context_count, expected_candidate_count)
+        _validate_gold_answerability(self, expected_context_count, expected_candidate_count)
+        _validate_gold_decision(self)
         return self
+
+
+def _validate_gold_identifiers(evaluation: GoldEvidenceCaseEvaluation) -> None:
+    if len(set(evaluation.assessment_reason_codes)) != len(evaluation.assessment_reason_codes):
+        raise ValueError("gold evaluation assessment reason codes must be unique")
+    if evaluation.assessment_reason_codes != tuple(sorted(evaluation.assessment_reason_codes)):
+        raise ValueError("gold evaluation assessment reason codes must be ordered")
+    if len(set(evaluation.context_chunk_ids)) != len(evaluation.context_chunk_ids):
+        raise ValueError("gold evaluation context chunk IDs must be unique")
+    if len(set(evaluation.omitted_chunk_ids)) != len(evaluation.omitted_chunk_ids):
+        raise ValueError("gold evaluation omitted chunk IDs must be unique")
+    if set(evaluation.context_chunk_ids) & set(evaluation.omitted_chunk_ids):
+        raise ValueError("gold evaluation context and omitted chunk IDs must not overlap")
+
+    claim_ids = tuple(result.claim_id for result in evaluation.claim_coverage)
+    if len(set(claim_ids)) != len(claim_ids):
+        raise ValueError("gold evaluation claim IDs must be unique")
+    if claim_ids != tuple(sorted(claim_ids)):
+        raise ValueError("gold evaluation claim results must be ordered by claim ID")
+    if evaluation.gold_claim_count != len(evaluation.claim_coverage):
+        raise ValueError("gold_claim_count must match claim_coverage")
+    if evaluation.corpus_answerable is not bool(evaluation.claim_coverage):
+        raise ValueError("corpus answerability must match the presence of gold claims")
+
+
+def _validate_gold_support_references(evaluation: GoldEvidenceCaseEvaluation) -> None:
+    context_ids = set(evaluation.context_chunk_ids)
+    candidate_ids = context_ids | set(evaluation.omitted_chunk_ids)
+    for result in evaluation.claim_coverage:
+        if any(
+            not set(support_set.chunk_ids).issubset(context_ids)
+            for support_set in result.matched_context_support_sets
+        ):
+            raise ValueError("matched context support sets must be present in recorded context IDs")
+        if any(
+            not set(support_set.chunk_ids).issubset(candidate_ids)
+            for support_set in result.matched_candidate_support_sets
+        ):
+            raise ValueError(
+                "matched candidate support sets must be present in recorded candidate IDs"
+            )
+
+
+def _validate_gold_coverage_metrics(
+    evaluation: GoldEvidenceCaseEvaluation,
+    expected_context_count: int,
+    expected_candidate_count: int,
+) -> None:
+    if evaluation.context_covered_claim_count != expected_context_count:
+        raise ValueError("context_covered_claim_count must match claim_coverage")
+    if evaluation.candidate_covered_claim_count != expected_candidate_count:
+        raise ValueError("candidate_covered_claim_count must match claim_coverage")
+    if evaluation.context_covered_claim_count > evaluation.candidate_covered_claim_count:
+        raise ValueError("context claim coverage cannot exceed candidate claim coverage")
+
+    denominator = evaluation.gold_claim_count
+    expected_context_rate = None if denominator == 0 else expected_context_count / denominator
+    expected_candidate_rate = None if denominator == 0 else expected_candidate_count / denominator
+    if evaluation.context_claim_coverage_rate != expected_context_rate:
+        raise ValueError("context claim coverage rate must use gold claims as its denominator")
+    if evaluation.candidate_claim_coverage_rate != expected_candidate_rate:
+        raise ValueError("candidate claim coverage rate must use gold claims as its denominator")
+
+
+def _validate_gold_answerability(
+    evaluation: GoldEvidenceCaseEvaluation,
+    expected_context_count: int,
+    expected_candidate_count: int,
+) -> None:
+    context_answerable = (
+        evaluation.corpus_answerable and expected_context_count == evaluation.gold_claim_count
+    )
+    candidate_answerable = (
+        evaluation.corpus_answerable and expected_candidate_count == evaluation.gold_claim_count
+    )
+    if evaluation.gold_context_answerable is not context_answerable:
+        raise ValueError("gold context answerability must match complete claim coverage")
+    if evaluation.gold_candidate_answerable is not candidate_answerable:
+        raise ValueError("gold candidate answerability must match complete claim coverage")
+    if evaluation.gold_context_answerable and not evaluation.gold_candidate_answerable:
+        raise ValueError("gold context answerability requires gold candidate answerability")
+
+
+def _validate_gold_decision(evaluation: GoldEvidenceCaseEvaluation) -> None:
+    should_abstain = evaluation.sufficiency is not EvidenceSufficiency.SUFFICIENT
+    if evaluation.should_abstain is not should_abstain:
+        raise ValueError("gold evaluation abstention must match evidence sufficiency")
+    decision_correct = evaluation.should_abstain is (not evaluation.gold_context_answerable)
+    unsupported = not evaluation.should_abstain and not evaluation.gold_context_answerable
+    unnecessary = evaluation.should_abstain and evaluation.gold_context_answerable
+    budget_loss = evaluation.gold_candidate_answerable and not evaluation.gold_context_answerable
+    if evaluation.decision_correct is not decision_correct:
+        raise ValueError("decision correctness must match gold context answerability")
+    if evaluation.unsupported_answer_authorized is not unsupported:
+        raise ValueError("unsupported-answer classification must match the gold decision")
+    if evaluation.unnecessary_abstention is not unnecessary:
+        raise ValueError("unnecessary-abstention classification must match the gold decision")
+    if evaluation.budget_prevented_answerability is not budget_loss:
+        raise ValueError(
+            "budget-loss classification must match candidate and context answerability"
+        )
 
 
 class AggregateGoldEvidenceMetrics(EvaluationModel):

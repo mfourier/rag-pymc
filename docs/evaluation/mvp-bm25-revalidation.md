@@ -1,6 +1,6 @@
 # MVP BM25 revalidation after simplification
 
-- Date: 2026-07-27
+- Date: 2026-07-28
 - Status: Passed
 - Selected policy: `bm25-v1`
 
@@ -58,16 +58,20 @@ ranking, and non-latency aggregate in `reports/evaluation/phase4-bm25-expanded.j
 | Version correctness | 1.000000 |
 
 Latency was deliberately excluded from the equality assertion because it is machine-specific.
+This equality is now enforced by `tests/integration/test_bm25_mvp_regression.py` in every test run.
+The historical `correct_abstention_rate` field is only the fraction of unanswerable queries that
+returned no chunks; it is not a measurement of the separate evidence policy.
 
 ## Software validation
 
 The simplified repository passed:
 
 - Ruff format and lint checks over all active Python and agent utility files;
-- strict mypy checks over `src`, `tests`, `scripts`, and `.agents/skills`;
-- 296 tests on Python 3.12.13 and Python 3.13.5;
-- 84.79% branch coverage, above the enforced 84% floor;
-- `rag-pymc doctor` in the development environment and from the built wheel; and
+- strict mypy checks over `src`, `tests`, `tools`, and `.agents/skills`;
+- 298 tests on Python 3.12.13 and Python 3.13.5;
+- 87.16% branch coverage, above the enforced 84% floor;
+- `rag-pymc doctor` in the development environment and from the dependency-minimal built wheel;
+- `rag-pymc doctor --scientific` with the optional scientific toolchain; and
 - source-distribution and wheel builds from the locked dependency graph.
 
 CI repeats formatting, linting, typing, coverage-tested tests, CLI smoke testing, and packaging on
@@ -81,16 +85,16 @@ Relative to the repository state before this simplification:
 | --- | ---: | ---: | ---: |
 | Locked packages | 176 | 67 | 61.9% |
 | Product CLI commands | 16 | 5 | 68.8% |
-| Product CLI lines | 1,314 | 316 | 75.9% |
+| Product CLI lines | 1,314 | 304 | 76.9% |
 | Runtime Python files | 63 | 48 | 23.8% |
-| Runtime Python lines | 8,866 | 6,049 | 31.8% |
-| Test Python files | 41 | 26 | 36.6% |
-| Test Python lines | 8,535 | 5,773 | 32.4% |
+| Runtime Python lines | 8,866 | 4,693 | 47.1% |
+| Test Python files | 41 | 28 | 31.7% |
+| Test Python lines | 8,535 | 5,934 | 30.5% |
 
-Three annotation-data commands remain available through the explicitly internal
-`rag-pymc-research` CLI. The runtime-line total includes the new small compatibility facade and the
-split evaluation-contract modules, so the reduction does not come from compressing unrelated
-contracts into a larger file.
+Three annotation-data commands remain available through the repository-local
+`python -m tools.research_cli` module. They are excluded from the installed wheel. The runtime-line
+total includes the split evaluation-contract modules, so the reduction does not come from
+compressing unrelated contracts into a larger file.
 
 ## Interpretation
 

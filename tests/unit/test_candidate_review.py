@@ -5,20 +5,22 @@ import pytest
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Difficulty
-from rag_pymc.evaluation import (
+from rag_pymc.evaluation.development_models import (
     AtomicGoldClaim,
-    EvaluationDatasetError,
-    EvaluationQuery,
     GoldEvidenceSupportSet,
     Phase5DevelopmentCandidate,
     Phase5DevelopmentCandidateBatch,
-    hash_phase5_corpus,
+)
+from rag_pymc.evaluation.errors import EvaluationDatasetError
+from tests.factories import make_chunk
+from tools.candidate_review import (
+    PriorQuery,
+    PriorQuerySource,
     load_phase5_development_candidates,
     render_phase5_candidate_review,
     validate_phase5_candidate_batch_v1,
 )
-from rag_pymc.evaluation.candidate_review import PriorQuerySource
-from tests.factories import make_chunk
+from tools.development_dataset import hash_phase5_corpus
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CANDIDATE_PATH = (
@@ -105,12 +107,9 @@ def test_candidate_loader_rejects_duplicate_json_keys(tmp_path: Path) -> None:
 def test_review_render_is_deterministic_and_contains_resolved_evidence() -> None:
     batch, raw_chunks = make_candidate_batch()
     chunks = tuple(raw_chunks)
-    prior_query = EvaluationQuery(
+    prior_query = PriorQuery(
         question_id="prior_001",
         question="What is an unrelated prior question?",
-        intent="api_usage",
-        answerable=False,
-        difficulty=Difficulty.BEGINNER,
     )
     prior = PriorQuerySource(
         path="datasets/evaluation/prior.jsonl",
@@ -137,12 +136,9 @@ def test_review_render_is_deterministic_and_contains_resolved_evidence() -> None
 def test_review_render_rejects_an_exact_prior_query_duplicate() -> None:
     batch, chunks = make_candidate_batch()
     candidate = batch.candidates[0]
-    duplicate = EvaluationQuery(
+    duplicate = PriorQuery(
         question_id="prior_001",
         question=candidate.query_text.upper(),
-        intent="api_usage",
-        answerable=False,
-        difficulty=Difficulty.BEGINNER,
     )
     prior = PriorQuerySource(
         path="datasets/evaluation/prior.jsonl",

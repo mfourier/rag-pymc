@@ -5,7 +5,7 @@ from hashlib import sha256
 import pytest
 from pydantic import AnyUrl
 
-from rag_pymc.application import ContextInspectionService
+from rag_pymc.application.context_inspection import ContextInspectionService
 from rag_pymc.domain import (
     Chunk,
     ConstructedContext,

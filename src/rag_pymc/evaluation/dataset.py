@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from rag_pymc.evaluation.errors import EvaluationDatasetError
-from rag_pymc.evaluation.models import EvaluationQuery
+from rag_pymc.evaluation.retrieval_models import EvaluationQuery
 
 
 def load_evaluation_queries(path: Path) -> tuple[EvaluationQuery, ...]:

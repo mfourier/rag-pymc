@@ -1,18 +1,18 @@
 import pytest
 from pydantic import ValidationError
 
-from rag_pymc.evaluation import (
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.evaluation.structural_models import (
     AggregateStructuralResponseMetrics,
     CitationTraceabilityReason,
     CitationTraceabilityResult,
-    EvaluationError,
     StructuralFailureReason,
     StructuralResponseAggregateReport,
     StructuralResponseEvaluation,
     StructuralValidationFailure,
     StructuralValidationStage,
-    aggregate_structural_responses,
 )
+from rag_pymc.evaluation.structural_response import aggregate_structural_responses
 
 RAW_OUTPUT_SHA256 = "a" * 64
 GENERATOR_INPUT_SHA256 = "b" * 64

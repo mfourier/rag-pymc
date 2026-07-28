@@ -7,7 +7,7 @@ from typer.main import get_command
 from typer.testing import CliRunner
 
 from rag_pymc.cli import app
-from rag_pymc.domain import Chunk, ConstructedContext
+from rag_pymc.domain import Chunk, ConstructedContext, SourceType
 
 runner = CliRunner()
 
@@ -33,6 +33,14 @@ def test_doctor_reports_healthy_environment() -> None:
 
     assert result.exit_code == 0
     assert "rag-pymc doctor" in result.stdout
+    assert "pymc:" not in result.stdout
+    assert "status: ok" in result.stdout
+
+
+def test_doctor_can_verify_optional_scientific_environment() -> None:
+    result = runner.invoke(app, ["doctor", "--scientific"])
+
+    assert result.exit_code == 0
     assert "pymc:" in result.stdout
     assert "arviz:" in result.stdout
     assert "pytensor:" in result.stdout
@@ -105,6 +113,31 @@ def test_search_and_evaluate_use_the_ingested_bm25_corpus(
     assert report_path.is_file()
 
 
+def test_evaluate_requires_explicit_input_and_output_artifact_paths(tmp_path: Path) -> None:
+    dataset_path = Path(__file__).resolve().parents[2] / (
+        "datasets/evaluation/phase2/pymc_sample_queries.jsonl"
+    )
+    missing_dataset = runner.invoke(app, ["evaluate"])
+    missing_corpus = runner.invoke(app, ["evaluate", "--dataset", str(dataset_path)])
+    missing_output = runner.invoke(
+        app,
+        [
+            "evaluate",
+            "--dataset",
+            str(dataset_path),
+            "--corpus-dir",
+            str(tmp_path),
+        ],
+    )
+
+    assert missing_dataset.exit_code == 2
+    assert "--dataset" in missing_dataset.stderr
+    assert missing_corpus.exit_code == 2
+    assert "--corpus-dir" in missing_corpus.stderr
+    assert missing_output.exit_code == 2
+    assert "--output" in missing_output.stderr
+
+
 def test_inspect_context_emits_deterministic_bm25_domain_json(cli_corpus: Path) -> None:
     arguments = [
         "inspect-context",
@@ -124,6 +157,7 @@ def test_inspect_context_emits_deterministic_bm25_domain_json(cli_corpus: Path) 
     context = ConstructedContext.model_validate_json(first.stdout)
     assert context.query.library == "pymc"
     assert context.query.library_version == "6.1.0"
+    assert context.query.source_types == (SourceType.API_REFERENCE,)
     assert context.query.top_k == 3
     assert context.token_counter == "technical-v1"
     assert len(context.items) == 3
@@ -203,7 +237,7 @@ def test_inspect_context_validates_query_before_loading_corpus(
         pytest.fail("corpus loading must not run for an invalid query")
 
     monkeypatch.setattr(
-        "rag_pymc.cli.JsonlDocumentRepository.load_chunks",
+        "rag_pymc.cli.JsonDocumentRepository.load_chunks",
         unexpected_load,
     )
 
@@ -221,6 +255,7 @@ def test_inspect_context_help_exposes_only_the_bounded_sparse_interface() -> Non
     assert "--token-budget" in result.stdout
     assert "--top-k" in result.stdout
     assert "--allow-download" not in result.stdout
+    assert "--source-type" not in result.stdout
 
 
 @pytest.mark.parametrize(

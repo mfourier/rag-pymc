@@ -6,8 +6,9 @@ version-aware help with model design, implementation, diagnostics, and scientifi
 
 The current MVP is deliberately narrow: it ingests controlled official PyMC API pages, retrieves
 evidence with deterministic BM25, builds bounded context, evaluates evidence sufficiency, and
-validates provider-neutral grounded-answer contracts. It does not yet call an LLM or generate an
-answer.
+validates provider-neutral grounded-answer contracts. The provider-neutral orchestration boundary
+is implemented, but no LLM adapter or public `ask` command is configured and the active evidence
+policy still prevents generation.
 
 ## Product boundary
 
@@ -24,10 +25,11 @@ findings without being allowed to establish API compatibility. See the
 
 - hash-verified local ingestion of official PyMC 6.1.0 generated API pages;
 - structure-aware Sphinx HTML parsing and deterministic chunking;
-- content-addressed JSONL persistence with stable document and chunk identities;
-- BM25 retrieval with library, version, source-type, and API-symbol filters;
+- one atomic, content-addressed JSON corpus snapshot with stable document and chunk identities;
+- BM25 retrieval over official API evidence with library, version, and API-symbol filters;
 - deterministic, whole-item context construction under an explicit technical-token budget;
 - a fail-closed evidence policy that currently always abstains;
+- retrieval-to-answer orchestration that bypasses the generator unless evidence is authorized;
 - immutable answer, claim, section, citation, generator-input, and generator-output contracts;
 - structural response and citation-traceability evaluation;
 - strict development-dataset, corpus-freeze, and gold-evidence evaluation contracts; and
@@ -81,9 +83,17 @@ uv run pre-commit install
 uv run rag-pymc doctor
 ```
 
-The compatibility baseline is pinned to PyMC 6.1.0, ArviZ 1.2.0, and PyTensor 3.1.3. Exact
-transitive versions are recorded in `uv.lock`. The HDF5 backend remains explicit because the
-agent-facing inference audit reads standard ArviZ NetCDF artifacts.
+The product runtime needs only Beautiful Soup, Pydantic, and Typer. To run the agent-facing
+scientific utilities as well, install and verify the optional toolchain:
+
+```bash
+uv sync --all-groups --extra scientific
+uv run rag-pymc doctor --scientific
+```
+
+That optional compatibility baseline pins PyMC 6.1.0, ArviZ 1.2.0, and PyTensor 3.1.3. Exact
+transitive versions are recorded in `uv.lock`. Its HDF5 backend supports the inference audit's
+standard ArviZ NetCDF artifacts.
 
 ## Build the controlled corpus
 
@@ -99,7 +109,7 @@ do
   uv run rag-pymc ingest \
     --manifest "datasets/raw/manifests/pymc/6.1.0/$symbol.json" \
     --source "datasets/fixtures/pymc/6.1.0/$symbol.html" \
-    --output-dir datasets/processed/phase4
+    --output-dir datasets/processed/pymc-6.1.0-api-v1
 done
 ```
 
@@ -111,14 +121,14 @@ upserts the same records.
 ```bash
 uv run rag-pymc search \
   "How do I update predictors for posterior prediction?" \
-  --corpus-dir datasets/processed/phase4 \
+  --corpus-dir datasets/processed/pymc-6.1.0-api-v1 \
   --library pymc \
   --library-version 6.1.0 \
   --top-k 3
 
 uv run rag-pymc inspect-context \
   "How do I update predictors for posterior prediction?" \
-  --corpus-dir datasets/processed/phase4 \
+  --corpus-dir datasets/processed/pymc-6.1.0-api-v1 \
   --token-budget 2048
 ```
 
@@ -131,7 +141,7 @@ does not imply that the question itself is invalid.
 ```bash
 uv run rag-pymc evaluate \
   --dataset datasets/evaluation/phase4/pymc_core_queries.jsonl \
-  --corpus-dir datasets/processed/phase4 \
+  --corpus-dir datasets/processed/pymc-6.1.0-api-v1 \
   --output /tmp/rag-pymc-bm25-evaluation.json \
   --top-k 3 \
   --seed 20260720 \
@@ -148,9 +158,9 @@ inputs.
 Annotation preparation is intentionally separated from the product CLI:
 
 ```bash
-uv run rag-pymc-research validate-development-data --help
-uv run rag-pymc-research freeze-annotation-corpus --help
-uv run rag-pymc-research export-development-review --help
+uv run python -m tools.research_cli validate-development-data --help
+uv run python -m tools.research_cli freeze-annotation-corpus --help
+uv run python -m tools.research_cli export-development-review --help
 ```
 
 The prepared 24-example packet remains an agent-authored draft awaiting one genuine human review.
@@ -162,7 +172,7 @@ These commands do not generate answers or fabricate human annotation.
 uv run ruff format --check .
 uv run ruff check .
 uv run mypy
-uv run pytest
+uv run pytest --cov=rag_pymc --cov-branch --cov-report=term-missing:skip-covered
 uv run rag-pymc doctor
 ```
 
@@ -183,14 +193,14 @@ src/rag_pymc/
 ├── indexing/          # Explicit BM25 index
 ├── ingestion/         # Integrity checks and orchestration
 ├── parsing/           # Official Sphinx API parser
-├── persistence/       # Deterministic JSONL corpus
+├── persistence/       # Atomic deterministic JSON corpus
 ├── retrieval/         # Selected sparse retriever
-├── cli.py             # Product CLI
-└── research_cli.py    # Internal annotation-data CLI
+└── cli.py             # Product CLI
 ```
 
 Agent expertise lives outside the installable runtime in `.agents/skills/`; immutable research
-inputs and outputs live under `datasets/` and `reports/`.
+inputs and outputs live under `datasets/` and `reports/`. Repository-only annotation commands live
+under `tools/`.
 
 Historical dense, hybrid, reranking, repository-code, and notebook experiments remain documented
 under `docs/adr/`, `docs/evaluation/`, and `reports/evaluation/`. They are evidence for decisions,
@@ -202,8 +212,8 @@ ingestion path.
 1. Complete one real human review of the prepared Phase 5 development packet and freeze the
    resulting single-review dataset.
 2. Record the conservative-policy baseline before selecting any answer-permitting rule.
-3. Add prompt-safe serialization, one project-owned generator protocol, one deterministic fake,
-   and one end-to-end `ask` use case.
+3. Add prompt-safe provider serialization and one end-to-end `ask` command on top of the existing
+   generator protocol and application service.
 4. Evaluate semantic claim support, citation correctness, completeness, and technical usefulness
    before selecting an LLM provider.
 5. Add a small, curated and versioned scientific-paper slice under the adoption gate in the

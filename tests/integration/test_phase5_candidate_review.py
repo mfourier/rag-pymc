@@ -7,8 +7,8 @@ from rag_pymc.chunking import ApiReferenceChunker
 from rag_pymc.domain import SourceManifest
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
-from rag_pymc.persistence import JsonlDocumentRepository
-from rag_pymc.research_cli import app
+from rag_pymc.persistence import JsonDocumentRepository
+from tools.research_cli import app
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_NAMES = (
@@ -30,7 +30,7 @@ def test_phase5_candidate_review_rebuilds_from_candidates_and_frozen_corpus(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     corpus_dir = tmp_path / "corpus"
-    repository = JsonlDocumentRepository(corpus_dir)
+    repository = JsonDocumentRepository(corpus_dir)
     for source_name in SOURCE_NAMES:
         manifest_path = PROJECT_ROOT / f"datasets/raw/manifests/pymc/6.1.0/{source_name}.json"
         source_path = PROJECT_ROOT / f"datasets/fixtures/pymc/6.1.0/{source_name}.html"

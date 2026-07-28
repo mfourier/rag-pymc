@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -31,7 +31,7 @@ jobs:
           enable-cache: true
 
       - name: Synchronize the locked environment
-        run: uv sync --locked --all-groups
+        run: uv sync --locked --all-groups --extra scientific
 
       - name: Check formatting
         run: uv run ruff format --check .
@@ -42,11 +42,16 @@ jobs:
       - name: Type-check
         run: uv run mypy
 
+      - name: Check local documentation links
+        run: uv run python -m tools.check_markdown_links
+
       - name: Test with branch coverage
-        run: uv run pytest
+        run: uv run pytest --cov=rag_pymc --cov-branch --cov-report=term-missing:skip-covered
 
       - name: Smoke-test the CLI
-        run: uv run rag-pymc doctor
+        run: |
+          uv run rag-pymc doctor
+          uv run rag-pymc doctor --scientific
 
       - name: Smoke-test agent utilities
         run: |
@@ -56,3 +61,6 @@ jobs:
 
       - name: Build package artifacts
         run: uv build
+
+      - name: Smoke-test the base wheel in isolation
+        run: uv tool run --from dist/*.whl rag-pymc doctor

@@ -47,7 +47,7 @@ hash-verified API fixture + manifest
        ApiReferenceChunker
                 |
                 v
-    JsonlDocumentRepository
+     JsonDocumentRepository
                 |
                 v
        BM25Index / SparseRetriever
@@ -78,9 +78,9 @@ source type requires a working vertical slice and an adoption gate.
 
 ### Persistence
 
-`JsonlDocumentRepository` provides deterministic local upserts behind the repository boundary.
-JSONL remains the selected MVP persistence format. PostgreSQL, pgvector, migrations, and vector
-stores have no active contract.
+`JsonDocumentRepository` stores documents and chunks in one deterministic `corpus.json` snapshot.
+Each upsert replaces that snapshot atomically, so readers cannot observe a new document set paired
+with stale chunks. PostgreSQL, pgvector, migrations, and vector stores have no active contract.
 
 ### Retrieval
 
@@ -108,6 +108,11 @@ generator inputs, and generator outputs. Positive generation requires an explici
 non-abstaining assessment bound to the exact query and context. Citations must resolve to included
 context items with exact provenance.
 
+`ExpertAssistantService` is the sole retrieval-to-generation application boundary. It retrieves,
+builds context, applies the evidence policy, and returns a claim-free abstention without invoking
+the `AnswerGenerator` whenever authorization fails. No provider adapter or public answer command is
+selected yet.
+
 `structural-citation-v1` validates JSON shape, domain contracts, citation resolution, and provenance
 traceability. It does not establish semantic support, answer correctness, citation completeness, or
 technical usefulness.
@@ -118,8 +123,9 @@ The installed `evaluation` package contains retrieval metrics, strict developmen
 gold chunk-support evaluation, and structural response evaluation. The product CLI exposes only
 operational corpus, search, context, and evaluation commands.
 
-One-time annotation preparation is separated under `rag-pymc-research`. Its artifacts remain
-content-addressed and reproducible without enlarging the assistant's public command surface.
+One-time annotation preparation lives in the repository-local `tools.research_cli` module. It is
+not packaged as a product command. Its artifacts remain content-addressed and reproducible without
+enlarging the assistant's public command surface.
 
 ### Agent expertise assets
 

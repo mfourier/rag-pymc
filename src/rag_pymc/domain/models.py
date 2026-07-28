@@ -1,7 +1,6 @@
 """Validated domain models shared by ingestion and retrieval components."""
 
 from enum import StrEnum
-from pathlib import PurePosixPath
 from typing import Annotated, Literal, Self
 
 from pydantic import (
@@ -21,11 +20,9 @@ Sha256 = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 
 
 class SourceType(StrEnum):
-    """Current and archived evidence-layer identities."""
+    """Evidence layer supported by the active MVP."""
 
     API_REFERENCE = "api_reference"
-    NOTEBOOK = "notebook"
-    REPOSITORY_CODE = "repository_code"
 
 
 class Difficulty(StrEnum):
@@ -77,35 +74,10 @@ class SourceManifest(DomainModel):
 
     @model_validator(mode="after")
     def source_contract_matches_type(self) -> Self:
-        """Require provenance fields needed by each supported source type."""
-        if self.source_type is SourceType.API_REFERENCE and self.expected_api_symbol is None:
+        """Require the API symbol needed by the supported source type."""
+        if self.expected_api_symbol is None:
             msg = "expected_api_symbol is required for API reference sources"
             raise ValueError(msg)
-        if self.source_type is SourceType.REPOSITORY_CODE:
-            if self.expected_api_symbol is None:
-                msg = "expected_api_symbol is required for repository code sources"
-                raise ValueError(msg)
-            if self.source_commit is None:
-                msg = "source_commit is required for repository code sources"
-                raise ValueError(msg)
-            if self.source_path is None:
-                msg = "source_path is required for repository code sources"
-                raise ValueError(msg)
-            source_path = PurePosixPath(self.source_path)
-            if source_path.is_absolute() or ".." in source_path.parts:
-                msg = "source_path must be a relative repository path without parent traversal"
-                raise ValueError(msg)
-        if self.source_type is SourceType.NOTEBOOK:
-            if self.source_commit is None:
-                msg = "source_commit is required for notebook sources"
-                raise ValueError(msg)
-            if self.source_path is None:
-                msg = "source_path is required for notebook sources"
-                raise ValueError(msg)
-            source_path = PurePosixPath(self.source_path)
-            if source_path.is_absolute() or ".." in source_path.parts:
-                msg = "source_path must be a relative repository path without parent traversal"
-                raise ValueError(msg)
         return self
 
 

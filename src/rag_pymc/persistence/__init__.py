@@ -1,5 +1,5 @@
 """Persistence adapters for local corpus artifacts."""
 
-from rag_pymc.persistence.jsonl import JsonlDocumentRepository
+from rag_pymc.persistence.json import JsonDocumentRepository
 
-__all__ = ["JsonlDocumentRepository"]
+__all__ = ["JsonDocumentRepository"]

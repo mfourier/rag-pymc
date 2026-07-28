@@ -3,16 +3,13 @@ from pathlib import Path
 
 from rag_pymc.chunking import ApiReferenceChunker
 from rag_pymc.domain import SourceManifest
-from rag_pymc.evaluation import (
-    RetrievalEvaluator,
-    RetrievalExperimentConfig,
-    load_evaluation_queries,
-    write_experiment_report,
-)
+from rag_pymc.evaluation.dataset import load_evaluation_queries
+from rag_pymc.evaluation.evaluator import RetrievalEvaluator, write_experiment_report
+from rag_pymc.evaluation.retrieval_models import RetrievalExperimentConfig
 from rag_pymc.indexing import BM25Index
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
-from rag_pymc.persistence import JsonlDocumentRepository
+from rag_pymc.persistence import JsonDocumentRepository
 from rag_pymc.retrieval import SparseRetriever, TechnicalTokenizer
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -24,7 +21,7 @@ def test_sparse_retrieval_evaluation_uses_real_ingested_chunks(
     source_path: Path,
     tmp_path: Path,
 ) -> None:
-    repository = JsonlDocumentRepository(tmp_path / "corpus")
+    repository = JsonDocumentRepository(tmp_path / "corpus")
     ingestion = IngestionService(
         fetcher=LocalFileSourceFetcher(source_path),
         parser=SphinxApiParser(),
@@ -72,7 +69,7 @@ def test_sparse_retrieval_evaluation_uses_real_ingested_chunks(
     assert report.metrics.unanswerable_query_count == 2
     assert report.metrics.version_correctness == 1.0
     assert len(report.queries) == len(queries)
-    assert stored["experiment_id"] == "phase2-bm25-baseline"
+    assert stored["experiment_id"] == "bm25-evaluation-v1"
     assert stored["config"]["corpus_chunk_count"] == 5
     assert "sentence-transformers" not in report.software_versions
     assert "torch" not in report.software_versions

@@ -15,7 +15,7 @@ from rag_pymc.domain import (
     GroundedAnswer,
 )
 from rag_pymc.evaluation.errors import EvaluationError
-from rag_pymc.evaluation.models import (
+from rag_pymc.evaluation.structural_models import (
     AggregateStructuralResponseMetrics,
     CitationTraceabilityReason,
     CitationTraceabilityResult,
@@ -25,6 +25,7 @@ from rag_pymc.evaluation.models import (
     StructuralValidationFailure,
     StructuralValidationStage,
 )
+from rag_pymc.serialization import canonical_json_sha256
 
 _PROVENANCE_REASON_BY_FIELD = {
     "document_id": CitationTraceabilityReason.DOCUMENT_ID_MISMATCH,
@@ -228,14 +229,7 @@ def aggregate_structural_responses(
 
 
 def _hash_generator_input_v1(generator_input: GeneratorInput) -> str:
-    canonical_json = json.dumps(
-        generator_input.model_dump(mode="json"),
-        allow_nan=False,
-        ensure_ascii=True,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
-    return sha256(canonical_json.encode("ascii")).hexdigest()
+    return canonical_json_sha256(generator_input.model_dump(mode="json"))
 
 
 def _strict_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:

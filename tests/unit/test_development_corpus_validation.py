@@ -5,18 +5,17 @@ import pytest
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Difficulty
-from rag_pymc.evaluation import (
+from rag_pymc.evaluation.development_models import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
-    EvaluationDatasetError,
     GoldEvidenceSupportSet,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
-    hash_phase5_corpus,
-    validate_phase5_development_corpus,
 )
+from rag_pymc.evaluation.errors import EvaluationDatasetError
 from tests.factories import make_chunk as make_test_chunk
+from tools.development_dataset import hash_phase5_corpus, validate_phase5_development_corpus
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 CORPUS_HASH_POLICY: Literal["canonical-chunk-identity-json-v1"] = "canonical-chunk-identity-json-v1"

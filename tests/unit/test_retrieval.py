@@ -35,11 +35,6 @@ def test_bm25_applies_all_metadata_filters_before_ranking() -> None:
         make_chunk("matching", "posterior draws"),
         make_chunk("wrong-version", "posterior draws", version="5.0.0"),
         make_chunk("wrong-library", "posterior draws", library="arviz"),
-        make_chunk(
-            "wrong-type",
-            "posterior draws",
-            source_type=SourceType.NOTEBOOK,
-        ),
         make_chunk("wrong-symbol", "posterior draws", symbols=("pymc.fit",)),
     ]
     query = SearchQuery(

@@ -17,9 +17,10 @@
   "limitations": [
     "The corpus contains 4 PyMC API pages and 15 chunks.",
     "The dataset was curated for this corpus and is not an external benchmark.",
-    "The embedding model truncates 5 chunks beyond 512 word pieces.",
+    "Retrieval is lexical BM25 and does not capture semantic similarity without shared terms.",
     "No score threshold or learned abstention policy is applied.",
-    "Model download time is excluded from setup and query latency."
+    "The correct_abstention_rate field is an empty-result proxy for historical schema compatibility, not an evidence-policy measurement.",
+    "Latency measures an in-process BM25 index and is machine-specific."
   ],
   "metrics": {
     "answerable_query_count": 27,

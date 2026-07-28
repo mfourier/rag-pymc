@@ -2,13 +2,11 @@ from pathlib import Path
 
 from rag_pymc.chunking import ApiReferenceChunker
 from rag_pymc.domain import SourceManifest
-from rag_pymc.evaluation import (
-    Phase5AnnotationCorpusFreeze,
-    build_phase5_annotation_corpus_freeze,
-)
+from rag_pymc.evaluation.development_models import Phase5AnnotationCorpusFreeze
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
-from rag_pymc.persistence import JsonlDocumentRepository
+from rag_pymc.persistence import JsonDocumentRepository
+from tools.development_dataset import build_phase5_annotation_corpus_freeze
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_NAMES = (
@@ -22,7 +20,7 @@ SOURCE_NAMES = (
 def test_frozen_phase5_annotation_corpus_rebuilds_from_controlled_sources(
     tmp_path: Path,
 ) -> None:
-    repository = JsonlDocumentRepository(tmp_path / "corpus")
+    repository = JsonDocumentRepository(tmp_path / "corpus")
     for source_name in SOURCE_NAMES:
         manifest_path = PROJECT_ROOT / f"datasets/raw/manifests/pymc/6.1.0/{source_name}.json"
         source_path = PROJECT_ROOT / f"datasets/fixtures/pymc/6.1.0/{source_name}.html"

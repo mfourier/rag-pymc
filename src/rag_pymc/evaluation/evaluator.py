@@ -21,7 +21,7 @@ from rag_pymc.evaluation.metrics import (
     recall_at_k,
     reciprocal_rank,
 )
-from rag_pymc.evaluation.models import (
+from rag_pymc.evaluation.retrieval_models import (
     AggregateRetrievalMetrics,
     EvaluationQuery,
     QueryEvaluationResult,
@@ -42,7 +42,7 @@ class RetrievalEvaluator:
         chunks: Sequence[Chunk],
         tokenizer: TechnicalTokenizer,
         config: RetrievalExperimentConfig,
-        experiment_id: str = "phase2-bm25-baseline",
+        experiment_id: str = "bm25-evaluation-v1",
         limitations: Sequence[str] | None = None,
         setup_latency_ms: float | None = None,
     ) -> None:
@@ -59,6 +59,10 @@ class RetrievalEvaluator:
                 "The corpus and binary qrels are controlled development artifacts.",
                 "The results validate this corpus and dataset, not broad retrieval quality.",
                 "No score threshold or learned abstention policy is applied.",
+                (
+                    "The correct_abstention_rate field is an empty-result proxy for "
+                    "historical schema compatibility, not an evidence-policy measurement."
+                ),
                 "Latency measures an in-process BM25 index and is machine-specific.",
             )
         )

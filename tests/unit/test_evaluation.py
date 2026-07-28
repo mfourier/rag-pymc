@@ -6,11 +6,8 @@ import pytest
 from pydantic import ValidationError
 
 from rag_pymc.domain import Difficulty
-from rag_pymc.evaluation import (
-    EvaluationDatasetError,
-    EvaluationQuery,
-    load_evaluation_queries,
-)
+from rag_pymc.evaluation.dataset import load_evaluation_queries
+from rag_pymc.evaluation.errors import EvaluationDatasetError
 from rag_pymc.evaluation.metrics import (
     ndcg_at_k,
     percentile,
@@ -18,6 +15,7 @@ from rag_pymc.evaluation.metrics import (
     recall_at_k,
     reciprocal_rank,
 )
+from rag_pymc.evaluation.retrieval_models import EvaluationQuery
 
 
 def test_binary_retrieval_metrics_match_hand_calculation() -> None:

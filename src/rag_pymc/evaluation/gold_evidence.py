@@ -1,12 +1,9 @@
 """Gold-backed context coverage and abstention evaluation for Phase 5 development data."""
 
-import json
 from collections.abc import Sequence
-from hashlib import sha256
 
 from rag_pymc.domain import ConstructedContext, EvidenceAssessment
-from rag_pymc.evaluation.errors import EvaluationError
-from rag_pymc.evaluation.models import (
+from rag_pymc.evaluation.development_models import (
     AggregateGoldEvidenceMetrics,
     AtomicGoldClaim,
     GoldClaimCoverage,
@@ -15,6 +12,8 @@ from rag_pymc.evaluation.models import (
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
 )
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.serialization import canonical_json_sha256
 
 
 def evaluate_gold_evidence(
@@ -219,11 +218,4 @@ def _validate_runtime_binding(
 
 
 def _hash_context(context: ConstructedContext) -> str:
-    canonical_json = json.dumps(
-        context.model_dump(mode="json"),
-        allow_nan=False,
-        ensure_ascii=True,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
-    return sha256(canonical_json.encode("ascii")).hexdigest()
+    return canonical_json_sha256(context.model_dump(mode="json"))

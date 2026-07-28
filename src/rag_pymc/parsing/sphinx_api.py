@@ -6,7 +6,7 @@ from hashlib import sha256
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, PageElement, Tag
 
-from rag_pymc.domain import Document, SourceManifest, SourceType
+from rag_pymc.domain import Document, SourceManifest
 from rag_pymc.ingestion.errors import DocumentParseError
 from rag_pymc.parsing.models import ParsedApiDocument, ParsedSection
 
@@ -18,9 +18,6 @@ class SphinxApiParser:
 
     def parse(self, source: bytes, manifest: SourceManifest) -> ParsedApiDocument:
         """Parse an API page while preserving code and source provenance."""
-        if manifest.source_type is not SourceType.API_REFERENCE:
-            msg = f"SphinxApiParser does not support {manifest.source_type}"
-            raise DocumentParseError(msg)
         if manifest.media_type != "text/html":
             msg = f"expected text/html, got {manifest.media_type}"
             raise DocumentParseError(msg)

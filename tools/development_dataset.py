@@ -9,14 +9,15 @@ from typing import Any
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Document, SourceType
-from rag_pymc.evaluation.errors import EvaluationDatasetError
-from rag_pymc.evaluation.models import (
+from rag_pymc.evaluation.development_models import (
     Phase5AnnotationCorpusDocument,
     Phase5AnnotationCorpusFreeze,
     Phase5DevelopmentCorpusValidation,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
 )
+from rag_pymc.evaluation.errors import EvaluationDatasetError
+from rag_pymc.serialization import canonical_json_sha256
 
 
 class _DuplicateJsonKeyError(ValueError):
@@ -114,14 +115,7 @@ def hash_phase5_corpus(chunks: Sequence[Chunk]) -> str:
         {"chunk_id": chunk.chunk_id, "content_sha256": chunk.content_hash}
         for chunk in sorted(validated, key=lambda chunk: chunk.chunk_id)
     )
-    canonical_json = json.dumps(
-        identity,
-        allow_nan=False,
-        ensure_ascii=True,
-        separators=(",", ":"),
-        sort_keys=True,
-    )
-    return sha256(canonical_json.encode("ascii")).hexdigest()
+    return canonical_json_sha256(identity)
 
 
 def build_phase5_annotation_corpus_freeze(

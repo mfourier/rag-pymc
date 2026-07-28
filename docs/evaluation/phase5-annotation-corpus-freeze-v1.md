@@ -24,7 +24,7 @@ against the exact raw SHA-256 in their checked-in manifests.
 | `pymc.sample` | `48ec372999fdfc86bbdbd11aa7ebeb3185a2488a58a055db00f86320dfdc3d35` |
 | `pymc.sample_posterior_predictive` | `20d65310024f100b06a880551c160a0a9c0e6df4652621a45692b4212f28a869` |
 
-The checked-in manifests and fixtures are authoritative build inputs. The processed JSONL
+The checked-in manifests and fixtures are authoritative build inputs. The processed JSON
 directory is deliberately ignored by Git and must be rebuilt before annotation or validation.
 
 ## Frozen identity
@@ -44,7 +44,7 @@ directory is deliberately ignored by Git and must be rebuilt before annotation o
 The machine-validated record is
 `reports/evaluation/phase5-annotation-corpus-freeze-v1.json`. Its corpus SHA-256 is the
 order-invariant identity over sorted chunk ID and content-hash records; it is not the byte hash
-of `chunks.jsonl`.
+of `corpus.json`.
 
 ## Reproduction
 
@@ -52,13 +52,12 @@ Build the corpus into a new or already matching output directory by running the 
 ingestion commands documented in `README.md`. Then create or verify the freeze artifact:
 
 ```bash
-uv run rag-pymc-research freeze-annotation-corpus \
+uv run python -m tools.research_cli freeze-annotation-corpus \
   --corpus-dir datasets/processed/phase5-annotation-api-v1 \
   --corpus-path datasets/processed/phase5-annotation-api-v1 \
   --annotation-namespace pymc-6.1.0-api-phase5-development-v1 \
   --library pymc \
   --library-version 6.1.0 \
-  --source-type api_reference \
   --limitation "Chunk-identity coverage does not establish semantic support, citation correctness, answer correctness, or usefulness." \
   --limitation "The corpus contains generated API reference pages for only four PyMC public symbols." \
   --limitation "The corpus excludes conceptual notebooks, repository code, ArviZ, and PyTensor sources." \

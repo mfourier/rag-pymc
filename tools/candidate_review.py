@@ -12,14 +12,12 @@ from typing import Any
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Difficulty
-from rag_pymc.evaluation.dataset import load_evaluation_queries
-from rag_pymc.evaluation.development_dataset import hash_phase5_corpus
-from rag_pymc.evaluation.errors import EvaluationDatasetError
-from rag_pymc.evaluation.models import (
-    EvaluationQuery,
+from rag_pymc.evaluation.development_models import (
     Phase5DevelopmentCandidate,
     Phase5DevelopmentCandidateBatch,
 )
+from rag_pymc.evaluation.errors import EvaluationDatasetError
+from tools.development_dataset import hash_phase5_corpus
 
 PREREGISTRATION_ID = "phase5-development-batch-preregistration-v1"
 BATCH_ID = "pymc-6.1.0-api-phase5-development-batch-v1"
@@ -45,12 +43,20 @@ class _SlotSpec:
 
 
 @dataclass(frozen=True)
+class PriorQuery:
+    """Minimal historical query identity used for leakage triage."""
+
+    question_id: str
+    question: str
+
+
+@dataclass(frozen=True)
 class PriorQuerySource:
     """One prior query collection used only for deterministic leakage triage."""
 
     path: str
     dataset_sha256: str
-    queries: tuple[EvaluationQuery, ...]
+    queries: tuple[PriorQuery, ...]
 
 
 def _slot(
@@ -476,8 +482,41 @@ def load_prior_query_source(path: Path) -> PriorQuerySource:
     return PriorQuerySource(
         path=path.as_posix(),
         dataset_sha256=sha256(raw_bytes).hexdigest(),
-        queries=load_evaluation_queries(path),
+        queries=_load_prior_queries(raw_bytes, path),
     )
+
+
+def _load_prior_queries(raw_bytes: bytes, path: Path) -> tuple[PriorQuery, ...]:
+    try:
+        text = raw_bytes.decode("utf-8", errors="strict")
+    except UnicodeDecodeError as error:
+        msg = f"invalid UTF-8 in prior evaluation queries: {path}"
+        raise EvaluationDatasetError(msg) from error
+
+    queries: list[PriorQuery] = []
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(
+                line,
+                object_pairs_hook=_strict_json_object,
+                parse_constant=_reject_non_finite_json_number,
+            )
+            question_id = payload["question_id"]
+            question = payload["question"]
+            if not isinstance(question_id, str) or not question_id.strip():
+                raise ValueError
+            if not isinstance(question, str) or not question.strip():
+                raise ValueError
+            queries.append(PriorQuery(question_id=question_id.strip(), question=question.strip()))
+        except (KeyError, TypeError, json.JSONDecodeError, RecursionError, ValueError) as error:
+            msg = f"invalid prior evaluation query at {path}:{line_number}"
+            raise EvaluationDatasetError(msg) from error
+    if not queries:
+        msg = f"prior evaluation query file is empty: {path}"
+        raise EvaluationDatasetError(msg)
+    return tuple(queries)
 
 
 def render_phase5_candidate_review(
@@ -579,7 +618,7 @@ def write_phase5_candidate_review(review: str, path: Path) -> None:
 
 def _render_candidate(
     candidate: Phase5DevelopmentCandidate,
-    matches: tuple[tuple[float, PriorQuerySource, EvaluationQuery], ...],
+    matches: tuple[tuple[float, PriorQuerySource, PriorQuery], ...],
 ) -> list[str]:
     lines = [
         f"### {candidate.query_id}",
@@ -668,13 +707,13 @@ def _render_chunk(chunk: Chunk) -> list[str]:
 def _build_leakage_matches(
     candidates: Sequence[Phase5DevelopmentCandidate],
     sources: Sequence[PriorQuerySource],
-) -> dict[str, tuple[tuple[float, PriorQuerySource, EvaluationQuery], ...]]:
+) -> dict[str, tuple[tuple[float, PriorQuerySource, PriorQuery], ...]]:
     prior = tuple((source, query) for source in sources for query in source.queries)
-    normalized_prior: dict[str, list[tuple[PriorQuerySource, EvaluationQuery]]] = {}
+    normalized_prior: dict[str, list[tuple[PriorQuerySource, PriorQuery]]] = {}
     for source, query in prior:
         normalized_prior.setdefault(_normalize_query(query.question), []).append((source, query))
 
-    result: dict[str, tuple[tuple[float, PriorQuerySource, EvaluationQuery], ...]] = {}
+    result: dict[str, tuple[tuple[float, PriorQuerySource, PriorQuery], ...]] = {}
     for candidate in candidates:
         normalized = _normalize_query(candidate.query_text)
         exact = normalized_prior.get(normalized, [])

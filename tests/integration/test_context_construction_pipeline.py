@@ -6,7 +6,7 @@ from rag_pymc.domain import SearchQuery, SourceManifest, SourceType
 from rag_pymc.indexing import BM25Index
 from rag_pymc.ingestion import IngestionService, LocalFileSourceFetcher
 from rag_pymc.parsing import SphinxApiParser
-from rag_pymc.persistence import JsonlDocumentRepository
+from rag_pymc.persistence import JsonDocumentRepository
 from rag_pymc.retrieval import SparseRetriever, TechnicalTokenizer
 
 
@@ -15,7 +15,7 @@ def test_real_sparse_retrieval_builds_deterministic_bounded_context(
     source_path: Path,
     tmp_path: Path,
 ) -> None:
-    repository = JsonlDocumentRepository(tmp_path / "corpus")
+    repository = JsonDocumentRepository(tmp_path / "corpus")
     ingestion_result = IngestionService(
         fetcher=LocalFileSourceFetcher(source_path),
         parser=SphinxApiParser(),

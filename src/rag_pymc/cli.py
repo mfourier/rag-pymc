@@ -12,7 +12,7 @@ import typer
 from pydantic import ValidationError
 
 from rag_pymc import __version__
-from rag_pymc.application import ContextInspectionService
+from rag_pymc.application.context_inspection import ContextInspectionService
 from rag_pymc.application.retrieval_runtime import (
     build_sparse_experiment_config,
     build_sparse_runtime,
@@ -20,16 +20,13 @@ from rag_pymc.application.retrieval_runtime import (
 from rag_pymc.chunking import ApiReferenceChunker
 from rag_pymc.context import RankedContextBuilder
 from rag_pymc.domain import Chunk, RetrievedChunk, SearchQuery, SourceManifest, SourceType
-from rag_pymc.evaluation import (
-    EvaluationError,
-    RetrievalEvaluator,
-    load_evaluation_queries,
-    write_experiment_report,
-)
+from rag_pymc.evaluation.dataset import load_evaluation_queries
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.evaluation.evaluator import RetrievalEvaluator, write_experiment_report
 from rag_pymc.ingestion import IngestionResult, IngestionService, LocalFileSourceFetcher
 from rag_pymc.ingestion.errors import CorpusPersistenceError, IngestionError
 from rag_pymc.parsing import SphinxApiParser
-from rag_pymc.persistence import JsonlDocumentRepository
+from rag_pymc.persistence import JsonDocumentRepository
 
 app = typer.Typer(
     add_completion=False,
@@ -39,9 +36,7 @@ app = typer.Typer(
 
 MINIMUM_PYTHON = (3, 12)
 SCIENTIFIC_DISTRIBUTIONS = ("pymc", "arviz", "pytensor")
-DEFAULT_CORPUS_DIR = Path("datasets/processed/phase4")
-DEFAULT_DATASET_PATH = Path("datasets/evaluation/phase4/pymc_core_queries.jsonl")
-DEFAULT_REPORT_PATH = Path("reports/evaluation/phase4-bm25-expanded.json")
+DEFAULT_CORPUS_DIR = Path("datasets/processed/pymc-6.1.0-api-v1")
 DEFAULT_LIBRARY = "pymc"
 DEFAULT_LIBRARY_VERSION = "6.1.0"
 DEFAULT_SEED = 20260720
@@ -59,13 +54,13 @@ def _run_api_ingestion(
         fetcher=LocalFileSourceFetcher(source_path),
         parser=SphinxApiParser(),
         chunker=ApiReferenceChunker(),
-        repository=JsonlDocumentRepository(output_dir),
+        repository=JsonDocumentRepository(output_dir),
     ).run(manifest)
     return manifest, result
 
 
 def _load_corpus_chunks(corpus_dir: Path) -> tuple[Chunk, ...]:
-    chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+    chunks = JsonDocumentRepository(corpus_dir).load_chunks()
     if not chunks:
         msg = f"corpus contains no chunks: {corpus_dir}"
         raise CorpusPersistenceError(msg)
@@ -77,7 +72,6 @@ def _build_search_query(
     top_k: int,
     library: str | None,
     library_version: str | None,
-    source_types: Sequence[SourceType] | None,
     api_symbols: Sequence[str] | None,
 ) -> SearchQuery:
     return SearchQuery(
@@ -85,7 +79,7 @@ def _build_search_query(
         top_k=top_k,
         library=library,
         library_version=library_version,
-        source_types=tuple(source_types or ()),
+        source_types=(SourceType.API_REFERENCE,),
         api_symbols=tuple(api_symbols or ()),
     )
 
@@ -117,21 +111,27 @@ def _echo_results(query: SearchQuery, results: Sequence[RetrievedChunk]) -> None
 
 
 @app.command()
-def doctor() -> None:
-    """Report the installed scientific runtime and fail on missing requirements."""
+def doctor(
+    scientific: Annotated[
+        bool,
+        typer.Option("--scientific", help="Also verify the optional scientific toolchain."),
+    ] = False,
+) -> None:
+    """Report the core runtime and optionally verify scientific tooling."""
     typer.echo("rag-pymc doctor")
     typer.echo(f"project: {__version__}")
     typer.echo(f"python: {platform.python_version()}")
 
     missing: list[str] = []
-    for distribution in SCIENTIFIC_DISTRIBUTIONS:
-        installed = _distribution_version(distribution)
-        if installed is None:
-            missing.append(distribution)
-            typer.echo(f"{distribution}: missing")
-        else:
-            import_module(distribution)
-            typer.echo(f"{distribution}: {installed}")
+    if scientific:
+        for distribution in SCIENTIFIC_DISTRIBUTIONS:
+            installed = _distribution_version(distribution)
+            if installed is None:
+                missing.append(distribution)
+                typer.echo(f"{distribution}: missing")
+            else:
+                import_module(distribution)
+                typer.echo(f"{distribution}: {installed}")
 
     if sys.version_info < MINIMUM_PYTHON or missing:
         typer.echo("status: failed", err=True)
@@ -181,10 +181,6 @@ def search(
     library_version: Annotated[str | None, typer.Option("--library-version")] = (
         DEFAULT_LIBRARY_VERSION
     ),
-    source_types: Annotated[
-        list[SourceType] | None,
-        typer.Option("--source-type"),
-    ] = None,
     api_symbols: Annotated[
         list[str] | None,
         typer.Option("--api-symbol"),
@@ -192,9 +188,7 @@ def search(
 ) -> None:
     """Search the selected local corpus with deterministic BM25."""
     try:
-        query = _build_search_query(
-            query_text, top_k, library, library_version, source_types, api_symbols
-        )
+        query = _build_search_query(query_text, top_k, library, library_version, api_symbols)
         runtime = build_sparse_runtime(_load_corpus_chunks(corpus_dir))
         results = runtime.retriever.retrieve(query)
     except (CorpusPersistenceError, ValidationError, ValueError) as error:
@@ -222,10 +216,6 @@ def inspect_context(
     top_k: Annotated[int, typer.Option("--top-k", min=1, max=10)] = 3,
     library: Annotated[str, typer.Option("--library")] = DEFAULT_LIBRARY,
     library_version: Annotated[str, typer.Option("--library-version")] = DEFAULT_LIBRARY_VERSION,
-    source_types: Annotated[
-        list[SourceType] | None,
-        typer.Option("--source-type"),
-    ] = None,
     api_symbols: Annotated[
         list[str] | None,
         typer.Option("--api-symbol"),
@@ -233,9 +223,7 @@ def inspect_context(
 ) -> None:
     """Retrieve and print deterministic, budget-bounded BM25 context as JSON."""
     try:
-        query = _build_search_query(
-            query_text, top_k, library, library_version, source_types, api_symbols
-        )
+        query = _build_search_query(query_text, top_k, library, library_version, api_symbols)
         runtime = build_sparse_runtime(_load_corpus_chunks(corpus_dir))
         service = ContextInspectionService(
             runtime.retriever,
@@ -254,20 +242,20 @@ def evaluate(
     dataset_path: Annotated[
         Path,
         typer.Option("--dataset", exists=True, dir_okay=False, readable=True),
-    ] = DEFAULT_DATASET_PATH,
+    ],
     corpus_dir: Annotated[
         Path,
-        typer.Option("--corpus-dir", file_okay=False),
-    ] = DEFAULT_CORPUS_DIR,
+        typer.Option("--corpus-dir", exists=True, file_okay=False, readable=True),
+    ],
     output_path: Annotated[
         Path,
         typer.Option("--output", dir_okay=False),
-    ] = DEFAULT_REPORT_PATH,
+    ],
     top_k: Annotated[int, typer.Option("--top-k", min=1, max=100)] = 3,
     seed: Annotated[int, typer.Option("--seed")] = DEFAULT_SEED,
     k1: Annotated[float, typer.Option("--k1", min=0.000001)] = DEFAULT_K1,
     b: Annotated[float, typer.Option("--b", min=0.0, max=1.0)] = DEFAULT_B,
-    experiment_id: Annotated[str, typer.Option("--experiment-id")] = "phase4-bm25-expanded",
+    experiment_id: Annotated[str, typer.Option("--experiment-id")] = "bm25-mvp-v1",
     limitations: Annotated[list[str] | None, typer.Option("--limitation")] = None,
 ) -> None:
     """Evaluate the selected BM25 policy against committed query judgments."""
@@ -302,7 +290,7 @@ def evaluate(
     typer.echo(f"recall@{top_k}: {metrics.recall_at_k:.6f}")
     typer.echo(f"mrr: {metrics.mrr:.6f}")
     typer.echo(f"ndcg@{top_k}: {metrics.ndcg_at_k:.6f}")
-    typer.echo(f"correct_abstention: {metrics.correct_abstention_rate:.6f}")
+    typer.echo(f"unanswerable_empty_result_rate: {metrics.correct_abstention_rate:.6f}")
     typer.echo(f"output: {output_path}")
     typer.echo("status: ok")
 

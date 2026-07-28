@@ -8,16 +8,16 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from rag_pymc.evaluation import (
+from rag_pymc.evaluation.development_models import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
-    EvaluationDatasetError,
     GoldEvidenceSupportSet,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
-    load_phase5_development_dataset,
 )
+from rag_pymc.evaluation.errors import EvaluationDatasetError
+from tools.development_dataset import load_phase5_development_dataset
 
 CORPUS_SHA256 = "c" * 64
 OTHER_CORPUS_SHA256 = "d" * 64

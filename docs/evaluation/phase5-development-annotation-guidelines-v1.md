@@ -124,7 +124,7 @@ Before a batch is frozen:
 
 1. Load the JSONL with `load_phase5_development_dataset`.
 2. Load the exact processed corpus and call `validate_phase5_development_corpus`.
-   `rag-pymc-research validate-development-data --dataset <path> --corpus-dir <path>` performs both
+   `python -m tools.research_cli validate-development-data --dataset <path> --corpus-dir <path>` performs both
    operations and emits the canonical audit record.
 3. Confirm the returned dataset hash, corpus hash, chunk count, gold claim count, support-set
    count, and referenced chunk IDs against the batch record.

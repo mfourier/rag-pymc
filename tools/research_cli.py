@@ -1,4 +1,4 @@
-"""Internal CLI for versioned annotation and evaluation-data workflows."""
+"""Repository-local CLI for versioned annotation and evaluation-data workflows."""
 
 from pathlib import Path
 from typing import Annotated
@@ -7,20 +7,22 @@ import typer
 from pydantic import ValidationError
 
 from rag_pymc.domain import SourceType
-from rag_pymc.evaluation import (
-    EvaluationError,
-    build_phase5_annotation_corpus_freeze,
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.ingestion.errors import CorpusPersistenceError
+from rag_pymc.persistence import JsonDocumentRepository
+from tools.candidate_review import (
     load_phase5_development_candidates,
-    load_phase5_development_dataset,
     load_prior_query_source,
     render_phase5_candidate_review,
     validate_phase5_candidate_batch_v1,
-    validate_phase5_development_corpus,
-    write_phase5_annotation_corpus_freeze,
     write_phase5_candidate_review,
 )
-from rag_pymc.ingestion.errors import CorpusPersistenceError
-from rag_pymc.persistence import JsonlDocumentRepository
+from tools.development_dataset import (
+    build_phase5_annotation_corpus_freeze,
+    load_phase5_development_dataset,
+    validate_phase5_development_corpus,
+    write_phase5_annotation_corpus_freeze,
+)
 
 app = typer.Typer(
     add_completion=False,
@@ -43,7 +45,7 @@ def validate_development_data(
     """Validate development annotations against an exact local corpus."""
     try:
         dataset = load_phase5_development_dataset(dataset_path)
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+        chunks = JsonDocumentRepository(corpus_dir).load_chunks()
         report = validate_phase5_development_corpus(dataset, chunks)
     except (
         CorpusPersistenceError,
@@ -74,13 +76,12 @@ def freeze_annotation_corpus(
     annotation_namespace: Annotated[str, typer.Option("--annotation-namespace")],
     library: Annotated[str, typer.Option("--library")],
     library_version: Annotated[str, typer.Option("--library-version")],
-    source_types: Annotated[list[SourceType], typer.Option("--source-type")],
     limitations: Annotated[list[str], typer.Option("--limitation")],
     output_path: Annotated[Path, typer.Option("--output", dir_okay=False)],
 ) -> None:
     """Freeze a validated corpus before annotation begins."""
     try:
-        repository = JsonlDocumentRepository(corpus_dir)
+        repository = JsonDocumentRepository(corpus_dir)
         report = build_phase5_annotation_corpus_freeze(
             repository.load_documents(),
             repository.load_chunks(),
@@ -88,7 +89,7 @@ def freeze_annotation_corpus(
             corpus_path=corpus_path,
             library=library,
             library_version=library_version,
-            source_types=source_types,
+            source_types=(SourceType.API_REFERENCE,),
             limitations=limitations,
         )
         write_phase5_annotation_corpus_freeze(report, output_path)
@@ -125,7 +126,7 @@ def export_development_review(
     try:
         batch = load_phase5_development_candidates(candidates_path)
         validate_phase5_candidate_batch_v1(batch)
-        chunks = JsonlDocumentRepository(corpus_dir).load_chunks()
+        chunks = JsonDocumentRepository(corpus_dir).load_chunks()
         prior_sources = tuple(load_prior_query_source(path) for path in prior_dataset_paths)
         review = render_phase5_candidate_review(batch, chunks, prior_sources)
         write_phase5_candidate_review(review, output_path)
@@ -139,7 +140,7 @@ def export_development_review(
         typer.echo(f"development-review export failed: {error}", err=True)
         raise typer.Exit(code=1) from error
 
-    typer.echo("rag-pymc-research export-development-review")
+    typer.echo("python -m tools.research_cli export-development-review")
     typer.echo(f"candidates: {candidates_path}")
     typer.echo(f"candidate_sha256: {batch.dataset_sha256}")
     typer.echo(f"corpus_sha256: {batch.corpus_sha256}")

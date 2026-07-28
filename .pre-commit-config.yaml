@@ -20,6 +20,6 @@ repos:
         pass_filenames: false
       - id: pytest
         name: pytest
-        entry: uv run pytest
+        entry: uv run pytest --cov=rag_pymc --cov-branch --cov-report=term-missing:skip-covered
         language: system
         pass_filenames: false

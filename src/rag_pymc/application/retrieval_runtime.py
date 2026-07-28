@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from rag_pymc.domain import Chunk
-from rag_pymc.evaluation import RetrievalExperimentConfig
+from rag_pymc.evaluation.retrieval_models import RetrievalExperimentConfig
 from rag_pymc.indexing import BM25Index
 from rag_pymc.retrieval import SparseRetriever, TechnicalTokenizer
 

@@ -30,9 +30,9 @@ feature-specific tests from the installed project. Remove the one-off repository
 as well; the exact controlled outputs it produced remain versioned.
 
 Retain the exact raw fixtures, source manifests, evaluation datasets, machine-readable reports,
-evaluation narratives, and earlier ADRs as historical research evidence. Retain archived source
-type identities where research-data validation needs to read those frozen records; they do not
-imply an active ingestion capability.
+evaluation narratives, and earlier ADRs as historical research evidence. Repository-local leakage
+triage reads only the question identity and text from older datasets, so archived source identities
+do not remain in the active domain contract.
 
 A new source format may return only when it has:
 
@@ -63,8 +63,8 @@ without a stronger hypothesis.
 ## Consequences
 
 - The installed project has one acquisition-to-chunking path and one documented corpus build.
-- Jupyter is no longer a development dependency. The small HDF5 backend remains because the
-  independent ArviZ inference-audit utility has a concrete NetCDF contract.
+- Jupyter is no longer a development dependency. The scientific extra retains the small HDF5
+  backend because the independent ArviZ inference-audit utility has a concrete NetCDF contract.
 - The Python package is smaller, while exact experimental evidence remains auditable.
 - Archived manifests cannot be ingested through the product CLI in the current version.
 - Scientific papers must enter through the separate policy and adoption gate rather than by

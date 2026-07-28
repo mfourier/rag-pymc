@@ -4,15 +4,17 @@ import pytest
 from pydantic import ValidationError
 
 from rag_pymc.domain import Chunk, Document, SourceType
-from rag_pymc.evaluation import (
-    EvaluationDatasetError,
+from rag_pymc.evaluation.development_models import (
     Phase5AnnotationCorpusFreeze,
+)
+from rag_pymc.evaluation.errors import EvaluationDatasetError
+from tests.factories import make_chunk as make_test_chunk
+from tests.factories import make_document
+from tools.development_dataset import (
     build_phase5_annotation_corpus_freeze,
     hash_phase5_corpus,
     write_phase5_annotation_corpus_freeze,
 )
-from tests.factories import make_chunk as make_test_chunk
-from tests.factories import make_document
 
 LIMITATIONS = ("The synthetic corpus is intentionally narrow.",)
 
@@ -80,14 +82,6 @@ def test_annotation_corpus_freeze_is_deterministic_and_complete(tmp_path: Path) 
     restored = Phase5AnnotationCorpusFreeze.model_validate_json(output_path.read_text())
     assert restored == report
     assert output_path.read_bytes().endswith(b"\n")
-
-
-def test_annotation_corpus_freeze_rejects_an_undeclared_source_layer() -> None:
-    document = make_document("guide", source_type=SourceType.NOTEBOOK)
-    chunk = make_chunk("chunk_a", document)
-
-    with pytest.raises(EvaluationDatasetError, match="source types do not match"):
-        build_report((document,), (chunk,))
 
 
 def test_annotation_corpus_freeze_rejects_a_chunk_without_its_parent() -> None:

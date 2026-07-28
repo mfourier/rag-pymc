@@ -16,18 +16,17 @@ from rag_pymc.domain import (
     SearchQuery,
     SourceType,
 )
-from rag_pymc.evaluation import (
+from rag_pymc.evaluation.development_models import (
     AdjudicationProvenance,
     AnnotationProvenance,
     AtomicGoldClaim,
-    EvaluationError,
     GoldEvidenceEvaluationReport,
     GoldEvidenceSupportSet,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
-    aggregate_gold_evidence,
-    evaluate_gold_evidence,
 )
+from rag_pymc.evaluation.errors import EvaluationError
+from rag_pymc.evaluation.gold_evidence import aggregate_gold_evidence, evaluate_gold_evidence
 from rag_pymc.retrieval import TechnicalTokenizer
 
 NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
