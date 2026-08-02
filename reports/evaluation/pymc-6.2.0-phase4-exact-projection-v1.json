@@ -1,0 +1,26 @@
+{
+  "schema_version": "1",
+  "projection_version": "pymc-6.2.0-exact-retrieval-projection-v1",
+  "artifact_role": "version-migration-retrieval-diagnostic",
+  "from_library_version": "6.1.0",
+  "to_library_version": "6.2.0",
+  "source_dataset_hash_policy": "sha256-raw-file-bytes-v1",
+  "source_dataset_sha256": "5f5eb1f0e42a77759a5a1b33bae26fa43264002238633ed93a3d0d6695aa454b",
+  "projected_dataset_hash_policy": "sha256-raw-file-bytes-v1",
+  "projected_dataset_sha256": "a681d557e9e93895d95832864071eb6ed94e1f75cb99a74fc93aae495c8eb8e9",
+  "migration_report_sha256": "9ce30bd317e7d41bf73086913321a4f42c362075544d0a75f7e075e93d9b6dc4",
+  "target_corpus_sha256": "796e7aee3f1fae1423bc04f0478381e6f7338afdd85d2f3a9d1d9cfa692c573a",
+  "query_count": 30,
+  "answerable_query_count": 27,
+  "referenced_document_count": 4,
+  "referenced_chunk_count": 13,
+  "projection_method": "exact-normalized-document-and-chunk-identity",
+  "new_human_judgment": false,
+  "held_out": false,
+  "threshold_selected": false,
+  "limitations": [
+    "The projected dataset cannot support sufficiency calibration or production quality claims.",
+    "The projection changes only library_version after exact normalized identity validation; it creates no new human judgment.",
+    "The source queries are development diagnostics, not a held-out evaluation set for PyMC 6.2.0."
+  ]
+}

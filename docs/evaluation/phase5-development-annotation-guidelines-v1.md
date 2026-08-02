@@ -38,6 +38,20 @@ adoption still requires its own regression decision.
 The JSONL file contains only records with adjudication status `accepted`. Drafts and reviewer
 discussion belong outside the dataset artifact.
 
+### Governed single-review exception
+
+The original `phase5-development-annotation-v1` contract above remains unchanged and continues to
+require independent annotator and adjudicator identities. It must not encode the one-person review
+authorized later by `phase5-development-single-review-governance-v1`.
+
+That governed exploratory exception uses separate
+`phase5-development-single-review-decision-v1` and
+`phase5-development-single-review-example-v1` contracts. Its role is
+`development-single-review-exploratory`; its reports explicitly state that independent
+adjudication, held-out evaluation, and threshold selection did not occur. See the
+[single-review workflow](phase5-development-single-review-workflow-v1.md). This exception does not
+weaken or reinterpret any independently adjudicated dataset.
+
 ## Query construction
 
 Author queries deliberately across multiple intents, difficulty levels, and template

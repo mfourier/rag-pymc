@@ -5,16 +5,16 @@ description: Search, inspect, summarize, and assess the local upstream PyMC docu
 
 # PyMC Raw Documentation
 
-Use the upstream documentation tree as local discovery and contextual evidence while preserving its uncertain version boundary. Do not treat it as the controlled PyMC 6.1.0 corpus.
+Use the upstream documentation tree as local discovery and contextual evidence while preserving its uncertain version boundary. Do not treat it as the controlled PyMC 6.2.0 corpus.
 
 ## Establish the source boundary
 
 1. Work from the `rag-pymc` repository root and confirm that `datasets/raw/source` exists.
 2. Read `references/source-map.md` before selecting sources. Re-read it when the tree changes materially.
-3. Inspect `datasets/raw/manifests/pymc/6.1.0` when the question requires controlled PyMC 6.1.0 evidence.
+3. Inspect `datasets/raw/manifests/pymc/6.2.0` when the question requires current controlled PyMC evidence. Use the 6.1.0 manifests only for historical Phase 5 or migration questions.
 4. Confirm executable behavior against `pyproject.toml`, `uv.lock`, and the pinned environment when an answer will influence repository code.
 
-The raw tree has no adjacent acquisition manifest proving a release tag, commit, or complete-tree hash. Notebook outputs expose several historical or development PyMC versions, but none versions the entire tree. Never describe this directory as PyMC 6.1.0 or as an immutable release snapshot without new provenance evidence.
+The raw tree has no adjacent acquisition manifest proving a release tag, commit, or complete-tree hash. Notebook outputs expose several historical or development PyMC versions, but none versions the entire tree. Never describe this directory as PyMC 6.2.0 or as an immutable release snapshot without new provenance evidence.
 
 ## Locate evidence
 

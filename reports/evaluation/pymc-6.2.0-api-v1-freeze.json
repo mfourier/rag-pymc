@@ -1,0 +1,304 @@
+{
+  "schema_version": "2",
+  "freeze_version": "controlled-api-corpus-freeze-v2",
+  "corpus_role": "active-api-version-migration",
+  "corpus_id": "pymc-6.2.0-api-v1",
+  "corpus_path": "datasets/processed/pymc-6.2.0-api-v1",
+  "corpus_hash_policy": "canonical-corpus-provenance-json-v2",
+  "corpus_sha256": "796e7aee3f1fae1423bc04f0478381e6f7338afdd85d2f3a9d1d9cfa692c573a",
+  "legacy_content_hash_policy": "canonical-chunk-identity-json-v1",
+  "legacy_content_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+  "library": "pymc",
+  "library_version": "6.2.0",
+  "release_tag": "v6.2.0",
+  "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+  "sources": [
+    {
+      "manifest_path": "datasets/raw/manifests/pymc/6.2.0/pymc.Data.json",
+      "fixture_path": "datasets/fixtures/pymc/6.2.0/pymc.Data.html",
+      "manifest": {
+        "manifest_version": "1",
+        "source_id": "pymc-6.2.0-api-pymc.Data",
+        "library": "pymc",
+        "library_version": "6.2.0",
+        "source_type": "api_reference",
+        "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.Data.html",
+        "release_tag": "v6.2.0",
+        "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.2.0",
+        "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+        "source_last_modified_at": null,
+        "downloaded_at": "2026-08-02T02:52:05Z",
+        "content_hash": "ba15eba8195925d28dd0234a05f7807f4219c9c33871e4e136da5b60f6861e82",
+        "media_type": "text/html",
+        "expected_api_symbol": "pymc.Data",
+        "license_name": "Apache-2.0",
+        "license_url": "https://github.com/pymc-devs/pymc/blob/v6.2.0/LICENSE"
+      }
+    },
+    {
+      "manifest_path": "datasets/raw/manifests/pymc/6.2.0/pymc.model.core.set_data.json",
+      "fixture_path": "datasets/fixtures/pymc/6.2.0/pymc.model.core.set_data.html",
+      "manifest": {
+        "manifest_version": "1",
+        "source_id": "pymc-6.2.0-api-pymc.model.core.set_data",
+        "library": "pymc",
+        "library_version": "6.2.0",
+        "source_type": "api_reference",
+        "source_url": "https://www.pymc.io/projects/docs/en/stable/api/model/generated/pymc.model.core.set_data.html",
+        "release_tag": "v6.2.0",
+        "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.2.0",
+        "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+        "source_last_modified_at": null,
+        "downloaded_at": "2026-08-02T02:52:05Z",
+        "content_hash": "14eb483a1bc93fa7b9a628a58eb336872d603203a14a40659f5752c44394144a",
+        "media_type": "text/html",
+        "expected_api_symbol": "pymc.model.core.set_data",
+        "license_name": "Apache-2.0",
+        "license_url": "https://github.com/pymc-devs/pymc/blob/v6.2.0/LICENSE"
+      }
+    },
+    {
+      "manifest_path": "datasets/raw/manifests/pymc/6.2.0/pymc.sample.json",
+      "fixture_path": "datasets/fixtures/pymc/6.2.0/pymc.sample.html",
+      "manifest": {
+        "manifest_version": "1",
+        "source_id": "pymc-6.2.0-api-pymc.sample",
+        "library": "pymc",
+        "library_version": "6.2.0",
+        "source_type": "api_reference",
+        "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample.html",
+        "release_tag": "v6.2.0",
+        "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.2.0",
+        "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+        "source_last_modified_at": null,
+        "downloaded_at": "2026-08-02T02:52:05Z",
+        "content_hash": "08153ae8af4c7a869135747b34a57f674b7f32e3a4c78d47de4fc94046caf559",
+        "media_type": "text/html",
+        "expected_api_symbol": "pymc.sample",
+        "license_name": "Apache-2.0",
+        "license_url": "https://github.com/pymc-devs/pymc/blob/v6.2.0/LICENSE"
+      }
+    },
+    {
+      "manifest_path": "datasets/raw/manifests/pymc/6.2.0/pymc.sample_posterior_predictive.json",
+      "fixture_path": "datasets/fixtures/pymc/6.2.0/pymc.sample_posterior_predictive.html",
+      "manifest": {
+        "manifest_version": "1",
+        "source_id": "pymc-6.2.0-api-pymc.sample_posterior_predictive",
+        "library": "pymc",
+        "library_version": "6.2.0",
+        "source_type": "api_reference",
+        "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample_posterior_predictive.html",
+        "release_tag": "v6.2.0",
+        "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.2.0",
+        "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+        "source_last_modified_at": null,
+        "downloaded_at": "2026-08-02T02:52:05Z",
+        "content_hash": "cb7d4b34c27ce68f35a157dc18380bce99e4d6e8e00e41551ab154b805ed21ed",
+        "media_type": "text/html",
+        "expected_api_symbol": "pymc.sample_posterior_predictive",
+        "license_name": "Apache-2.0",
+        "license_url": "https://github.com/pymc-devs/pymc/blob/v6.2.0/LICENSE"
+      }
+    }
+  ],
+  "documents": [
+    {
+      "document_id": "doc_16037e242e11d70fa4d5",
+      "title": "pymc.Data",
+      "content_sha256": "16037e242e11d70fa4d5c74c54e0e03ee1fbf55df0ea0d45231874b2006d8034",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.Data.html",
+      "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+      "parser_version": "sphinx-api-v1"
+    },
+    {
+      "document_id": "doc_9411eb3cb4de154ce8e3",
+      "title": "pymc.sample_posterior_predictive",
+      "content_sha256": "9411eb3cb4de154ce8e32b77396f9697f28013806868934e0da5d8cf4c81b2c3",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample_posterior_predictive.html",
+      "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+      "parser_version": "sphinx-api-v1"
+    },
+    {
+      "document_id": "doc_9cabb930971b31b5f763",
+      "title": "pymc.model.core.set_data",
+      "content_sha256": "9cabb930971b31b5f76324607d8a29afc9976542d07b1525ae07b4be9104f8ac",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/model/generated/pymc.model.core.set_data.html",
+      "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+      "parser_version": "sphinx-api-v1"
+    },
+    {
+      "document_id": "doc_c7542318b80e10fd1370",
+      "title": "pymc.sample",
+      "content_sha256": "c7542318b80e10fd1370285a6b2ba1ac16f2b517dce168246e6901ceaf6c8edc",
+      "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.sample.html",
+      "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+      "parser_version": "sphinx-api-v1"
+    }
+  ],
+  "chunks": [
+    {
+      "chunk_id": "chunk_0534d7f7dc0ee3d7674b",
+      "document_id": "doc_9cabb930971b31b5f763",
+      "section": "Parameters",
+      "content_sha256": "d5c41f29722ded8dadfbb5b2880ee0827c02b620dd0c354f464e70ba614ca64b",
+      "api_symbols": [
+        "pymc.model.core.set_data"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_070e4da52bcfccda8d96",
+      "document_id": "doc_c7542318b80e10fd1370",
+      "section": "Parameters",
+      "content_sha256": "2037c9b679bb478dcfa83e1428940845cf30eaedf2ae45a204fd2048f154965f",
+      "api_symbols": [
+        "pymc.sample"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_0f560b5e9847d47c9f2a",
+      "document_id": "doc_9411eb3cb4de154ce8e3",
+      "section": "Overview",
+      "content_sha256": "0c9e40fb9c8bc188707074d70075602acf5ba3e183e70b488477a5142163da2d",
+      "api_symbols": [
+        "pymc.sample_posterior_predictive"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_19342001ac28c7109268",
+      "document_id": "doc_c7542318b80e10fd1370",
+      "section": "Returns",
+      "content_sha256": "0f42abf6a4f6474c81f5742e5106252d8833d8985e0d4a96498f228d1e4a1785",
+      "api_symbols": [
+        "pymc.sample"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_3b18e70cd47d4b07c688",
+      "document_id": "doc_9411eb3cb4de154ce8e3",
+      "section": "Returns",
+      "content_sha256": "e45f83468fe765100e9fb3d02b690ebf1a58b93fe4cd38ff4b595933ddb4d7d0",
+      "api_symbols": [
+        "pymc.sample_posterior_predictive"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_4cb92e902495d287e54c",
+      "document_id": "doc_9411eb3cb4de154ce8e3",
+      "section": "Parameters",
+      "content_sha256": "0b7f6ed42d29338dfa9f9a1cedb38dd6dcaa3629fda2fec0afe97914419b4980",
+      "api_symbols": [
+        "pymc.sample_posterior_predictive"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_67f1417c989e25a0b269",
+      "document_id": "doc_9cabb930971b31b5f763",
+      "section": "Overview",
+      "content_sha256": "7cb333f8bcef0279053b99d508b63ad9d14ffc812f67dd534338a88f1fbc18c1",
+      "api_symbols": [
+        "pymc.model.core.set_data"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_8087d370d7cb0d682ae2",
+      "document_id": "doc_16037e242e11d70fa4d5",
+      "section": "Overview",
+      "content_sha256": "5c21c0706e6365349d6e2a884e96bfde13975b4b7b8e034f49d536d6e7ff2fac",
+      "api_symbols": [
+        "pymc.Data"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_b533fae009131320ddaa",
+      "document_id": "doc_9411eb3cb4de154ce8e3",
+      "section": "Examples",
+      "content_sha256": "92a21afdebc039140471df2270da5bcac6dd09726f566f1901c1716b180fe58a",
+      "api_symbols": [
+        "pymc.sample_posterior_predictive"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_b65fd20e8dd52ffab212",
+      "document_id": "doc_c7542318b80e10fd1370",
+      "section": "Examples",
+      "content_sha256": "b915073a18f89f2fe3ef4e73b5121861629076586e6301e5054818fa728187b0",
+      "api_symbols": [
+        "pymc.sample"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_bdbac941d4ebd7c396ed",
+      "document_id": "doc_c7542318b80e10fd1370",
+      "section": "Overview",
+      "content_sha256": "bf317aa8978a92105ff80dfaa37015d752eebc08f2826f75ba57732b876ccad7",
+      "api_symbols": [
+        "pymc.sample"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_d63299c2a9cfdb46bd8f",
+      "document_id": "doc_c7542318b80e10fd1370",
+      "section": "Notes",
+      "content_sha256": "4fa22051cf34f1ebc3aa28f30dc19cff579ba6983861a07e764c913dddf30f6e",
+      "api_symbols": [
+        "pymc.sample"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_e254c2d8ed3f2fdf8d8d",
+      "document_id": "doc_16037e242e11d70fa4d5",
+      "section": "Parameters",
+      "content_sha256": "2a6407028f016ce7c4d117f013994494ec1d215cb6ed132873686fb1b9d4308b",
+      "api_symbols": [
+        "pymc.Data"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_f09fd8e15a80db2baf99",
+      "document_id": "doc_9cabb930971b31b5f763",
+      "section": "Examples",
+      "content_sha256": "dbfb0f7afb2638773f2ed0ee4ea4be3eacf5e96041abf005c6fffc64351ee5e0",
+      "api_symbols": [
+        "pymc.model.core.set_data"
+      ],
+      "chunker_version": "api-reference-v1"
+    },
+    {
+      "chunk_id": "chunk_f7d55663f01200eb5f54",
+      "document_id": "doc_16037e242e11d70fa4d5",
+      "section": "Examples",
+      "content_sha256": "0ccda38a377fb74b71ab1cb11d3a28521487bd4b8ae038a33c543e695486b38f",
+      "api_symbols": [
+        "pymc.Data"
+      ],
+      "chunker_version": "api-reference-v1"
+    }
+  ],
+  "document_count": 4,
+  "chunk_count": 15,
+  "parser_versions": [
+    "sphinx-api-v1"
+  ],
+  "chunker_versions": [
+    "api-reference-v1"
+  ],
+  "limitations": [
+    "Chunk-identity equivalence does not establish semantic support, citation correctness, answer correctness, or usefulness.",
+    "The corpus contains generated API reference pages for only four PyMC public symbols.",
+    "The provenance-complete v2 hash is not comparable to the historical content-only v1 hash as though only content changed."
+  ]
+}

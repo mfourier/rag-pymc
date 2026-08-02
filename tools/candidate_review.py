@@ -548,15 +548,20 @@ def render_phase5_candidate_review(
     lines = [
         "# Phase 5 development batch v1 single-review candidate packet",
         "",
-        "> Status: Agent-authored draft awaiting one real human review. No human review is "
-        "recorded.",
+        "> Status: Frozen agent-authored candidate packet. Human decision state is recorded only "
+        "in separate governed artifacts.",
         "",
         "## Fixed identities",
         "",
         f"- Design preregistration: `{batch.preregistration_id}`",
         f"- Review governance: `{REVIEW_GOVERNANCE_ID}`",
         f"- Review-governance SHA-256: `{REVIEW_GOVERNANCE_SHA256}`",
-        f"- Intended single reviewer: `{SINGLE_REVIEWER_ID}` (review not yet performed)",
+        f"- Governed single reviewer: `{SINGLE_REVIEWER_ID}` "
+        "(decision state external to this packet)",
+        "- Governed decision path: "
+        "`datasets/evaluation/phase5/reviews/development-single-review-v1.decisions.jsonl`",
+        "- Validation report path: "
+        "`reports/evaluation/phase5-development-single-review-v1-validation.json`",
         f"- Batch: `{batch.batch_id}`",
         f"- Candidate SHA-256: `{batch.dataset_sha256}`",
         f"- Corpus hash policy: `{batch.corpus_hash_policy}`",
@@ -573,7 +578,8 @@ def render_phase5_candidate_review(
         f"- Normalization policy: `{NORMALIZATION_POLICY}`",
         "- Exact normalized duplicates are rejected before this packet is rendered.",
         "- Lexical overlap is triage only; it is not retrieval evidence or a leakage decision.",
-        "- Every candidate still requires human semantic near-duplicate review.",
+        "- Every candidate requires human semantic near-duplicate review before entering a "
+        "reviewed dataset.",
     ]
     for source in sources:
         lines.append(f"- Prior questions: `{source.path}` (`{source.dataset_sha256}`)")
@@ -582,8 +588,9 @@ def render_phase5_candidate_review(
             "",
             "## Candidate decisions",
             "",
-            "For every candidate, the single human reviewer must accept, revise, or reject the "
-            "query, corpus-relative label, claims, and minimal support sets. This review is not "
+            "For every candidate, the governed workflow requires the single human reviewer to "
+            "accept, revise, or reject the query, corpus-relative label, claims, and minimal "
+            "support sets. Human outcomes are not embedded in this packet. This review is not "
             "independent adjudication.",
             "",
         ]
@@ -678,7 +685,11 @@ def _render_candidate(
             "this hard negative.",
             "- [ ] Every support set is sufficient and minimal; all valid alternatives are "
             "represented.",
-            "- [ ] Decision: accept / revise / reject (circle one in the review workflow).",
+            "- [ ] Hard-negative status is confirmed, revised, or marked not applicable.",
+            "- [ ] The decision record has a real UTC timestamp and an explicit final status: "
+            "accepted-as-proposed / accepted-with-revisions / rejected / unresolved.",
+            "- [ ] Rejected or unresolved records contain concise review notes and no reviewed "
+            "dataset content.",
             "",
         ]
     )

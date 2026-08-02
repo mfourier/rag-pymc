@@ -1,0 +1,1436 @@
+{
+  "schema_version": "1",
+  "evaluator_version": "phase5-single-review-gold-evidence-v1",
+  "dataset_id": "development-single-review-v1",
+  "dataset_role": "development-single-review-exploratory",
+  "independent_adjudication": false,
+  "held_out": false,
+  "threshold_selected": false,
+  "dataset_hash_policy": "sha256-raw-file-bytes-v1",
+  "dataset_sha256": "bf9c9b515fe0b886db88199b94a2b24f1a60ad60273bd7e266f6d0f757ceab15",
+  "decisions_hash_policy": "sha256-raw-file-bytes-v1",
+  "decisions_sha256": "3bb0aa56adb8fc664c65020ee64c54f5b1aecf30d918b24ceeec75323556da2e",
+  "governance_id": "phase5-development-single-review-governance-v1",
+  "governance_sha256": "a11593ce188abb16c7f3832992cf9c5fe121e6086dacdb5bf1f9009944db1264",
+  "candidate_batch_id": "pymc-6.1.0-api-phase5-development-batch-v1",
+  "candidate_batch_sha256": "832075827b782c26b4975635f19b836439a2a0d582e36fa59704ee19bbb15abb",
+  "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+  "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+  "corpus_chunk_count": 15,
+  "retriever_version": "bm25-v1",
+  "tokenizer_version": "technical-v1",
+  "k1": 1.5,
+  "b": 0.75,
+  "top_k": 3,
+  "context_builder_version": "ranked-context-v1",
+  "context_rendering_policy": "context-item-text-v1",
+  "context_truncation_policy": "rank-prefix-whole-item-v1",
+  "token_budget": 2048,
+  "evidence_policy_version": "conservative-no-threshold-v1",
+  "evaluations": [
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_001",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "fd4640563d5089b171c1f158298ee2257513ae972c4f2726845352880b1cb44b",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa",
+        "chunk_e254c2d8ed3f2fdf8d8d"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_001_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_002",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "f5fae33ee748a98be4e50ff2b8e22f863f25881c129eea7a8bdc16b3c68d7e3a",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_19342001ac28c7109268",
+        "chunk_d63299c2a9cfdb46bd8f"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_002_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_003",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "b52a5b2ecc899d52633f3b2476fc3322960293fad4036eb5002c27cc00c26c73",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_4cb92e902495d287e54c",
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_e254c2d8ed3f2fdf8d8d"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 2,
+      "context_covered_claim_count": 2,
+      "candidate_covered_claim_count": 2,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_003_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_003_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_004",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "fe587f84631c28f00791f7a45cd66cfc52e6df049f93fc638913871bf0aaefed",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_004_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_005",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "ccf9ce6fc83a3d5d92cfa726026342fc3babe57ec2d037969719c698edb2db59",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 3,
+      "context_covered_claim_count": 3,
+      "candidate_covered_claim_count": 3,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_005_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_005_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_005_claim_003",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_070e4da52bcfccda8d96"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_006",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "e636c0982bd02d6daa07affe76f9bef77682f084b82f0a1f1d39cd7f2e287330",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_8087d370d7cb0d682ae2",
+        "chunk_b533fae009131320ddaa"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_006_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_8087d370d7cb0d682ae2"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_8087d370d7cb0d682ae2"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_007",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "46700d64d5f02af87858c076471ed822d7c2484bd2e78093666761947f38e217",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_8087d370d7cb0d682ae2",
+        "chunk_b533fae009131320ddaa"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_007_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_e254c2d8ed3f2fdf8d8d"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_e254c2d8ed3f2fdf8d8d"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_008",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "6cbe1962bd7291b21ef33d40a94e4bbef37b0e8ee83bc666496508aea72808db",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 2,
+      "context_covered_claim_count": 2,
+      "candidate_covered_claim_count": 2,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_008_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_e254c2d8ed3f2fdf8d8d"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_e254c2d8ed3f2fdf8d8d"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_008_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_e254c2d8ed3f2fdf8d8d"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_e254c2d8ed3f2fdf8d8d"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_009",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "0094683f5429561c237260144376d5a5ebddecefd8c33678a127566d47bc935c",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_67f1417c989e25a0b269",
+        "chunk_8087d370d7cb0d682ae2",
+        "chunk_0f560b5e9847d47c9f2a"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_009_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_67f1417c989e25a0b269"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_67f1417c989e25a0b269"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_010",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "a49ebb513b6f810723eb9ef4532efe10d4565b95c2ff620d277bf3a807c72f8e",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_4cb92e902495d287e54c",
+        "chunk_67f1417c989e25a0b269"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": 0.0,
+      "candidate_claim_coverage_rate": 0.0,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_010_claim_001",
+          "matched_context_support_sets": [],
+          "matched_candidate_support_sets": [],
+          "covered_by_context": false,
+          "covered_by_candidates": false
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_011",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "113b19db2c9031741e54a8a9db159b8044e6061db7e4c8dd3f5510d133b2fe6c",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_f09fd8e15a80db2baf99",
+        "chunk_b533fae009131320ddaa"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 2,
+      "context_covered_claim_count": 2,
+      "candidate_covered_claim_count": 2,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_011_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f09fd8e15a80db2baf99"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f09fd8e15a80db2baf99"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_011_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f09fd8e15a80db2baf99"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f09fd8e15a80db2baf99"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_012",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "412963f22d456e9878506c817f3b8ed19bed6eda4151d208b335d6b4ca7c0779",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_0f560b5e9847d47c9f2a",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_012_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_0f560b5e9847d47c9f2a"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_0f560b5e9847d47c9f2a"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_013",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "470e15303b03cd67e8d15bae2180ad94f6696dc42801862dc36bb20eaecde7b3",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_b533fae009131320ddaa",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_0f560b5e9847d47c9f2a"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_013_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            },
+            {
+              "chunk_ids": [
+                "chunk_b533fae009131320ddaa"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            },
+            {
+              "chunk_ids": [
+                "chunk_b533fae009131320ddaa"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_014",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "ee83489b93075a9a1930b7595732a2ff31fe06495ae71bc44ea1c630e62d5ba5",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_4cb92e902495d287e54c",
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 1,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_014_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_015",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "26380442662e4deeb964cb9acc05e5a223c1a68775128330d62ec81d5e1c4ba8",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_4cb92e902495d287e54c",
+        "chunk_0f560b5e9847d47c9f2a"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 2,
+      "context_covered_claim_count": 2,
+      "candidate_covered_claim_count": 2,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_015_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_015_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_016",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "f9f376d85029f96537e95c79713f92781245bbaa9c7150abf12aaefe5b65425a",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_f7d55663f01200eb5f54",
+        "chunk_4cb92e902495d287e54c",
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 2,
+      "context_covered_claim_count": 2,
+      "candidate_covered_claim_count": 2,
+      "context_claim_coverage_rate": 1.0,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": true,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": false,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": true,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_016_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f7d55663f01200eb5f54"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f7d55663f01200eb5f54"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_016_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f7d55663f01200eb5f54"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f7d55663f01200eb5f54"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_017",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "3f1a10910fead2d02f7ef4ac348356a368f6b0932340fce97ddb6f30a37c73f5",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_f09fd8e15a80db2baf99",
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_b533fae009131320ddaa"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": true,
+      "gold_claim_count": 2,
+      "context_covered_claim_count": 1,
+      "candidate_covered_claim_count": 1,
+      "context_claim_coverage_rate": 0.5,
+      "candidate_claim_coverage_rate": 0.5,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_017_claim_001",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f09fd8e15a80db2baf99"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_f09fd8e15a80db2baf99"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_017_claim_002",
+          "matched_context_support_sets": [],
+          "matched_candidate_support_sets": [],
+          "covered_by_context": false,
+          "covered_by_candidates": false
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_018",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "62e272cba4bd4152f57a33101ee60eebc2bc127548b40f18e200baa2fee10166",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_4cb92e902495d287e54c",
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa"
+      ],
+      "corpus_answerable": true,
+      "gold_claim_count": 3,
+      "context_covered_claim_count": 2,
+      "candidate_covered_claim_count": 3,
+      "context_claim_coverage_rate": 0.6666666666666666,
+      "candidate_claim_coverage_rate": 1.0,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": true,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": true,
+      "claim_coverage": [
+        {
+          "claim_id": "p5dev_v1_query_018_claim_001",
+          "matched_context_support_sets": [],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_b533fae009131320ddaa"
+              ]
+            }
+          ],
+          "covered_by_context": false,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_018_claim_002",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            },
+            {
+              "chunk_ids": [
+                "chunk_b533fae009131320ddaa"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        },
+        {
+          "claim_id": "p5dev_v1_query_018_claim_003",
+          "matched_context_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            }
+          ],
+          "matched_candidate_support_sets": [
+            {
+              "chunk_ids": [
+                "chunk_4cb92e902495d287e54c"
+              ]
+            },
+            {
+              "chunk_ids": [
+                "chunk_b533fae009131320ddaa"
+              ]
+            }
+          ],
+          "covered_by_context": true,
+          "covered_by_candidates": true
+        }
+      ]
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_019",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "e1d747f4865495aeee4e85e3b9bae30390562e3afda77280ba7335e35752385d",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_b533fae009131320ddaa",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "corpus_answerable": false,
+      "gold_claim_count": 0,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": null,
+      "candidate_claim_coverage_rate": null,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": []
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_020",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "f04b265d11d04d567687003f0ac710dc910c1ee201c3aab227f2a95b4637a628",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_19342001ac28c7109268",
+        "chunk_4cb92e902495d287e54c"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": false,
+      "gold_claim_count": 0,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": null,
+      "candidate_claim_coverage_rate": null,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": []
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_021",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "6a6f6bd5931bfb3c1e7e1dc2a47da19494d34d83be1df67dbc0a170b9a83c63c",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_e254c2d8ed3f2fdf8d8d",
+        "chunk_8087d370d7cb0d682ae2",
+        "chunk_b533fae009131320ddaa"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": false,
+      "gold_claim_count": 0,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": null,
+      "candidate_claim_coverage_rate": null,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": []
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_022",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "7dde6fc17dc65c786761d9ece6df1247a20eb2e018a09e1e3fa4297336762eb8",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_f09fd8e15a80db2baf99",
+        "chunk_070e4da52bcfccda8d96",
+        "chunk_0534d7f7dc0ee3d7674b"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": false,
+      "gold_claim_count": 0,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": null,
+      "candidate_claim_coverage_rate": null,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": []
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_023",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "ec58ca3eb07ee9227179c3f8d7d84ce9b0e87a0c3fc7408c8213d12e0a330ec1",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_4cb92e902495d287e54c",
+        "chunk_3b18e70cd47d4b07c688",
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "omitted_chunk_ids": [],
+      "corpus_answerable": false,
+      "gold_claim_count": 0,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": null,
+      "candidate_claim_coverage_rate": null,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": []
+    },
+    {
+      "schema_version": "1",
+      "evaluator_version": "phase5-gold-evidence-v1",
+      "query_id": "p5dev_v1_query_024",
+      "corpus_hash_policy": "canonical-chunk-identity-json-v1",
+      "corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+      "context_hash_policy": "canonical-constructed-context-json-v1",
+      "context_sha256": "ae8fbcbdaaeaa50205896f30e1cae0baeb422a7a55cbad023dcdb654d3731dbf",
+      "policy_version": "conservative-no-threshold-v1",
+      "sufficiency": "not_assessed",
+      "assessment_reason_codes": [
+        "budget_omitted_evidence",
+        "no_calibrated_criterion"
+      ],
+      "context_chunk_ids": [
+        "chunk_b533fae009131320ddaa",
+        "chunk_f09fd8e15a80db2baf99"
+      ],
+      "omitted_chunk_ids": [
+        "chunk_070e4da52bcfccda8d96"
+      ],
+      "corpus_answerable": false,
+      "gold_claim_count": 0,
+      "context_covered_claim_count": 0,
+      "candidate_covered_claim_count": 0,
+      "context_claim_coverage_rate": null,
+      "candidate_claim_coverage_rate": null,
+      "gold_context_answerable": false,
+      "gold_candidate_answerable": false,
+      "should_abstain": true,
+      "decision_correct": true,
+      "unsupported_answer_authorized": false,
+      "unnecessary_abstention": false,
+      "budget_prevented_answerability": false,
+      "claim_coverage": []
+    }
+  ],
+  "metrics": {
+    "query_count": 24,
+    "corpus_answerable_query_count": 18,
+    "corpus_unanswerable_query_count": 6,
+    "gold_context_answerable_query_count": 15,
+    "gold_candidate_answerable_query_count": 16,
+    "authorized_answer_count": 0,
+    "correct_decision_count": 9,
+    "unsupported_answer_count": 0,
+    "unnecessary_abstention_count": 15,
+    "budget_prevented_answerability_count": 1,
+    "gold_claim_count": 28,
+    "context_covered_claim_count": 25,
+    "candidate_covered_claim_count": 26,
+    "answer_coverage": 0.0,
+    "selective_risk": null,
+    "false_answer_rate": 0.0,
+    "false_abstention_rate": 1.0,
+    "decision_accuracy": 0.375,
+    "context_claim_coverage_rate": 0.8928571428571429,
+    "candidate_claim_coverage_rate": 0.9285714285714286
+  },
+  "limitations": [
+    "Accepted labels, claims, and support sets were reviewed by one human and were not independently adjudicated.",
+    "BM25 rank and chunk-identity coverage do not establish semantic support, scientific correctness, citation correctness, or answer usefulness.",
+    "This baseline records the unchanged conservative policy and does not select or authorize an evidence-sufficiency threshold.",
+    "This exploratory development baseline is not held out or production-grade."
+  ]
+}

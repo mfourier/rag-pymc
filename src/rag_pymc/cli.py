@@ -36,9 +36,9 @@ app = typer.Typer(
 
 MINIMUM_PYTHON = (3, 12)
 SCIENTIFIC_DISTRIBUTIONS = ("pymc", "arviz", "pytensor")
-DEFAULT_CORPUS_DIR = Path("datasets/processed/pymc-6.1.0-api-v1")
+DEFAULT_CORPUS_DIR = Path("datasets/processed/pymc-6.2.0-api-v1")
 DEFAULT_LIBRARY = "pymc"
-DEFAULT_LIBRARY_VERSION = "6.1.0"
+DEFAULT_LIBRARY_VERSION = "6.2.0"
 DEFAULT_SEED = 20260720
 DEFAULT_K1 = 1.5
 DEFAULT_B = 0.75
@@ -235,6 +235,18 @@ def inspect_context(
         raise typer.Exit(code=1) from error
 
     typer.echo(context.model_dump_json(indent=2))
+
+
+@app.command("serve-mcp")
+def serve_mcp() -> None:
+    """Serve the fixed read-only PyMC evidence tools over local MCP STDIO."""
+    from rag_pymc.mcp.stdio import McpServerStartupError, serve_stdio
+
+    try:
+        serve_stdio()
+    except McpServerStartupError as error:
+        typer.echo(f"MCP server failed: {error}", err=True)
+        raise typer.Exit(code=1) from error
 
 
 @app.command()

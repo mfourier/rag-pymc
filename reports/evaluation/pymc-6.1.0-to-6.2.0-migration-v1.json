@@ -1,0 +1,55 @@
+{
+  "schema_version": "1",
+  "migration_version": "pymc-6.2.0-controlled-migration-v1",
+  "from_library_version": "6.1.0",
+  "from_corpus_hash_policy": "canonical-chunk-identity-json-v1",
+  "from_corpus_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+  "to_library_version": "6.2.0",
+  "to_corpus_hash_policy": "canonical-corpus-provenance-json-v2",
+  "to_corpus_sha256": "796e7aee3f1fae1423bc04f0478381e6f7338afdd85d2f3a9d1d9cfa692c573a",
+  "to_legacy_content_sha256": "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2",
+  "raw_fixtures": [
+    {
+      "api_symbol": "pymc.Data",
+      "from_sha256": "e4ea25f1178592a5b5d475ac7ffd4cddda5f930715734b0ee2948c15273d9402",
+      "to_sha256": "ba15eba8195925d28dd0234a05f7807f4219c9c33871e4e136da5b60f6861e82",
+      "exact_bytes": false
+    },
+    {
+      "api_symbol": "pymc.model.core.set_data",
+      "from_sha256": "d123ea93e161192ba8cf00c445f35ef20478e74540110b4c3ec4a49bfb1bc8df",
+      "to_sha256": "14eb483a1bc93fa7b9a628a58eb336872d603203a14a40659f5752c44394144a",
+      "exact_bytes": false
+    },
+    {
+      "api_symbol": "pymc.sample",
+      "from_sha256": "48ec372999fdfc86bbdbd11aa7ebeb3185a2488a58a055db00f86320dfdc3d35",
+      "to_sha256": "08153ae8af4c7a869135747b34a57f674b7f32e3a4c78d47de4fc94046caf559",
+      "exact_bytes": false
+    },
+    {
+      "api_symbol": "pymc.sample_posterior_predictive",
+      "from_sha256": "20d65310024f100b06a880551c160a0a9c0e6df4652621a45692b4212f28a869",
+      "to_sha256": "cb7d4b34c27ce68f35a157dc18380bce99e4d6e8e00e41551ab154b805ed21ed",
+      "exact_bytes": false
+    }
+  ],
+  "normalized_document_count": 4,
+  "exact_normalized_document_count": 4,
+  "normalized_chunk_count": 15,
+  "exact_normalized_chunk_count": 15,
+  "reviewed_claim_count": 28,
+  "reviewed_support_set_count": 31,
+  "referenced_chunk_count": 10,
+  "exact_mapped_referenced_chunk_count": 10,
+  "exact_mapped_support_set_count": 31,
+  "human_review_migrated": false,
+  "independent_adjudication": false,
+  "held_out": false,
+  "threshold_selected": false,
+  "limitations": [
+    "Exact normalized text mapping is mechanical evidence and is not a new human review decision for PyMC 6.2.0.",
+    "The source slice contains only four API pages and is not representative of the complete PyMC documentation.",
+    "This migration diagnostic is exploratory, not held out, and selects no evidence-sufficiency threshold."
+  ]
+}

@@ -47,4 +47,4 @@ Use `contributing/` for questions about developing PyMC itself, building its doc
 
 The tree does not contain an acquisition manifest tying every file to one PyMC release or commit. Stored notebook outputs mention heterogeneous versions, including PyMC 5.15, 5.25 development builds, 5.27 development builds, and 5.28 development builds. Older contributor examples mention PyMC 5.1. These values date individual executions or examples; they do not establish the version of the full source tree.
 
-For exact PyMC 6.1.0 claims, prefer the hash-verified HTML fixtures and manifests under `datasets/fixtures/pymc/6.1.0` and `datasets/raw/manifests/pymc/6.1.0`, then verify behavior in the pinned runtime when code depends on it.
+For current exact PyMC 6.2.0 claims, prefer the hash-verified HTML fixtures and manifests under `datasets/fixtures/pymc/6.2.0` and `datasets/raw/manifests/pymc/6.2.0`, then verify behavior in the pinned runtime when code depends on it. The equivalent 6.1.0 paths remain historical evidence for Phase 5 and the controlled migration; do not silently relabel them as 6.2.0.

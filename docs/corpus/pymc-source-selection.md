@@ -6,7 +6,7 @@ The MVP ingests only hash-verified generated PyMC API HTML. This format provides
 signatures, parameter descriptions, returns, notes, examples, stable sections, public URLs, and
 explicit library-version provenance through one exercised parser and chunker.
 
-The active PyMC 6.1.0 slice contains:
+The active PyMC 6.2.0 slice contains:
 
 | Public symbol | Primary use |
 | --- | --- |
@@ -15,15 +15,24 @@ The active PyMC 6.1.0 slice contains:
 | `pymc.model.core.set_data` | Updating model data for prediction workflows |
 | `pymc.sample_posterior_predictive` | Posterior prediction inputs, outputs, and groups |
 
-Exact fixtures live under `datasets/fixtures/pymc/6.1.0/`; manifests live under
-`datasets/raw/manifests/pymc/6.1.0/`. A corpus build produces four documents and 15 deterministic
-chunks under `source_type=api_reference`.
+Exact fixtures live under `datasets/fixtures/pymc/6.2.0/`; manifests live under
+`datasets/raw/manifests/pymc/6.2.0/`. A corpus build produces four documents and 15 deterministic
+chunks under `source_type=api_reference`. The provenance-complete freeze uses
+`canonical-corpus-provenance-json-v2` and binds the source manifests, raw fixture hashes, release
+tag, upstream commit, normalized documents, and normalized chunks.
+
+The PyMC [API index](https://www.pymc.io/projects/docs/en/stable/api.html) is a symbol catalog for
+choosing future pages. It is not ingested as one evidence document: index entries identify symbols
+but do not contain the complete generated signatures, parameter descriptions, notes, and examples.
+Each selected generated detail page must receive its own exact fixture and strict manifest before
+it can enter the controlled corpus.
 
 ## Expansion rule
 
 Expand breadth through the same source format before adding another parser. Select new API pages
-from observed user questions, define evaluation queries first, acquire exact versioned HTML,
-record license and SHA-256, then measure retrieval and context cost.
+from observed user questions and the API index, define evaluation queries first, acquire exact
+versioned HTML, record release/commit, license, acquisition time, and SHA-256, then measure
+retrieval and context cost.
 
 Likely future API families include model construction, distributions, diagnostics, dimensions,
 sampling backends, log probability, posterior prediction, and ArviZ interoperation. Selection must
@@ -70,5 +79,5 @@ The MVP does not ingest:
 - arbitrary notebooks or their execution outputs;
 - generated documentation indexes without resolved content;
 - contributor logistics unrelated to supported questions;
-- files from a different release under a PyMC 6.1.0 namespace; or
+- files from a different release under a PyMC 6.2.0 namespace; or
 - scientific papers through the API-documentation parser.

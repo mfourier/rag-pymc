@@ -5,7 +5,7 @@
 Scientific literature will extend `rag-pymc` beyond library lookup so the assistant can reason
 about Bayesian methods, assumptions, diagnostics, validation, and research workflows. This layer
 is planned but not yet implemented. The current default corpus still contains only controlled PyMC
-6.1.0 API evidence.
+6.2.0 API evidence.
 
 The literature layer must improve technical depth without weakening version correctness. It is a
 research-authority corpus, not a substitute for official PyMC, ArviZ, or PyTensor evidence.

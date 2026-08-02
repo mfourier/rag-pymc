@@ -7,7 +7,7 @@ import pytest
 from typer.main import get_command
 from typer.testing import CliRunner
 
-from rag_pymc.cli import app
+from rag_pymc.cli import DEFAULT_CORPUS_DIR, DEFAULT_LIBRARY_VERSION, app
 from rag_pymc.domain import Chunk, ConstructedContext, SourceType
 
 runner = CliRunner()
@@ -37,8 +37,14 @@ def test_product_cli_exposes_only_the_selected_mvp_workflows() -> None:
         "ingest",
         "search",
         "inspect-context",
+        "serve-mcp",
         "evaluate",
     }
+
+
+def test_product_cli_defaults_to_the_controlled_pymc_620_corpus() -> None:
+    assert str(DEFAULT_CORPUS_DIR) == "datasets/processed/pymc-6.2.0-api-v1"
+    assert DEFAULT_LIBRARY_VERSION == "6.2.0"
 
 
 def test_doctor_reports_healthy_environment() -> None:
@@ -159,6 +165,8 @@ def test_inspect_context_emits_deterministic_bm25_domain_json(cli_corpus: Path) 
         str(cli_corpus),
         "--token-budget",
         "100000",
+        "--library-version",
+        "6.1.0",
     ]
 
     first = runner.invoke(app, arguments)
@@ -183,6 +191,8 @@ def test_inspect_context_applies_exact_whole_item_budget(cli_corpus: Path) -> No
         "What does pymc.sample do?",
         "--corpus-dir",
         str(cli_corpus),
+        "--library-version",
+        "6.1.0",
     ]
     full_result = runner.invoke(app, [*common, "--token-budget", "100000"])
     assert full_result.exit_code == 0
@@ -270,6 +280,30 @@ def test_inspect_context_help_exposes_only_the_bounded_sparse_interface() -> Non
     assert "--top-k" in help_text
     assert "--allow-download" not in help_text
     assert "--source-type" not in help_text
+
+
+def test_serve_mcp_help_exposes_no_filesystem_or_provider_options() -> None:
+    result = runner.invoke(app, ["serve-mcp", "--help"], env={"COLUMNS": "160"})
+    help_text = _plain_terminal_output(result.stdout)
+
+    assert result.exit_code == 0
+    assert "read-only PyMC evidence tools" in help_text
+    assert "--corpus-dir" not in help_text
+    assert "--provider" not in help_text
+    assert "--api-key" not in help_text
+
+
+def test_serve_mcp_fails_closed_without_exposing_missing_corpus_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    result = runner.invoke(app, ["serve-mcp"])
+
+    assert result.exit_code == 1
+    assert "authorized PyMC corpus is unavailable or invalid" in result.output
+    assert str(tmp_path) not in result.output
 
 
 @pytest.mark.parametrize(

@@ -124,11 +124,12 @@ def test_review_render_is_deterministic_and_contains_resolved_evidence() -> None
 
     assert first == second
     assert all(line == line.rstrip() for line in first.splitlines())
-    assert "Status: Agent-authored draft awaiting one real human review" in first
-    assert "No human review is recorded" in first
+    assert "Status: Frozen agent-authored candidate packet" in first
+    assert "Human decision state is recorded only in separate governed artifacts" in first
     assert "phase5-development-single-review-governance-v1" in first
     assert "a11593ce188abb16c7f3832992cf9c5fe121e6086dacdb5bf1f9009944db1264" in first
-    assert "`sr_001` (review not yet performed)" in first
+    assert "`sr_001` (decision state external to this packet)" in first
+    assert "development-single-review-v1.decisions.jsonl" in first
     assert "This review is not independent adjudication" in first
     assert "`chunk_a`" in first
     assert "Complete synthetic support." in first

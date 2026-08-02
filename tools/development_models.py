@@ -1,6 +1,7 @@
 """Repository-local contracts for Phase 5 annotation and gold-evidence evaluation."""
 
 from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from pathlib import PurePosixPath
 from typing import Literal, Self
 
@@ -14,6 +15,17 @@ from rag_pymc.evaluation._model_base import (
     _canonicalize_unique_strings,
 )
 from rag_pymc.evaluation.errors import EvaluationError
+
+type Phase5SingleReviewGovernanceSha256 = Literal[
+    "a11593ce188abb16c7f3832992cf9c5fe121e6086dacdb5bf1f9009944db1264"
+]
+type Phase5SingleReviewCandidateSha256 = Literal[
+    "832075827b782c26b4975635f19b836439a2a0d582e36fa59704ee19bbb15abb"
+]
+type Phase5SingleReviewCorpusSha256 = Literal[
+    "af0b6d5408b0a9cf22ee56cd536816c9487f04498c874972270c442cf9ecd6b2"
+]
+_PHASE5_SINGLE_REVIEW_GOVERNANCE_DECIDED_AT = datetime(2026, 7, 26, 4, 14, 51, tzinfo=UTC)
 
 
 class AnnotationProvenance(EvaluationModel):
@@ -337,6 +349,478 @@ class Phase5DevelopmentCorpusValidation(EvaluationModel):
         if self.referenced_chunk_count > self.corpus_chunk_count:
             msg = "referenced chunk count cannot exceed corpus chunk count"
             raise ValueError(msg)
+        return self
+
+
+class Phase5SingleReviewRevisedContent(EvaluationModel):
+    """Human-revised semantic fields for one Phase 5 candidate."""
+
+    query_text: NonEmptyString
+    corpus_answerable: bool = Field(strict=True)
+    hard_negative_category: NonEmptyString | None = None
+    gold_claims: tuple[AtomicGoldClaim, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_reviewed_content(self) -> Self:
+        """Require internally complete claims or an explicit hard-negative category."""
+        claim_ids = tuple(claim.claim_id for claim in self.gold_claims)
+        if len(set(claim_ids)) != len(claim_ids):
+            msg = "Phase 5 single-review gold claim IDs must be unique within an example"
+            raise ValueError(msg)
+        if self.corpus_answerable:
+            if not self.gold_claims:
+                msg = "corpus-answerable Phase 5 single-review content requires gold claims"
+                raise ValueError(msg)
+            if self.hard_negative_category is not None:
+                msg = "corpus-answerable Phase 5 single-review content cannot be a hard negative"
+                raise ValueError(msg)
+        else:
+            if self.gold_claims:
+                msg = "corpus-unanswerable Phase 5 single-review content cannot contain claims"
+                raise ValueError(msg)
+            if self.hard_negative_category is None:
+                msg = (
+                    "corpus-unanswerable Phase 5 single-review content requires a "
+                    "hard-negative category"
+                )
+                raise ValueError(msg)
+        return self
+
+
+class Phase5SingleReviewDecision(EvaluationModel):
+    """One pending or completed decision by the governed single human reviewer."""
+
+    schema_version: Literal["phase5-development-single-review-decision-v1"] = (
+        "phase5-development-single-review-decision-v1"
+    )
+    artifact_role: Literal["single-human-review-record"] = "single-human-review-record"
+    dataset_role: Literal["development-single-review-exploratory"] = (
+        "development-single-review-exploratory"
+    )
+    governance_id: Literal["phase5-development-single-review-governance-v1"]
+    governance_sha256: Phase5SingleReviewGovernanceSha256
+    candidate_batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    candidate_batch_sha256: Phase5SingleReviewCandidateSha256
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Phase5SingleReviewCorpusSha256
+    reviewer_id: Literal["sr_001"]
+    query_id: NonEmptyString
+    query_review: Literal["pending", "accepted", "revised", "rejected", "unresolved"]
+    corpus_answerability_review: Literal["pending", "accepted", "revised", "rejected", "unresolved"]
+    claims_review: Literal["pending", "accepted", "revised", "rejected", "unresolved"]
+    support_sets_review: Literal["pending", "accepted", "revised", "rejected", "unresolved"]
+    leakage_review: Literal["pending", "confirmed-distinct", "duplicate", "unresolved"]
+    hard_negative_review: Literal[
+        "pending", "confirmed", "not-applicable", "revised", "rejected", "unresolved"
+    ]
+    final_status: Literal[
+        "pending", "accepted-as-proposed", "accepted-with-revisions", "rejected", "unresolved"
+    ]
+    reviewed_at: AwareDatetime | None = None
+    review_notes: NonEmptyString | None = None
+    revised_content: Phase5SingleReviewRevisedContent | None = None
+
+    @model_validator(mode="after")
+    def validate_decision_state(self) -> Self:
+        """Keep draft forms and completed human decisions unambiguously separate."""
+        component_reviews = (
+            self.query_review,
+            self.corpus_answerability_review,
+            self.claims_review,
+            self.support_sets_review,
+        )
+        all_review_values = (*component_reviews, self.leakage_review, self.hard_negative_review)
+        if self.final_status == "pending":
+            _validate_pending_single_review_decision(self, all_review_values)
+            return self
+
+        _validate_completed_single_review_base(self, all_review_values)
+        if self.final_status == "accepted-as-proposed":
+            _validate_accepted_as_proposed(self, component_reviews)
+        elif self.final_status == "accepted-with-revisions":
+            _validate_accepted_with_revisions(self, component_reviews)
+        elif self.final_status == "rejected":
+            _validate_rejected_single_review(self, component_reviews)
+        else:
+            _validate_unresolved_single_review(self, component_reviews)
+        return self
+
+
+def _validate_pending_single_review_decision(
+    decision: Phase5SingleReviewDecision,
+    review_values: tuple[str, ...],
+) -> None:
+    if any(value != "pending" for value in review_values):
+        msg = "pending Phase 5 single-review records require every review field pending"
+        raise ValueError(msg)
+    if (
+        decision.reviewed_at is not None
+        or decision.review_notes is not None
+        or decision.revised_content is not None
+    ):
+        msg = "pending Phase 5 single-review records cannot contain human decisions"
+        raise ValueError(msg)
+
+
+def _validate_completed_single_review_base(
+    decision: Phase5SingleReviewDecision,
+    review_values: tuple[str, ...],
+) -> None:
+    if "pending" in review_values:
+        msg = "completed Phase 5 single-review records cannot contain pending review fields"
+        raise ValueError(msg)
+    if decision.reviewed_at is None:
+        msg = "completed Phase 5 single-review records require a real UTC timestamp"
+        raise ValueError(msg)
+    if decision.reviewed_at.utcoffset() != timedelta(0):
+        msg = "Phase 5 single-review timestamps must use UTC"
+        raise ValueError(msg)
+    if decision.reviewed_at < _PHASE5_SINGLE_REVIEW_GOVERNANCE_DECIDED_AT:
+        msg = "Phase 5 single-review timestamps must not precede the governance decision"
+        raise ValueError(msg)
+
+
+def _validate_accepted_as_proposed(
+    decision: Phase5SingleReviewDecision,
+    component_reviews: tuple[str, ...],
+) -> None:
+    if component_reviews != ("accepted",) * 4:
+        msg = "accepted-as-proposed records require explicit acceptance of every component"
+        raise ValueError(msg)
+    if decision.leakage_review != "confirmed-distinct":
+        msg = "accepted Phase 5 single-review records require confirmed leakage review"
+        raise ValueError(msg)
+    if decision.hard_negative_review not in {"confirmed", "not-applicable"}:
+        msg = "accepted-as-proposed records require a final hard-negative review"
+        raise ValueError(msg)
+    if decision.revised_content is not None:
+        msg = "accepted-as-proposed records cannot contain revised content"
+        raise ValueError(msg)
+
+
+def _validate_accepted_with_revisions(
+    decision: Phase5SingleReviewDecision,
+    component_reviews: tuple[str, ...],
+) -> None:
+    if any(value not in {"accepted", "revised"} for value in component_reviews):
+        msg = "accepted-with-revisions records require accepted or revised components"
+        raise ValueError(msg)
+    if "revised" not in component_reviews:
+        msg = "accepted-with-revisions records must identify a revised component"
+        raise ValueError(msg)
+    if decision.leakage_review != "confirmed-distinct":
+        msg = "accepted Phase 5 single-review records require confirmed leakage review"
+        raise ValueError(msg)
+    if decision.hard_negative_review not in {"confirmed", "not-applicable", "revised"}:
+        msg = "accepted-with-revisions records require a final hard-negative review"
+        raise ValueError(msg)
+    if decision.revised_content is None:
+        msg = "accepted-with-revisions records require complete revised content"
+        raise ValueError(msg)
+
+
+def _validate_rejected_single_review(
+    decision: Phase5SingleReviewDecision,
+    component_reviews: tuple[str, ...],
+) -> None:
+    rejected = "rejected" in component_reviews or decision.leakage_review == "duplicate"
+    rejected = rejected or decision.hard_negative_review == "rejected"
+    if not rejected:
+        msg = "rejected Phase 5 single-review records require an explicit rejection"
+        raise ValueError(msg)
+    if decision.review_notes is None:
+        msg = "rejected Phase 5 single-review records require concise review notes"
+        raise ValueError(msg)
+    if decision.revised_content is not None:
+        msg = "rejected Phase 5 single-review records cannot enter reviewed content"
+        raise ValueError(msg)
+
+
+def _validate_unresolved_single_review(
+    decision: Phase5SingleReviewDecision,
+    component_reviews: tuple[str, ...],
+) -> None:
+    unresolved = "unresolved" in component_reviews
+    unresolved = unresolved or decision.leakage_review == "unresolved"
+    unresolved = unresolved or decision.hard_negative_review == "unresolved"
+    if not unresolved:
+        msg = "unresolved Phase 5 single-review records require an unresolved field"
+        raise ValueError(msg)
+    if decision.review_notes is None:
+        msg = "unresolved Phase 5 single-review records require concise review notes"
+        raise ValueError(msg)
+    if decision.revised_content is not None:
+        msg = "unresolved Phase 5 single-review records cannot enter reviewed content"
+        raise ValueError(msg)
+
+
+class Phase5SingleReviewDecisionBatch(EvaluationModel):
+    """Exact-byte identity and shared provenance for one single-review decision JSONL."""
+
+    schema_version: Literal["phase5-development-single-review-decision-batch-v1"] = (
+        "phase5-development-single-review-decision-batch-v1"
+    )
+    artifact_role: Literal["single-human-review-records"] = "single-human-review-records"
+    dataset_role: Literal["development-single-review-exploratory"] = (
+        "development-single-review-exploratory"
+    )
+    hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    decisions_sha256: Sha256
+    governance_id: Literal["phase5-development-single-review-governance-v1"]
+    governance_sha256: Phase5SingleReviewGovernanceSha256
+    candidate_batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    candidate_batch_sha256: Phase5SingleReviewCandidateSha256
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Phase5SingleReviewCorpusSha256
+    reviewer_id: Literal["sr_001"]
+    decisions: tuple[Phase5SingleReviewDecision, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_decision_batch(self) -> Self:
+        """Require sorted unique decisions under one fixed governance boundary."""
+        query_ids = tuple(decision.query_id for decision in self.decisions)
+        if len(set(query_ids)) != len(query_ids):
+            msg = "Phase 5 single-review decision query IDs must be unique"
+            raise ValueError(msg)
+        if query_ids != tuple(sorted(query_ids)):
+            msg = "Phase 5 single-review decisions must be ordered by query ID"
+            raise ValueError(msg)
+        if any(
+            decision.dataset_role != self.dataset_role
+            or decision.governance_id != self.governance_id
+            or decision.governance_sha256 != self.governance_sha256
+            or decision.candidate_batch_id != self.candidate_batch_id
+            or decision.candidate_batch_sha256 != self.candidate_batch_sha256
+            or decision.corpus_hash_policy != self.corpus_hash_policy
+            or decision.corpus_sha256 != self.corpus_sha256
+            or decision.reviewer_id != self.reviewer_id
+            for decision in self.decisions
+        ):
+            msg = "Phase 5 single-review decisions must share exact governance and corpus identity"
+            raise ValueError(msg)
+        return self
+
+
+class Phase5SingleReviewProvenance(EvaluationModel):
+    """One-human provenance that never claims independent adjudication."""
+
+    method: Literal["human-single-review"] = "human-single-review"
+    outcome: Literal["accepted-as-proposed", "accepted-with-revisions"]
+    governance_id: Literal["phase5-development-single-review-governance-v1"]
+    governance_sha256: Phase5SingleReviewGovernanceSha256
+    candidate_batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    candidate_batch_sha256: Phase5SingleReviewCandidateSha256
+    decisions_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    decisions_sha256: Sha256
+    reviewer_id: Literal["sr_001"]
+    reviewed_at: AwareDatetime
+
+    @model_validator(mode="after")
+    def require_utc_timestamp(self) -> Self:
+        """Reject local offsets even when they identify an equivalent UTC instant."""
+        if self.reviewed_at.utcoffset() != timedelta(0):
+            msg = "Phase 5 single-review timestamps must use UTC"
+            raise ValueError(msg)
+        if self.reviewed_at < _PHASE5_SINGLE_REVIEW_GOVERNANCE_DECIDED_AT:
+            msg = "Phase 5 single-review timestamps must not precede the governance decision"
+            raise ValueError(msg)
+        return self
+
+
+class Phase5SingleReviewExample(EvaluationModel):
+    """One accepted example from a governed single-human exploratory review."""
+
+    schema_version: Literal["phase5-development-single-review-example-v1"] = (
+        "phase5-development-single-review-example-v1"
+    )
+    dataset_role: Literal["development-single-review-exploratory"] = (
+        "development-single-review-exploratory"
+    )
+    slot_id: NonEmptyString
+    query_id: NonEmptyString
+    query_text: NonEmptyString
+    query_family: NonEmptyString
+    template_family: NonEmptyString
+    library: NonEmptyString
+    library_version: NonEmptyString
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Phase5SingleReviewCorpusSha256
+    corpus_answerable: bool = Field(strict=True)
+    intent: NonEmptyString
+    difficulty: Difficulty
+    hard_negative_category: NonEmptyString | None = None
+    expected_api_symbols: tuple[NonEmptyString, ...] = ()
+    gold_claims: tuple[AtomicGoldClaim, ...] = ()
+    review: Phase5SingleReviewProvenance
+
+    @field_validator("expected_api_symbols")
+    @classmethod
+    def canonicalize_expected_api_symbols(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        """Store unique expected symbols in canonical order."""
+        return _canonicalize_unique_strings(
+            values,
+            label="Phase 5 single-review expected API symbols",
+        )
+
+    @model_validator(mode="after")
+    def validate_single_review_example(self) -> Self:
+        """Preserve corpus-level annotation invariants without adjudication semantics."""
+        Phase5SingleReviewRevisedContent(
+            query_text=self.query_text,
+            corpus_answerable=self.corpus_answerable,
+            hard_negative_category=self.hard_negative_category,
+            gold_claims=self.gold_claims,
+        )
+        return self
+
+
+class Phase5SingleReviewDataset(EvaluationModel):
+    """An exact-byte single-review exploratory dataset and its complete provenance."""
+
+    schema_version: Literal["phase5-development-single-review-dataset-v1"] = (
+        "phase5-development-single-review-dataset-v1"
+    )
+    dataset_id: Literal["development-single-review-v1"] = "development-single-review-v1"
+    dataset_role: Literal["development-single-review-exploratory"] = (
+        "development-single-review-exploratory"
+    )
+    dataset_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    dataset_sha256: Sha256
+    decisions_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    decisions_sha256: Sha256
+    governance_id: Literal["phase5-development-single-review-governance-v1"]
+    governance_sha256: Phase5SingleReviewGovernanceSha256
+    candidate_batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    candidate_batch_sha256: Phase5SingleReviewCandidateSha256
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Phase5SingleReviewCorpusSha256
+    reviewer_id: Literal["sr_001"]
+    examples: tuple[Phase5SingleReviewExample, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_dataset_identity(self) -> Self:
+        """Require ordered unique examples with provenance matching the dataset envelope."""
+        query_ids = tuple(example.query_id for example in self.examples)
+        if len(set(query_ids)) != len(query_ids):
+            msg = "Phase 5 single-review dataset query IDs must be unique"
+            raise ValueError(msg)
+        if query_ids != tuple(sorted(query_ids)):
+            msg = "Phase 5 single-review dataset examples must be ordered by query ID"
+            raise ValueError(msg)
+        claim_ids = tuple(
+            claim.claim_id for example in self.examples for claim in example.gold_claims
+        )
+        if len(set(claim_ids)) != len(claim_ids):
+            msg = "Phase 5 single-review gold claim IDs must be globally unique"
+            raise ValueError(msg)
+        if any(
+            example.dataset_role != self.dataset_role
+            or example.corpus_hash_policy != self.corpus_hash_policy
+            or example.corpus_sha256 != self.corpus_sha256
+            or example.review.governance_id != self.governance_id
+            or example.review.governance_sha256 != self.governance_sha256
+            or example.review.candidate_batch_id != self.candidate_batch_id
+            or example.review.candidate_batch_sha256 != self.candidate_batch_sha256
+            or example.review.decisions_sha256 != self.decisions_sha256
+            or example.review.reviewer_id != self.reviewer_id
+            for example in self.examples
+        ):
+            msg = "Phase 5 single-review examples must match the dataset provenance envelope"
+            raise ValueError(msg)
+        return self
+
+
+class Phase5SingleReviewValidation(EvaluationModel):
+    """Reproducible audit record for one completed single-review decision set."""
+
+    schema_version: Literal["1"] = "1"
+    validator_version: Literal["phase5-development-single-review-validation-v1"] = (
+        "phase5-development-single-review-validation-v1"
+    )
+    dataset_id: Literal["development-single-review-v1"] = "development-single-review-v1"
+    dataset_role: Literal["development-single-review-exploratory"] = (
+        "development-single-review-exploratory"
+    )
+    independent_adjudication: Literal[False] = False
+    held_out: Literal[False] = False
+    threshold_selected: Literal[False] = False
+    governance_id: Literal["phase5-development-single-review-governance-v1"]
+    governance_sha256: Phase5SingleReviewGovernanceSha256
+    candidate_batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    candidate_batch_sha256: Phase5SingleReviewCandidateSha256
+    decisions_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    decisions_sha256: Sha256
+    dataset_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    dataset_sha256: Sha256
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Phase5SingleReviewCorpusSha256
+    corpus_chunk_count: int = Field(ge=1, strict=True)
+    reviewer_ids: tuple[Literal["sr_001"], ...] = Field(min_length=1, max_length=1)
+    candidate_count: int = Field(ge=1, strict=True)
+    decision_count: int = Field(ge=1, strict=True)
+    accepted_as_proposed_count: int = Field(ge=0, strict=True)
+    accepted_with_revisions_count: int = Field(ge=0, strict=True)
+    rejected_count: int = Field(ge=0, strict=True)
+    unresolved_count: int = Field(ge=0, strict=True)
+    included_query_count: int = Field(ge=0, strict=True)
+    answerable_query_count: int = Field(ge=0, strict=True)
+    gold_claim_count: int = Field(ge=0, strict=True)
+    gold_support_set_count: int = Field(ge=0, strict=True)
+    accepted_as_proposed_query_ids: tuple[NonEmptyString, ...] = ()
+    accepted_with_revisions_query_ids: tuple[NonEmptyString, ...] = ()
+    rejected_query_ids: tuple[NonEmptyString, ...] = ()
+    unresolved_query_ids: tuple[NonEmptyString, ...] = ()
+    referenced_chunk_ids: tuple[NonEmptyString, ...] = ()
+    limitations: tuple[NonEmptyString, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_report_counts(self) -> Self:
+        """Make every decision and accepted-dataset count independently auditable."""
+        status_groups = (
+            (self.accepted_as_proposed_query_ids, self.accepted_as_proposed_count),
+            (self.accepted_with_revisions_query_ids, self.accepted_with_revisions_count),
+            (self.rejected_query_ids, self.rejected_count),
+            (self.unresolved_query_ids, self.unresolved_count),
+        )
+        all_status_ids: tuple[str, ...] = ()
+        for query_ids, count in status_groups:
+            if query_ids != tuple(sorted(query_ids)) or len(set(query_ids)) != len(query_ids):
+                msg = "Phase 5 single-review report query IDs must be unique and ordered"
+                raise ValueError(msg)
+            if len(query_ids) != count:
+                msg = "Phase 5 single-review report status counts must match query IDs"
+                raise ValueError(msg)
+            all_status_ids += query_ids
+        if len(set(all_status_ids)) != len(all_status_ids):
+            msg = "Phase 5 single-review report status groups must not overlap"
+            raise ValueError(msg)
+        if (
+            len(all_status_ids) != self.decision_count
+            or self.decision_count != self.candidate_count
+        ):
+            msg = "Phase 5 single-review report requires one final decision per candidate"
+            raise ValueError(msg)
+        if self.included_query_count != (
+            self.accepted_as_proposed_count + self.accepted_with_revisions_count
+        ):
+            msg = "included query count must equal accepted single-review decisions"
+            raise ValueError(msg)
+        if self.answerable_query_count > self.included_query_count:
+            msg = "answerable query count cannot exceed included query count"
+            raise ValueError(msg)
+        if self.gold_claim_count < self.answerable_query_count:
+            msg = "every answerable single-review query requires at least one gold claim"
+            raise ValueError(msg)
+        if self.gold_support_set_count < self.gold_claim_count:
+            msg = "every single-review gold claim requires at least one support set"
+            raise ValueError(msg)
+        for values, label in (
+            (self.referenced_chunk_ids, "referenced chunk IDs"),
+            (self.limitations, "limitations"),
+        ):
+            if values != tuple(sorted(values)) or len(set(values)) != len(values):
+                msg = f"Phase 5 single-review report {label} must be unique and ordered"
+                raise ValueError(msg)
         return self
 
 
@@ -757,5 +1241,67 @@ class GoldEvidenceEvaluationReport(EvaluationModel):
         expected_metrics = AggregateGoldEvidenceMetrics.from_evaluations(self.evaluations)
         if self.metrics != expected_metrics:
             msg = "gold evidence report metrics must be derived from its evaluations"
+            raise ValueError(msg)
+        return self
+
+
+class Phase5SingleReviewGoldEvidenceEvaluationReport(EvaluationModel):
+    """Conservative baseline bound to the governed single-human review artifact."""
+
+    schema_version: Literal["1"] = "1"
+    evaluator_version: Literal["phase5-single-review-gold-evidence-v1"] = (
+        "phase5-single-review-gold-evidence-v1"
+    )
+    dataset_id: Literal["development-single-review-v1"] = "development-single-review-v1"
+    dataset_role: Literal["development-single-review-exploratory"] = (
+        "development-single-review-exploratory"
+    )
+    independent_adjudication: Literal[False] = False
+    held_out: Literal[False] = False
+    threshold_selected: Literal[False] = False
+    dataset_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    dataset_sha256: Sha256
+    decisions_hash_policy: Literal["sha256-raw-file-bytes-v1"] = "sha256-raw-file-bytes-v1"
+    decisions_sha256: Sha256
+    governance_id: Literal["phase5-development-single-review-governance-v1"]
+    governance_sha256: Phase5SingleReviewGovernanceSha256
+    candidate_batch_id: Literal["pymc-6.1.0-api-phase5-development-batch-v1"]
+    candidate_batch_sha256: Phase5SingleReviewCandidateSha256
+    corpus_hash_policy: Literal["canonical-chunk-identity-json-v1"]
+    corpus_sha256: Phase5SingleReviewCorpusSha256
+    corpus_chunk_count: int = Field(ge=1, strict=True)
+    retriever_version: NonEmptyString
+    tokenizer_version: NonEmptyString
+    k1: float = Field(gt=0.0, strict=True, allow_inf_nan=False)
+    b: float = Field(ge=0.0, le=1.0, strict=True, allow_inf_nan=False)
+    top_k: int = Field(ge=1, le=100, strict=True)
+    context_builder_version: NonEmptyString
+    context_rendering_policy: NonEmptyString
+    context_truncation_policy: NonEmptyString
+    token_budget: int = Field(ge=1, strict=True)
+    evidence_policy_version: NonEmptyString
+    evaluations: tuple[GoldEvidenceCaseEvaluation, ...] = Field(min_length=1)
+    metrics: AggregateGoldEvidenceMetrics
+    limitations: tuple[NonEmptyString, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_single_review_baseline(self) -> Self:
+        """Require canonical results, exact shared identities, and derived metrics."""
+        query_ids = tuple(item.query_id for item in self.evaluations)
+        if query_ids != tuple(sorted(query_ids)) or len(set(query_ids)) != len(query_ids):
+            msg = "single-review gold evidence evaluations must have unique ordered query IDs"
+            raise ValueError(msg)
+        if any(item.corpus_sha256 != self.corpus_sha256 for item in self.evaluations):
+            msg = "single-review gold evidence evaluations must share the report corpus"
+            raise ValueError(msg)
+        if any(item.policy_version != self.evidence_policy_version for item in self.evaluations):
+            msg = "single-review gold evidence evaluations must share the report policy"
+            raise ValueError(msg)
+        expected_metrics = AggregateGoldEvidenceMetrics.from_evaluations(self.evaluations)
+        if self.metrics != expected_metrics:
+            msg = "single-review gold evidence metrics must be derived from evaluations"
+            raise ValueError(msg)
+        if self.limitations != tuple(sorted(set(self.limitations))):
+            msg = "single-review gold evidence limitations must be unique and ordered"
             raise ValueError(msg)
         return self

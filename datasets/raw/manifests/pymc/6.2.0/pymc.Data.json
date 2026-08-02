@@ -1,0 +1,17 @@
+{
+  "manifest_version": "1",
+  "source_id": "pymc-6.2.0-api-pymc.Data",
+  "library": "pymc",
+  "library_version": "6.2.0",
+  "source_type": "api_reference",
+  "source_url": "https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.Data.html",
+  "release_tag": "v6.2.0",
+  "release_url": "https://github.com/pymc-devs/pymc/releases/tag/v6.2.0",
+  "source_commit": "3b661c7e5e3ca7d5d7550eca36991d7c1e72274e",
+  "downloaded_at": "2026-08-02T02:52:05Z",
+  "content_hash": "ba15eba8195925d28dd0234a05f7807f4219c9c33871e4e136da5b60f6861e82",
+  "media_type": "text/html",
+  "expected_api_symbol": "pymc.Data",
+  "license_name": "Apache-2.0",
+  "license_url": "https://github.com/pymc-devs/pymc/blob/v6.2.0/LICENSE"
+}

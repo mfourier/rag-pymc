@@ -1,0 +1,2 @@
+# Preserve exact hash-verified upstream fixture bytes, including source whitespace.
+datasets/fixtures/pymc/**/*.html -whitespace

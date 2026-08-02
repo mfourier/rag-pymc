@@ -39,6 +39,13 @@ def test_research_cli_contains_only_internal_data_workflows() -> None:
         "validate-development-data",
         "freeze-annotation-corpus",
         "export-development-review",
+        "export-development-single-review-template",
+        "finalize-development-single-review",
+        "validate-development-single-review",
+        "evaluate-development-single-review-baseline",
+        "freeze-controlled-api-corpus",
+        "compare-pymc-620-migration",
+        "project-pymc-620-retrieval-dataset",
     }
 
 

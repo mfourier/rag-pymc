@@ -13,6 +13,9 @@ from tools.development_models import (
     GoldEvidenceEvaluationReport,
     Phase5DevelopmentDataset,
     Phase5DevelopmentExample,
+    Phase5SingleReviewDataset,
+    Phase5SingleReviewExample,
+    Phase5SingleReviewGoldEvidenceEvaluationReport,
 )
 
 
@@ -29,14 +32,42 @@ def evaluate_gold_evidence(
     generated claim is correct or that cited prose semantically supports that claim.
     """
     example = Phase5DevelopmentExample.model_validate(example)
-    context = ConstructedContext.model_validate(context)
-    assessment = EvidenceAssessment.model_validate(assessment)
-    _validate_runtime_binding(
+    return _evaluate_gold_evidence_common(
         example,
         context,
         assessment,
         corpus_sha256=corpus_sha256,
     )
+
+
+def evaluate_single_review_gold_evidence(
+    example: Phase5SingleReviewExample,
+    context: ConstructedContext,
+    assessment: EvidenceAssessment,
+    *,
+    corpus_sha256: str,
+) -> GoldEvidenceCaseEvaluation:
+    """Score one governed single-review example without claiming adjudication."""
+    example = Phase5SingleReviewExample.model_validate(example)
+    return _evaluate_gold_evidence_common(
+        example,
+        context,
+        assessment,
+        corpus_sha256=corpus_sha256,
+    )
+
+
+def _evaluate_gold_evidence_common(
+    example: Phase5DevelopmentExample | Phase5SingleReviewExample,
+    context: ConstructedContext,
+    assessment: EvidenceAssessment,
+    *,
+    corpus_sha256: str,
+) -> GoldEvidenceCaseEvaluation:
+    """Evaluate common gold fields after the caller validates provenance semantics."""
+    context = ConstructedContext.model_validate(context)
+    assessment = EvidenceAssessment.model_validate(assessment)
+    _validate_runtime_binding(example, context, assessment, corpus_sha256=corpus_sha256)
 
     context_chunk_ids = set(context.included_chunk_ids)
     candidate_chunk_ids = context_chunk_ids | set(context.omitted_chunk_ids)
@@ -154,6 +185,100 @@ def aggregate_gold_evidence(
     )
 
 
+def aggregate_single_review_gold_evidence(
+    dataset: Phase5SingleReviewDataset,
+    evaluations: Sequence[GoldEvidenceCaseEvaluation],
+    *,
+    corpus_chunk_count: int,
+    retriever_version: str,
+    tokenizer_version: str,
+    k1: float,
+    b: float,
+    top_k: int,
+    context_builder_version: str,
+    context_rendering_policy: str,
+    context_truncation_policy: str,
+    token_budget: int,
+    limitations: tuple[str, ...],
+) -> Phase5SingleReviewGoldEvidenceEvaluationReport:
+    """Aggregate a baseline while retaining all single-review limitations and identities."""
+    dataset = Phase5SingleReviewDataset.model_validate(dataset)
+    ordered = _validate_aggregate_inputs(dataset.examples, dataset.corpus_sha256, evaluations)
+    policy_versions = {item.policy_version for item in ordered}
+    if len(policy_versions) != 1:
+        msg = "single-review gold evidence aggregation requires one evidence policy version"
+        raise EvaluationError(msg)
+    return Phase5SingleReviewGoldEvidenceEvaluationReport(
+        dataset_sha256=dataset.dataset_sha256,
+        decisions_sha256=dataset.decisions_sha256,
+        governance_id=dataset.governance_id,
+        governance_sha256=dataset.governance_sha256,
+        candidate_batch_id=dataset.candidate_batch_id,
+        candidate_batch_sha256=dataset.candidate_batch_sha256,
+        corpus_hash_policy=dataset.corpus_hash_policy,
+        corpus_sha256=dataset.corpus_sha256,
+        corpus_chunk_count=corpus_chunk_count,
+        retriever_version=retriever_version,
+        tokenizer_version=tokenizer_version,
+        k1=k1,
+        b=b,
+        top_k=top_k,
+        context_builder_version=context_builder_version,
+        context_rendering_policy=context_rendering_policy,
+        context_truncation_policy=context_truncation_policy,
+        token_budget=token_budget,
+        evidence_policy_version=next(iter(policy_versions)),
+        evaluations=ordered,
+        metrics=AggregateGoldEvidenceMetrics.from_evaluations(ordered),
+        limitations=limitations,
+    )
+
+
+def _validate_aggregate_inputs(
+    examples: Sequence[Phase5DevelopmentExample | Phase5SingleReviewExample],
+    corpus_sha256: str,
+    evaluations: Sequence[GoldEvidenceCaseEvaluation],
+) -> tuple[GoldEvidenceCaseEvaluation, ...]:
+    """Bind one canonical evaluation to every supplied gold example."""
+    validated = tuple(GoldEvidenceCaseEvaluation.model_validate(item) for item in evaluations)
+    ordered = tuple(sorted(validated, key=lambda item: item.query_id))
+    observed_ids = tuple(item.query_id for item in ordered)
+    if len(set(observed_ids)) != len(observed_ids):
+        raise EvaluationError("cannot aggregate duplicate gold evidence query IDs")
+    examples_by_id = {example.query_id: example for example in examples}
+    if set(observed_ids) != set(examples_by_id):
+        missing_ids = tuple(sorted(set(examples_by_id) - set(observed_ids)))
+        unexpected_ids = tuple(sorted(set(observed_ids) - set(examples_by_id)))
+        msg = (
+            "gold evidence evaluations must exactly cover the development dataset; "
+            f"missing={missing_ids}, unexpected={unexpected_ids}"
+        )
+        raise EvaluationError(msg)
+    if any(item.corpus_sha256 != corpus_sha256 for item in ordered):
+        msg = "gold evidence evaluation corpus does not match the development dataset"
+        raise EvaluationError(msg)
+    for item in ordered:
+        example = examples_by_id[item.query_id]
+        expected_claim_coverage = tuple(
+            _evaluate_claim_coverage(
+                claim,
+                context_chunk_ids=set(item.context_chunk_ids),
+                candidate_chunk_ids=set(item.context_chunk_ids) | set(item.omitted_chunk_ids),
+            )
+            for claim in sorted(example.gold_claims, key=lambda claim: claim.claim_id)
+        )
+        if (
+            item.corpus_answerable is not example.corpus_answerable
+            or item.claim_coverage != expected_claim_coverage
+        ):
+            msg = (
+                f"gold evidence evaluation for {item.query_id} does not match its "
+                "development annotation"
+            )
+            raise EvaluationError(msg)
+    return ordered
+
+
 def _evaluate_claim_coverage(
     claim: AtomicGoldClaim,
     *,
@@ -181,7 +306,7 @@ def _evaluate_claim_coverage(
 
 
 def _validate_runtime_binding(
-    example: Phase5DevelopmentExample,
+    example: Phase5DevelopmentExample | Phase5SingleReviewExample,
     context: ConstructedContext,
     assessment: EvidenceAssessment,
     *,

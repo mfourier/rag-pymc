@@ -1,13 +1,15 @@
 # Phase 5 development batch v1 single-review candidate packet
 
-> Status: Agent-authored draft awaiting one real human review. No human review is recorded.
+> Status: Frozen agent-authored candidate packet. Human decision state is recorded only in separate governed artifacts.
 
 ## Fixed identities
 
 - Design preregistration: `phase5-development-batch-preregistration-v1`
 - Review governance: `phase5-development-single-review-governance-v1`
 - Review-governance SHA-256: `a11593ce188abb16c7f3832992cf9c5fe121e6086dacdb5bf1f9009944db1264`
-- Intended single reviewer: `sr_001` (review not yet performed)
+- Governed single reviewer: `sr_001` (decision state external to this packet)
+- Governed decision path: `datasets/evaluation/phase5/reviews/development-single-review-v1.decisions.jsonl`
+- Validation report path: `reports/evaluation/phase5-development-single-review-v1-validation.json`
 - Batch: `pymc-6.1.0-api-phase5-development-batch-v1`
 - Candidate SHA-256: `832075827b782c26b4975635f19b836439a2a0d582e36fa59704ee19bbb15abb`
 - Corpus hash policy: `canonical-chunk-identity-json-v1`
@@ -24,7 +26,7 @@
 - Normalization policy: `nfkc-casefold-whitespace-v1`
 - Exact normalized duplicates are rejected before this packet is rendered.
 - Lexical overlap is triage only; it is not retrieval evidence or a leakage decision.
-- Every candidate still requires human semantic near-duplicate review.
+- Every candidate requires human semantic near-duplicate review before entering a reviewed dataset.
 - Prior questions: `datasets/evaluation/notebooks/pymc_conceptual_queries.jsonl` (`82c0c625224a23b0f293ac130180a36badb765b39c6dcdea1d797d6b62e64efc`)
 - Prior questions: `datasets/evaluation/phase2/pymc_sample_queries.jsonl` (`5df8628e7c22042784cf5361cafbbbc204b8cdc7313f43508dec6e7a8c6eba87`)
 - Prior questions: `datasets/evaluation/phase4/pymc_core_queries.jsonl` (`5f5eb1f0e42a77759a5a1b33bae26fa43264002238633ed93a3d0d6695aa454b`)
@@ -32,7 +34,7 @@
 
 ## Candidate decisions
 
-For every candidate, the single human reviewer must accept, revise, or reject the query, corpus-relative label, claims, and minimal support sets. This review is not independent adjudication.
+For every candidate, the governed workflow requires the single human reviewer to accept, revise, or reject the query, corpus-relative label, claims, and minimal support sets. Human outcomes are not embedded in this packet. This review is not independent adjudication.
 
 ### p5dev_v1_query_001
 
@@ -66,7 +68,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_002
 
@@ -100,7 +104,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_003
 
@@ -137,7 +143,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_004
 
@@ -171,7 +179,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_005
 
@@ -211,7 +221,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_006
 
@@ -245,7 +257,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_007
 
@@ -279,7 +293,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_008
 
@@ -316,7 +332,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_009
 
@@ -350,7 +368,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_010
 
@@ -384,7 +404,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_011
 
@@ -421,7 +443,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_012
 
@@ -455,7 +479,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_013
 
@@ -490,7 +516,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_014
 
@@ -524,7 +552,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_015
 
@@ -561,7 +591,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_016
 
@@ -598,7 +630,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_017
 
@@ -635,7 +669,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_018
 
@@ -677,7 +713,9 @@ For every candidate, the single human reviewer must accept, revise, or reject th
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_019
 
@@ -710,7 +748,9 @@ No claims or support sets are proposed. Review against the complete corpus appen
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_020
 
@@ -743,7 +783,9 @@ No claims or support sets are proposed. Review against the complete corpus appen
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_021
 
@@ -776,7 +818,9 @@ No claims or support sets are proposed. Review against the complete corpus appen
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_022
 
@@ -809,7 +853,9 @@ No claims or support sets are proposed. Review against the complete corpus appen
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_023
 
@@ -842,7 +888,9 @@ No claims or support sets are proposed. Review against the complete corpus appen
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ### p5dev_v1_query_024
 
@@ -875,7 +923,9 @@ No claims or support sets are proposed. Review against the complete corpus appen
 - [ ] Proposed corpus-relative answerability is correct.
 - [ ] Every necessary proposition is an atomic claim, or no claim is valid for this hard negative.
 - [ ] Every support set is sufficient and minimal; all valid alternatives are represented.
-- [ ] Decision: accept / revise / reject (circle one in the review workflow).
+- [ ] Hard-negative status is confirmed, revised, or marked not applicable.
+- [ ] The decision record has a real UTC timestamp and an explicit final status: accepted-as-proposed / accepted-with-revisions / rejected / unresolved.
+- [ ] Rejected or unresolved records contain concise review notes and no reviewed dataset content.
 
 ## Frozen corpus appendix
 
